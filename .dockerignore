@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+studio/node_modules/
+studio-api/node_modules/
+
+# Build output (rebuilt in Docker)
+public/studio/
+studio/dist/
+
+# Project data (mounted as volumes)
+projects/
+data/
+.tmp_chunks/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Media files
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.mp3
+*.wav
+*.aac
+*.m4a
+*.ogg
+*.flac

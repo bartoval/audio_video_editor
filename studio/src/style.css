@@ -1,0 +1,2333 @@
+/* ============================================================================
+ * Bootstrap Import
+ * ============================================================================ */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+/* ============================================================================
+ * Bootstrap Icons
+ * ============================================================================ */
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+
+/* ============================================================================
+ * CSS Variables
+ * ============================================================================ */
+:root {
+  /* Layout */
+  --cursor-size: 18px;
+  --row-track-size: 150px;
+  --row-toolbar-size: 50px;
+
+  /* Spacing scale */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+
+  /* Custom colors (not in Bootstrap) */
+  --color-volume: rgba(63, 191, 127, 1);
+  --color-volume-dim: rgba(63, 191, 127, 0.2);
+  --color-pan: rgba(191, 63, 63, 1);
+  --color-pan-dim: rgba(191, 63, 63, 0.2);
+  --color-cut: #a78bfa;
+  --color-cut-dim: rgba(139, 92, 246, 0.3);
+  --color-online: #00ff88;
+  --color-offline: #ff4466;
+
+  /* Shadow presets */
+  --shadow-sm: rgba(0, 0, 0, 0.3);
+  --shadow-md: rgba(0, 0, 0, 0.5);
+  --glass-light: rgba(255, 255, 255, 0.1);
+  --glass-medium: rgba(255, 255, 255, 0.2);
+
+  /* Legacy mappings (for migration) */
+  --text-color: var(--bs-secondary-color);
+  --text-muted: var(--bs-secondary-color);
+  --btn-default: var(--bs-primary);
+  --btn-default-dark: var(--bs-border-color);
+  --btn-default-light: var(--bs-primary);
+  --bg-secondary: var(--bs-secondary-bg);
+  --bg-tertiary: var(--bs-tertiary-bg);
+  --main-color: var(--bs-info);
+  --main-color-light: var(--bs-cyan);
+}
+
+/* ============================================================================
+ * Studio Header
+ * ============================================================================ */
+.studio .studio-header.navbar {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.25) 0%,
+      rgba(255, 255, 255, 0.1) 15%,
+      rgba(255, 255, 255, 0.03) 40%,
+      transparent 70%
+    ),
+    var(--bs-body-bg) !important;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ============================================================================
+ * Studio Layout
+ * ============================================================================ */
+.studio-workspace {
+  flex: 0 0 auto;
+  min-height: 300px;
+  overflow: hidden;
+  display: flex;
+  position: relative;
+}
+
+.studio-preview {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  position: relative;
+  /* Default dimensions when no video (16:9 aspect ratio with 550px height) */
+  width: 978px;
+  height: 550px;
+}
+
+/* When video is loaded, dimensions are set by LayoutManager */
+.studio.has-video .studio-preview {
+  width: auto;
+  max-width: none;
+  height: auto;
+}
+
+.studio-library {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 1002px; /* Default: after preview (978px + padding ~24px) */
+  min-width: 350px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* When video is loaded, LayoutManager sets the width */
+.studio.has-video .studio-library {
+  left: auto;
+}
+
+.studio-library > .library {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* All direct children of library should stretch full width */
+.studio-library > .library > * {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.studio-resizer {
+  height: 12px;
+  background: var(--bs-border-color);
+  position: relative;
+  transition: background-color 0.15s ease;
+}
+
+.studio-resizer:hover {
+  background: var(--bs-info);
+}
+
+/* The Resizer component creates a child .resizer.resizableY element */
+.studio-resizer .resizer.resizableY {
+  width: 100%;
+  height: 100%;
+  cursor: ns-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.studio-resizer .resizer.resizableY::before {
+  content: '';
+  width: 40px;
+  height: 4px;
+  background-image: repeating-linear-gradient(
+    0deg,
+    var(--bs-secondary) 0px,
+    var(--bs-secondary) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  border-radius: 2px;
+}
+
+.studio-resizer:hover .resizer.resizableY::before {
+  background-image: repeating-linear-gradient(
+    0deg,
+    var(--bs-dark) 0px,
+    var(--bs-dark) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+.studio-timeline {
+  flex: 1 1 300px;
+  min-height: 200px;
+  background: var(--bs-tertiary-bg);
+  position: relative;
+}
+
+/* Hide scrubber/indicator when no video */
+.studio:not(.has-video) .scrubber-container {
+  display: none;
+}
+
+/* Hide player controls when no video */
+.studio:not(.has-video) .studio-preview > .bg-body-tertiary {
+  display: none;
+}
+
+/* Hide minimap when no video */
+.studio:not(.has-video) .minimap-container {
+  display: none;
+}
+
+/* ============================================================================
+ * Custom Range Input (Pitch Slider)
+ * ============================================================================ */
+.form-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 0.5rem;
+  background: var(--bs-secondary-bg);
+  border-radius: 0.25rem;
+}
+
+.form-range::-moz-range-track {
+  height: 0.5rem;
+  background: var(--bs-secondary-bg);
+  border-radius: 0.25rem;
+}
+
+.form-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  margin-top: -0.25rem;
+  background: var(--bs-info);
+  border: 0;
+  border-radius: 50%;
+}
+
+.form-range::-moz-range-thumb {
+  width: 1rem;
+  height: 1rem;
+  background: var(--bs-info);
+  border: 0;
+  border-radius: 50%;
+}
+
+.form-range:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 0.25rem rgba(var(--bs-info-rgb), 0.25);
+}
+
+.form-range:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 0.25rem rgba(var(--bs-info-rgb), 0.25);
+}
+
+.form-range:disabled {
+  pointer-events: none;
+  opacity: 0.3;
+  filter: grayscale(100%);
+}
+
+.form-range:disabled::-webkit-slider-thumb {
+  background: var(--bs-secondary);
+  transform: scale(0.7);
+}
+
+.form-range:disabled::-moz-range-thumb {
+  background: var(--bs-secondary);
+  transform: scale(0.7);
+}
+
+/* ============================================================================
+ * Disabled Toolbar Buttons
+ * ============================================================================ */
+.btn:disabled,
+.btn.disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+  pointer-events: auto !important;
+  border-color: #6c757d !important;
+  color: #6c757d !important;
+}
+
+/* ============================================================================
+ * SVG Styles (timeline waveforms, rulers)
+ * ============================================================================ */
+.studio svg {
+  shape-rendering: optimizeSpeed;
+}
+
+.studio svg line,
+.studio svg path {
+  stroke: var(--bs-secondary-color);
+  stroke-width: 1px;
+}
+
+.studio svg text {
+  font-size: 11px;
+  fill: var(--bs-secondary-color);
+}
+
+/* ============================================================================
+ * Utility Classes
+ * ============================================================================ */
+.hide {
+  display: none !important;
+}
+
+/* ============================================================================
+ * Responsive Styles
+ * ============================================================================ */
+@media only screen and (max-height: 768px) {
+  .studio {
+    font-size: 10px;
+  }
+
+  .studio i {
+    font-size: 22px;
+  }
+
+  .studio input {
+    font-size: 10px;
+  }
+
+  .studio-preview .content-video {
+    width: 310px;
+  }
+}
+
+/* ============================================================================
+ * Video Uploader Container
+ * ============================================================================ */
+.video-uploader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.video-uploader > * {
+  pointer-events: auto;
+}
+
+/* ============================================================================
+ * Video Empty State (Uploader)
+ * ============================================================================ */
+.video-empty-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  z-index: 10;
+}
+
+.video-empty-state.hide {
+  display: none;
+}
+
+.video-empty-state > i {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.video-empty-state > p {
+  margin: 0;
+  font-size: 16px;
+}
+
+.video-empty-hint {
+  font-size: 12px;
+  margin-top: 16px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.video-import-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  margin-top: 16px;
+  border: none;
+  background: var(--main-color);
+  color: #000;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.video-import-btn i {
+  font-size: 16px;
+}
+
+.video-import-btn:hover {
+  background: var(--main-color-light);
+  transform: translateY(-1px);
+}
+
+.video-import-btn:active {
+  transform: translateY(0);
+}
+
+/* ============================================================================
+ * Video Upload Progress
+ * ============================================================================ */
+.video-upload-progress {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 10;
+  padding: 20px;
+  box-sizing: border-box;
+  border-radius: 4px;
+}
+
+.video-upload-progress.hide {
+  display: none;
+}
+
+.video-upload-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 16px;
+  max-width: 80%;
+}
+
+.video-upload-name {
+  font-size: 14px;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.video-upload-size {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.video-upload-bar-container {
+  width: 80%;
+  max-width: 400px;
+  height: 8px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.video-upload-bar {
+  height: 100%;
+  background: var(--main-color);
+  transition: width 0.15s ease;
+}
+
+.video-upload-status {
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--main-color);
+  font-weight: 500;
+}
+
+.video-upload-bar.indeterminate {
+  animation: indeterminate 1.5s infinite ease-in-out;
+  background: linear-gradient(
+    90deg,
+    var(--main-color) 0%,
+    var(--main-color-light) 50%,
+    var(--main-color) 100%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes indeterminate {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ============================================================================
+ * Video Actions
+ * ============================================================================ */
+.video-actions {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.video-actions.hide {
+  display: none;
+}
+
+.video-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(0, 0, 0, 0.5);
+  color: var(--bs-info);
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.video-action-btn i {
+  font-size: 22px;
+}
+
+.video-action-btn:hover {
+  opacity: 1;
+}
+
+/* ============================================================================
+ * Video Component
+ * ============================================================================ */
+.content-video {
+  min-height: 200px;
+  min-width: 300px;
+  max-height: 100%; /* Respect parent container height */
+  background-color: black;
+  position: relative;
+  will-change: width, height;
+  contain: layout style;
+  flex-shrink: 0;
+}
+
+.content-video .resizer {
+  cursor: nwse-resize;
+  width: 28px;
+  height: 28px;
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bs-info);
+  font-size: 18px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+}
+
+.content-video .resizer i {
+  transform: rotate(90deg);
+}
+
+.content-video .resizer:hover {
+  opacity: 1;
+}
+
+.content-video .viewer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+/* ============================================================================
+ * Player Scrubber
+ * ============================================================================ */
+.scrubber-track {
+  position: relative;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.scrubber-bar {
+  position: relative;
+  width: 100%;
+  height: 24px;
+  background: var(--bs-secondary-bg);
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow:
+    inset 0 4px 8px rgba(0, 0, 0, 0.5),
+    inset 0 -2px 4px rgba(255, 255, 255, 0.15),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+.scrubber-bar::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  cursor: pointer;
+}
+
+.scrubber-handle {
+  position: absolute;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  margin-top: -9px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.3) 0%,
+      rgba(255, 255, 255, 0.1) 30%,
+      transparent 50%,
+      rgba(0, 0, 0, 0.15) 80%,
+      rgba(0, 0, 0, 0.3) 100%
+    ),
+    var(--bs-info);
+  border-radius: 50%;
+  cursor: grab;
+  z-index: 10;
+  will-change: transform;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.5),
+    0 4px 10px rgba(0, 0, 0, 0.3),
+    0 -1px 3px rgba(255, 255, 255, 0.2);
+}
+
+.scrubber-handle:active {
+  cursor: grabbing;
+}
+
+.scrubber-handle::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  cursor: pointer;
+}
+
+/* ============================================================================
+ * Library Component
+ * ============================================================================ */
+
+/* Upload List - Fixed toast in bottom right */
+.upload-list {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 500px;
+  max-height: 300px;
+  background: rgba(0, 0, 0, 0.95);
+  border: 1px solid var(--bs-info);
+  border-radius: 8px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 12px;
+  box-sizing: border-box;
+  z-index: 1050;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.upload-list .upload-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 6px 8px;
+  margin-bottom: 4px;
+}
+
+/* Oscilloscope Canvas */
+.oscilloscope-canvas {
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.oscilloscope-canvas.hide {
+  display: none;
+}
+
+/* Library List Container */
+.library-list-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Library Drop Zone (Empty State) */
+.library-drop-zone {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0.75rem;
+  border: 2px dashed var(--bs-info);
+  border-radius: 12px;
+  background: rgba(var(--bs-info-rgb), 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  max-width: calc(100% - 1.5rem);
+}
+
+.library-drop-zone:hover,
+.library-drop-zone.drag-over {
+  border-color: var(--bs-cyan);
+  background: rgba(var(--bs-info-rgb), 0.15);
+}
+
+.library-drop-zone.drag-over {
+  border-style: solid;
+  box-shadow: 0 0 20px rgba(var(--bs-info-rgb), 0.3);
+}
+
+.drop-zone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--bs-info);
+  text-align: center;
+  pointer-events: none;
+}
+
+.drop-zone-content i {
+  font-size: 3rem;
+  opacity: 0.8;
+}
+
+.drop-zone-content p {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.drop-zone-content span {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+/* Virtual Scroll */
+.vs-viewport {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.vs-viewport::-webkit-scrollbar {
+  width: 8px;
+}
+
+.vs-viewport::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+.vs-viewport::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.vs-viewport::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.vs-content {
+  position: relative;
+  width: 100%;
+}
+
+.vs-items {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Utility for flex truncation */
+.min-width-0 {
+  min-width: 0;
+}
+
+/* Audio Item (list-group-item with drag support) */
+.list-group-item.draggable {
+  gap: 0.5rem;
+  border-left: 3px solid transparent;
+  user-select: none;
+  cursor: grab;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.list-group-item.draggable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.list-group-item.draggable:hover {
+  background-color: var(--bs-tertiary-bg);
+  border-left-color: var(--bs-info);
+  box-shadow: inset 0 0 0 1px rgba(var(--bs-info-rgb), 0.3);
+}
+
+.list-group-item.draggable.selected {
+  background-color: rgba(var(--bs-info-rgb), 0.15);
+  border-left-color: var(--bs-info);
+  box-shadow: inset 3px 0 0 var(--bs-info);
+}
+
+.list-group-item.draggable.selected:hover {
+  background-color: rgba(var(--bs-info-rgb), 0.25);
+}
+
+.list-group-item.draggable:active {
+  cursor: grabbing;
+}
+
+.list-group-item.draggable.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+/* Drag handle */
+.drag-handle {
+  cursor: grab;
+  position: relative;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.list-group-item.draggable:hover .drag-handle {
+  opacity: 1 !important;
+  transform: scale(1.1);
+}
+
+.audio-play,
+.audio-delete,
+.drag-handle {
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.audio-play:hover {
+  opacity: 1 !important;
+  cursor: pointer;
+  transform: scale(1.1);
+}
+
+.audio-delete:hover {
+  opacity: 1 !important;
+  cursor: pointer;
+}
+
+.drag-handle:hover {
+  opacity: 1 !important;
+}
+
+/* Dragging state - highlight timeline drop zone */
+.studio.is-dragging .studio-timeline {
+  outline: 3px dashed var(--bs-info);
+  outline-offset: -4px;
+  background: color-mix(in srgb, var(--bs-info) 12%, var(--bs-tertiary-bg));
+  box-shadow: inset 0 0 30px rgba(var(--bs-info-rgb), 0.15);
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.studio.is-dragging .studio-timeline::before {
+  content: 'Drop audio here';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+  color: var(--bs-info);
+  font-weight: 600;
+  z-index: 100;
+  pointer-events: none;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: 2px solid var(--bs-info);
+}
+
+/* ============================================================================
+ * Playback Scrubber Time Tooltip
+ * ============================================================================ */
+.studio > .scrubber-time {
+  position: absolute;
+  z-index: 90;
+  will-change: transform;
+}
+
+.studio > .scrubber-time .arrow-down {
+  display: none;
+}
+
+/* ============================================================================
+ * Timeline Component
+ * ============================================================================ */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ============================================================================
+ * Navigator Toolbar
+ * ============================================================================ */
+.navigator-toolbar {
+  background: var(--bs-body-bg);
+}
+
+/* ============================================================================
+ * Timeline Navigator
+ * ============================================================================ */
+.navigator {
+  width: 100%;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.4) 0%,
+      rgba(0, 0, 0, 0.2) 3%,
+      rgba(0, 0, 0, 0.08) 8%,
+      transparent 20%
+    ),
+    var(--bs-body-bg);
+  box-shadow:
+    0 -2px 8px rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.5);
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.navigator::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================================================
+ * Navigator Ruler
+ * ============================================================================ */
+.navigator .progress-bar-container {
+  position: absolute;
+  height: 1px;
+  background-color: var(--text-color);
+}
+
+.navigator .progress-bar-container .scrubber-container {
+  position: absolute;
+  top: calc(-1 * var(--cursor-size) / 2);
+  z-index: 100;
+  list-style: none;
+}
+
+.navigator .progress-bar-container .scrubber-container .scrubber-time {
+  display: flex;
+  align-items: center;
+  color: black;
+  position: absolute;
+  background-color: var(--text-color);
+  width: 50px;
+  padding: 2px;
+  height: 20px;
+  left: -20px;
+  top: -30px;
+  text-align: center;
+  opacity: 1;
+  transition: opacity 0.25s ease-in;
+  z-index: 3;
+}
+
+.navigator .progress-bar-container .scrubber-container .scrubber-time .arrow-down {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid var(--text-color);
+  position: absolute;
+  bottom: -5px;
+  left: 21px;
+}
+
+.navigator .progress-bar-container .scrubber-container .scrubber-time .body {
+  position: absolute;
+}
+
+.navigator .progress-bar-container .scrubber-container .scrubber-button {
+  cursor: grab;
+  width: 22px;
+  height: 22px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.3) 0%,
+      rgba(255, 255, 255, 0.1) 30%,
+      transparent 50%,
+      rgba(0, 0, 0, 0.15) 80%,
+      rgba(0, 0, 0, 0.3) 100%
+    ),
+    var(--bs-info);
+  border-radius: 50%;
+  z-index: 100;
+  position: relative;
+  will-change: transform;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.5),
+    0 4px 10px rgba(0, 0, 0, 0.3),
+    0 -1px 3px rgba(255, 255, 255, 0.2);
+}
+
+.navigator .progress-bar-container .scrubber-container .scrubber-button:active {
+  cursor: grabbing;
+}
+
+.navigator .progress-bar-container .scrubber-container .scrubber-button::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: -12px;
+  right: -12px;
+  bottom: -12px;
+  cursor: grab;
+}
+
+.navigator .progress-bar-container .scrubber-container .scrubber-button:active::before {
+  cursor: grabbing;
+}
+
+.navigator .progress-bar-container .scrubber-container .line {
+  width: 3px;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      transparent 30%,
+      transparent 70%,
+      rgba(0, 0, 0, 0.2) 100%
+    ),
+    var(--bs-info);
+  margin: 0 auto;
+  z-index: 100;
+  position: relative;
+  will-change: transform;
+  cursor: grab;
+  box-shadow:
+    2px 0 4px rgba(0, 0, 0, 0.4),
+    -1px 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.navigator .progress-bar-container .scrubber-container .line:active {
+  cursor: grabbing;
+}
+
+.navigator .progress-bar-container .scrubber-container .line::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -8px;
+  right: -8px;
+  bottom: 0;
+  cursor: grab;
+}
+
+.navigator .progress-bar-container .scrubber-container .line:active::before {
+  cursor: grabbing;
+}
+
+.navigator .progress-bar-container .scrubber-container .hide-with-animation {
+  opacity: 0;
+  transition: opacity 0.25s ease-out;
+}
+
+.ruler {
+  overflow: hidden;
+  margin: 0 calc(var(--cursor-size) / 2);
+}
+
+.ruler .rulerDiv {
+  height: 30px;
+}
+
+/* ============================================================================
+ * Navigator Tracks
+ * ============================================================================ */
+.tracks {
+  margin: 0 calc(var(--cursor-size) / 2);
+  height: calc(100% - var(--row-toolbar-size) - var(--row-toolbar-size));
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: relative;
+}
+
+.tracks-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--bs-secondary-color);
+}
+
+.tracks-placeholder-content {
+  text-align: center;
+}
+
+.tracks-placeholder-content i {
+  font-size: 2.5rem;
+  opacity: 0.5;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.tracks-placeholder-content p {
+  margin: 0;
+  font-size: 1.1rem;
+  opacity: 0.7;
+}
+
+.tracks .controller-drag {
+  height: 10px !important;
+  margin: 0 auto;
+}
+
+.tracks .move {
+  opacity: 0;
+}
+
+.tracks .zone-container {
+  position: relative;
+  overflow-x: hidden;
+  padding-bottom: var(--row-track-size);
+  min-height: calc(100% + var(--row-track-size));
+}
+
+.tracks .zone-container .zones {
+  white-space: nowrap;
+  position: relative;
+  height: var(--row-track-size);
+  margin-bottom: 12px;
+}
+
+.tracks .zone-container .zones .zone {
+  color: white;
+  height: calc(100% - 8px);
+  top: 4px;
+  position: absolute;
+  will-change: transform;
+  contain: layout style;
+}
+
+/* ============================================================================
+ * Track Zone Content
+ * ============================================================================ */
+.zone-content {
+  position: relative;
+  height: 100%;
+  border-left: 1px solid var(--btn-default-dark);
+  border-right: 1px solid var(--btn-default-dark);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* Track Selection State */
+.track-content {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.35) 0%,
+      rgba(0, 0, 0, 0.1) 20%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.03) 80%,
+      rgba(255, 255, 255, 0.08) 100%
+    ),
+    var(--bs-secondary-bg);
+  border: 1px solid var(--btn-default-dark);
+  border-radius: 4px;
+  box-shadow:
+    inset 0 3px 8px rgba(0, 0, 0, 0.5),
+    inset 0 1px 2px rgba(0, 0, 0, 0.4),
+    inset 0 -2px 4px rgba(255, 255, 255, 0.08);
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.track-content:hover:not(.selected) {
+  background-color: color-mix(in srgb, var(--bs-secondary) 20%, var(--bs-secondary-bg));
+}
+
+.track-content.selected {
+  background-color: color-mix(in srgb, var(--bs-info) 20%, var(--bs-secondary-bg));
+  border-color: var(--bs-info);
+}
+
+/* Cut Zone - selection overlay during cut operation */
+.zone-content .cut-zone {
+  display: none;
+  position: absolute;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.2) 0%,
+    rgba(139, 92, 246, 0.25) 50%,
+    rgba(99, 102, 241, 0.2) 100%
+  );
+  border-radius: 6px;
+  z-index: 20;
+  pointer-events: none;
+  backdrop-filter: blur(2px) saturate(1.2);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.zone-content .cut-zone::before,
+.zone-content .cut-zone::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 3px;
+  background: linear-gradient(180deg, #818cf8 0%, #a78bfa 50%, #818cf8 100%);
+  border-radius: 2px;
+  box-shadow:
+    0 0 8px rgba(139, 92, 246, 0.6),
+    0 0 16px rgba(139, 92, 246, 0.3);
+}
+
+.zone-content .cut-zone::before {
+  left: -1px;
+}
+
+.zone-content .cut-zone::after {
+  right: -1px;
+}
+
+.zone-content .cut-zone.visible {
+  display: block;
+  animation: cutZoneFadeIn 0.15s ease-out;
+}
+
+@keyframes cutZoneFadeIn {
+  from {
+    opacity: 0;
+    transform: scaleX(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+/* Cut Mode - cursor and visual feedback */
+.track-content.cut-mode {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23a78bfa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='6' cy='6' r='3'/%3E%3Ccircle cx='6' cy='18' r='3'/%3E%3Cline x1='20' y1='4' x2='8.12' y2='15.88'/%3E%3Cline x1='14.47' y1='14.48' x2='20' y2='20'/%3E%3Cline x1='8.12' y1='8.12' x2='12' y2='12'/%3E%3C/svg%3E")
+      12 12,
+    crosshair !important;
+}
+
+.track-content.cut-mode .zone-content {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23a78bfa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='6' cy='6' r='3'/%3E%3Ccircle cx='6' cy='18' r='3'/%3E%3Cline x1='20' y1='4' x2='8.12' y2='15.88'/%3E%3Cline x1='14.47' y1='14.48' x2='20' y2='20'/%3E%3Cline x1='8.12' y1='8.12' x2='12' y2='12'/%3E%3C/svg%3E")
+      12 12,
+    crosshair !important;
+}
+
+.track-content.cut-mode::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(139, 92, 246, 0.06) 100%);
+  border: 1px dashed rgba(139, 92, 246, 0.4);
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.track-content.cut-mode::after {
+  content: 'CUT';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--color-cut);
+  background: rgba(15, 15, 25, 0.85);
+  backdrop-filter: blur(4px);
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--color-cut-dim);
+  pointer-events: none;
+  z-index: 25;
+  box-shadow: 0 2px 8px var(--shadow-sm);
+}
+
+.zone-content .controller {
+  position: absolute;
+  transition: opacity 0.25s ease-out;
+}
+
+.zone-content .hook-move {
+  display: none;
+}
+
+.track-content.selected .zone-content {
+  cursor: move;
+}
+
+.track-content.selected.editing-envelope .zone-content {
+  cursor: crosshair;
+}
+
+.zone-content .hook-resize {
+  background-color: var(--bs-secondary);
+  border-radius: 4px;
+  width: 16px;
+  height: 70%;
+  cursor: ew-resize;
+  transition:
+    background-color 0.15s ease,
+    opacity 0.15s ease;
+  /* Grip lines pattern */
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0px,
+    transparent 3px,
+    currentColor 3px,
+    currentColor 5px
+  );
+  background-size: 12px 60%;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: rgba(0, 0, 0, 0.3);
+}
+
+.zone-content .hook-resize-left {
+  left: 4px;
+  z-index: 1;
+}
+
+.zone-content .hook-resize-right {
+  right: 4px;
+  z-index: 1;
+}
+
+/* Resize handles on selected track */
+.track-content.selected .hook-resize {
+  background-color: var(--bs-info);
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.track-content.selected .hook-resize:hover {
+  opacity: 0.9;
+}
+
+.track-content:not(.selected) .hook-resize {
+  opacity: 0;
+}
+
+.track-content:not(.selected):hover .hook-resize {
+  opacity: 0.5;
+}
+
+/* Track Info Tooltip */
+.track-tooltip {
+  position: fixed;
+  z-index: 1000;
+  background-color: var(--bs-dark);
+  border: 1px solid var(--bs-info);
+  border-radius: 6px;
+  padding: 8px 12px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  font-size: 12px;
+  line-height: 1.4;
+  max-width: 200px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.track-tooltip.visible {
+  opacity: 1;
+}
+
+.track-tooltip .tooltip-title {
+  color: var(--bs-info);
+  font-weight: 600;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.track-tooltip .tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--bs-secondary-color);
+}
+
+.track-tooltip .tooltip-row span:first-child {
+  color: var(--bs-body-color);
+}
+
+.track-tooltip .tooltip-current-row {
+  color: var(--bs-info);
+  font-weight: 600;
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--bs-secondary-bg);
+}
+
+.track-tooltip .tooltip-current-row span:first-child {
+  color: var(--bs-info);
+}
+
+/* Row Drop Indicator */
+.row-drop-indicator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 100;
+}
+
+.row-drop-indicator.visible {
+  opacity: 1;
+}
+
+.row-drop-indicator.new-row {
+  height: 3px;
+  background: var(--bs-info);
+  box-shadow: 0 0 8px var(--bs-info);
+}
+
+.row-drop-indicator.existing-row {
+  background: rgba(var(--bs-info-rgb), 0.15);
+  border: 2px dashed var(--bs-info);
+  border-radius: 4px;
+}
+
+/* Volume Zone */
+.zone-content .volume-zone {
+  cursor: crosshair;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+}
+
+/* Pen cursor when editing volume envelope */
+.track-content.editing-envelope .volume-zone {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%233fbf7f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 19l7-7 3 3-7 7-3-3z'/%3E%3Cpath d='M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z'/%3E%3Cpath d='M2 2l7.586 7.586'/%3E%3Ccircle cx='11' cy='11' r='2'/%3E%3C/svg%3E")
+      2 22,
+    crosshair;
+}
+
+.zone-content .volume-zone .volume-area {
+  width: 100%;
+  height: 100%;
+  border-top: 1px solid var(--color-volume-dim);
+  border-bottom: 1px solid var(--color-volume-dim);
+  position: absolute;
+  z-index: 2;
+  shape-rendering: geometricPrecision;
+  overflow: visible;
+}
+
+.zone-content .volume-zone .volume-line {
+  stroke-width: 2px;
+  stroke: var(--color-volume);
+  fill: none;
+}
+
+.zone-content .volume-zone .volume-container .volume-info {
+  background-color: var(--color-volume);
+  box-shadow:
+    inset 3px -13px 5px 0 rgba(0, 0, 0, 0.16),
+    0 2px 10px 0 rgba(0, 0, 0, 0.12);
+  min-width: 42px;
+  height: 24px;
+  margin: -12px 10px;
+  padding: 0 6px;
+  position: absolute;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  transition: opacity 0.25s ease-out;
+}
+
+.zone-content .volume-zone .volume-container .arrow-left {
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 7px solid var(--color-volume);
+  transform: rotate(270deg);
+  position: absolute;
+  top: -2px;
+  left: 10px;
+}
+
+/* Pan Zone */
+.zone-content .pan-zone {
+  cursor: crosshair;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+}
+
+/* Pen cursor when editing pan envelope */
+.track-content.editing-envelope .pan-zone {
+  cursor:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23bf3f3f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 19l7-7 3 3-7 7-3-3z'/%3E%3Cpath d='M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z'/%3E%3Cpath d='M2 2l7.586 7.586'/%3E%3Ccircle cx='11' cy='11' r='2'/%3E%3C/svg%3E")
+      2 22,
+    crosshair;
+}
+
+.zone-content .pan-zone .pan-area {
+  width: 100%;
+  height: 100%;
+  border-top: 1px solid var(--color-pan-dim);
+  border-bottom: 1px solid var(--color-pan-dim);
+  position: absolute;
+  z-index: 1;
+}
+
+.zone-content .pan-zone .pan-line {
+  width: 100%;
+  height: 2px;
+  background-color: var(--color-pan);
+}
+
+.zone-content .pan-zone .pan-container .pan-info {
+  min-width: 42px;
+  height: 24px;
+  margin: -12px 10px;
+  padding: 0 6px;
+  background-color: var(--color-pan);
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    inset 3px -13px 5px 0 rgba(0, 0, 0, 0.16),
+    0 2px 10px 0 rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: opacity 0.25s ease-out;
+}
+
+.zone-content .pan-zone .pan-container .arrow-left {
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid var(--color-pan);
+  transform: rotate(270deg);
+  position: absolute;
+  top: -6px;
+  left: 10px;
+}
+
+.zone-content .hide-animated {
+  opacity: 0;
+  transition: opacity 0.25s ease-in;
+}
+
+/* Track Label - absolute positioning, updated via JS */
+.track-label {
+  position: absolute;
+  left: 8px;
+  bottom: 4px;
+  width: fit-content;
+  max-width: 120px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--bs-secondary-color);
+  background-color: var(--bs-body-bg);
+  border-radius: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 10;
+}
+
+.track-label:empty {
+  display: none;
+}
+
+.track-content.selected .track-label {
+  color: var(--bs-info);
+  font-weight: 500;
+}
+
+.zone .waveform {
+  width: 100%;
+  height: 100%;
+  top: 0;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  overflow: hidden;
+  transition: opacity 0.2s ease;
+}
+
+/* Waveform Skeleton Loading */
+.zone .waveform.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(var(--bs-info-rgb), 0.1) 0%,
+    rgba(var(--bs-info-rgb), 0.25) 50%,
+    rgba(var(--bs-info-rgb), 0.1) 100%
+  );
+  background-size: 200% 100%;
+  animation: waveformSkeleton 1.2s ease-in-out infinite;
+  border: 1px dashed rgba(var(--bs-info-rgb), 0.4);
+  border-radius: 4px;
+}
+
+.zone .waveform.skeleton::before {
+  content: 'Loading waveform...';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.75rem;
+  color: var(--bs-info);
+  opacity: 0.8;
+  white-space: nowrap;
+  z-index: 1;
+}
+
+.zone .waveform.skeleton canvas {
+  opacity: 0;
+}
+
+@keyframes waveformSkeleton {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Dim waveform when volume or pan editing is active */
+.track-content.editing-envelope .waveform {
+  opacity: 0.3;
+}
+
+.zone .waveform canvas {
+  position: absolute;
+  filter: saturate(0.3) brightness(0.8) hue-rotate(0deg);
+  animation: waveColor 3s ease-in-out infinite;
+}
+
+@keyframes waveColor {
+  0%,
+  100% {
+    filter: saturate(0.3) brightness(0.8) hue-rotate(0deg);
+  }
+  33% {
+    filter: saturate(1) brightness(1) hue-rotate(0deg);
+  }
+  66% {
+    filter: saturate(1) brightness(1) hue-rotate(60deg);
+  }
+}
+
+.scenes .zone .footer {
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  padding-bottom: 2px;
+  text-align: center;
+}
+
+.scenes .zone .footer .label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================================================
+ * Navigator Scenes
+ * ============================================================================ */
+.scenes {
+  margin: 0 calc(var(--cursor-size) / 2);
+  overflow: hidden;
+  position: relative;
+  border-top: 1px solid var(--bs-border-color);
+  border-bottom: 1px solid var(--bs-border-color);
+  min-height: 30px;
+  contain: layout style;
+}
+
+.scenes .zone-container {
+  background-color: var(--bs-tertiary-bg);
+  overflow: hidden;
+  height: 36px;
+}
+
+.scenes .zone-container .zones {
+  height: 100%;
+  display: flex;
+}
+
+.scenes .zone-container .zones .zone {
+  height: 100%;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.05) 30%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.1) 80%,
+    rgba(0, 0, 0, 0.25) 100%
+  );
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    0 -1px 2px rgba(255, 255, 255, 0.1);
+}
+
+.scenes .zone-container .zones .zone .label {
+  margin-left: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: white;
+}
+
+.scenes .zone-container .zones .zone .hook {
+  position: absolute;
+  top: 0;
+  width: 10px;
+  height: 100%;
+}
+
+/* ============================================================================
+ * Navigator Thumbs
+ * ============================================================================ */
+.thumbs {
+  height: 80px;
+  margin: 0 calc(var(--cursor-size) / 2);
+  position: relative;
+  overflow: hidden;
+  contain: layout style;
+}
+
+.thumbs ul {
+  z-index: 1;
+  position: absolute;
+  overflow: hidden;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.thumbs .hideThumb {
+  display: none;
+}
+
+.thumbs .thumb {
+  height: 100%;
+  width: 100%;
+}
+
+.thumbs .thumb .img {
+  height: 80px;
+  width: 100%;
+  object-fit: fill;
+}
+
+/* Thumb Preview Popup */
+.thumb-preview {
+  position: fixed;
+  z-index: 1000;
+  background-color: var(--bs-dark);
+  border: 2px solid var(--bs-info);
+  border-radius: 6px;
+  padding: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.thumb-preview.visible {
+  opacity: 1;
+}
+
+.thumb-preview .preview-image {
+  /* width and height set dynamically based on video aspect ratio */
+  min-width: 160px;
+  min-height: 90px;
+  background-repeat: no-repeat;
+  background-color: var(--bs-secondary-bg);
+  border-radius: 4px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thumb-preview .preview-image.loading::after {
+  content: '';
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--bs-info);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: thumb-spinner 0.8s linear infinite;
+}
+
+@keyframes thumb-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.thumb-preview .preview-time {
+  text-align: center;
+  color: var(--bs-info);
+  font-size: 12px;
+  font-weight: 600;
+  padding-top: 4px;
+}
+
+/* ============================================================================
+ * Preview Modal
+ * ============================================================================ */
+.preview-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+}
+
+.preview-modal-backdrop.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.preview-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  z-index: 2001;
+  max-width: 90vw;
+  max-height: 90vh;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease,
+    transform 0.2s ease;
+}
+
+.preview-modal.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.preview-modal-content {
+  background: var(--bs-dark);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.preview-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--bs-tertiary-bg);
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+.preview-modal-header h5 {
+  color: var(--bs-info);
+  font-weight: 600;
+}
+
+.preview-modal-body {
+  padding: 0;
+  background: #000;
+}
+
+.preview-video {
+  display: block;
+  max-width: 80vw;
+  max-height: 60vh;
+  width: auto;
+  height: auto;
+}
+
+.preview-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bs-tertiary-bg);
+  border-top: 1px solid var(--bs-border-color);
+}
+
+.preview-modal-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  min-width: 300px;
+}
+
+.preview-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--bs-secondary-bg);
+  border-top-color: var(--bs-info);
+  border-radius: 50%;
+  animation: preview-spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes preview-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.preview-loader-text {
+  color: var(--bs-body-color);
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.preview-loader-subtext {
+  color: var(--bs-secondary-color);
+  font-size: 13px;
+}
+
+/* ============================================================================
+ * Studio Footer / Status Bar
+ * ============================================================================ */
+.studio-footer {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 10;
+}
+
+.studio-statusbar {
+  background: var(--bs-body-bg);
+  border-top: 1px solid var(--bs-border-color);
+  padding: 8px 20px;
+}
+
+.status-indicator {
+  transition: color 0.3s ease;
+}
+
+.status-indicator.status-online {
+  color: var(--color-online);
+}
+
+.status-indicator.status-offline {
+  color: var(--color-offline);
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+.status-indicator.status-online .status-dot {
+  background: var(--color-online);
+  box-shadow: 0 0 8px var(--color-online);
+}
+
+.status-indicator.status-offline .status-dot {
+  background: var(--color-offline);
+  box-shadow: 0 0 8px var(--color-offline);
+}
+
+@keyframes status-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.status-indicator i {
+  font-size: 16px;
+}
+
+.status-label {
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ============================================================================
+ * Library Offline Overlay
+ * ============================================================================ */
+.library-offline-overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 100;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.library-offline-overlay.visible {
+  display: flex;
+}
+
+.library-offline-overlay .offline-icon {
+  font-size: 48px;
+  color: var(--color-offline);
+  animation: offline-pulse 2s ease-in-out infinite;
+}
+
+.library-offline-overlay .offline-label {
+  color: var(--color-offline);
+  font-weight: 700;
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.library-offline-overlay .offline-hint {
+  color: #888;
+  font-size: 12px;
+}
+
+@keyframes offline-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.95);
+  }
+}
+
+/* ============================================================================
+ * Library Mini Player
+ * ============================================================================ */
+.library-mini-player {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bs-dark);
+  border-top: 1px solid var(--bs-info);
+  padding: 10px 14px;
+  z-index: 50;
+  transform: translateY(100%);
+  transition: transform 0.15s ease-out;
+  display: flex;
+  align-items: center;
+}
+
+.library-mini-player.visible {
+  transform: translateY(0);
+}
+
+.library-mini-player .mini-player-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.library-mini-player .mini-player-track {
+  flex-shrink: 0;
+  color: var(--bs-light);
+  font-size: 14px;
+  max-width: 150px;
+}
+
+.library-mini-player .mini-player-waveform-container {
+  flex: 1;
+  height: 24px;
+  min-width: 0;
+}
+
+.library-mini-player .mini-player-waveform {
+  width: 100%;
+  height: 100%;
+}
+
+.library-mini-player .mini-player-pause,
+.library-mini-player .mini-player-goto {
+  padding: 4px 8px;
+  flex-shrink: 0;
+}
+
+/* ============================================================================
+ * App Loader
+ * ============================================================================ */
+.app-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: var(--bs-body-bg);
+  opacity: 1;
+  transition: opacity 0.5s ease-out;
+}
+
+.app-loader.visible {
+  display: flex;
+}
+
+.app-loader.fade-out {
+  opacity: 0;
+}
+
+.app-loader__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+.app-loader__spinner {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.app-loader__ring {
+  position: absolute;
+  inset: 0;
+  border: 3px solid transparent;
+  border-radius: 50%;
+}
+
+.app-loader__ring:nth-child(1) {
+  border-top-color: var(--bs-info);
+  animation: loader-spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.app-loader__ring:nth-child(2) {
+  inset: 8px;
+  border-right-color: var(--bs-cyan);
+  animation: loader-spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite reverse;
+  animation-delay: -0.4s;
+}
+
+.app-loader__ring:nth-child(3) {
+  inset: 16px;
+  border-bottom-color: var(--bs-info);
+  animation: loader-spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  animation-delay: -0.8s;
+}
+
+@keyframes loader-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.app-loader__message {
+  color: var(--bs-secondary-color);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  animation: loader-pulse 2s ease-in-out infinite;
+}
+
+@keyframes loader-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ============================================================================
+ * Minimap (Timeline Overview)
+ * ============================================================================ */
+
+.minimap-container {
+  margin: 0 calc(var(--cursor-size) / 2);
+}
+
+.minimap {
+  width: 100%;
+  padding: 4px 0;
+}
+
+.minimap-track {
+  position: relative;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.minimap-scenes {
+  display: none;
+}
+
+.minimap-scene {
+  display: none;
+}
+
+.minimap-viewport {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  cursor: grab;
+  box-sizing: border-box;
+  border-radius: 4px;
+  /* Same style as scrubber handle */
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.3) 0%,
+      rgba(255, 255, 255, 0.1) 30%,
+      transparent 50%,
+      rgba(0, 0, 0, 0.15) 80%,
+      rgba(0, 0, 0, 0.3) 100%
+    ),
+    var(--bs-info);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.5),
+    0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.minimap-viewport:hover {
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.6),
+    0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.minimap-viewport:active {
+  cursor: grabbing;
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.6),
+    0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.minimap-playhead {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--bs-danger);
+  pointer-events: none;
+  z-index: 10;
+  will-change: transform;
+}

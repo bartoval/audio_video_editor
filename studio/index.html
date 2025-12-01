@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <title>Video Audio Sync Studio</title>
+    <style>
+        /* Inline critical styles for instant loader */
+        .app-loader--initial {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #212529;
+        }
+        .app-loader--initial .loader-rings {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+        .app-loader--initial .ring {
+            position: absolute;
+            inset: 0;
+            border: 3px solid transparent;
+            border-radius: 50%;
+            background: transparent;
+            box-sizing: border-box;
+        }
+        .app-loader--initial .ring:nth-child(1) {
+            border-top-color: #0dcaf0;
+            animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+        }
+        .app-loader--initial .ring:nth-child(2) {
+            inset: 8px;
+            border-right-color: #0dcaf0;
+            animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite reverse;
+            animation-delay: -0.4s;
+        }
+        .app-loader--initial .ring:nth-child(3) {
+            inset: 16px;
+            border-bottom-color: #0dcaf0;
+            animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+            animation-delay: -0.8s;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Initial loader - shown immediately, removed by JS -->
+<div id="initial-loader" class="app-loader--initial">
+    <div class="loader-rings">
+        <div class="ring"></div>
+        <div class="ring"></div>
+        <div class="ring"></div>
+    </div>
+</div>
+
+<!-- Main App Container -->
+<div class="studio d-flex flex-column vh-100">
+
+    <!-- Navbar -->
+    <nav class="studio-header navbar navbar-expand border-bottom p-3">
+        <div class="container-fluid">
+            <!-- Brand / Project Selector will be injected here -->
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="studio-workspace d-flex overflow-hidden">
+
+        <!-- Left: Video Preview + Player -->
+        <section class="studio-preview d-flex flex-column p-3">
+            <!-- Video and Player components injected here -->
+        </section>
+
+        <!-- Right: Library Panel -->
+        <aside class="studio-library border-start p-3">
+            <div class="library h-100"></div>
+        </aside>
+
+    </main>
+
+    <!-- Timeline -->
+    <footer class="studio-timeline">
+        <!-- Timeline component injected here -->
+    </footer>
+
+    <!-- Status Bar -->
+    <div class="studio-footer">
+        <!-- StatusBar component injected here -->
+    </div>
+
+</div>
+
+<script type="module" src="src/App.js"></script>
+</body>
+</html>

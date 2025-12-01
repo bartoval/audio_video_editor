@@ -1,0 +1,28 @@
+{
+  "name": "video_audio_sync",
+  "version": "1.0.0",
+  "description": "Video and audio synchronization studio",
+  "author": "bartoval",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "format": "prettier --write \"src/**/*.{js,css,html}\"",
+    "format:check": "prettier --check \"src/**/*.{js,css,html}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "vite": "^7.2.4"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.1",
+    "rubberband-wasm": "^3.3.0"
+  }
+}
