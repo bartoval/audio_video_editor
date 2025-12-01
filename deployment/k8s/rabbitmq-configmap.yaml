@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rabbitmq-config
+  labels:
+    app: rabbitmq
+data:
+  99-consumer-timeout.conf: |
+    # Consumer timeout: 2 hours (in milliseconds)
+    # Default is 30 minutes which is too short for ML tasks like Demucs
+    consumer_timeout = 7200000

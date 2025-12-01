@@ -1,0 +1,63 @@
+/* ============================================================================
+ * Layout - Body & App Structure
+ * ============================================================================ */
+
+/* Global font sizing with responsive clamp */
+html {
+  background: var(--bg-body);
+  font-size: clamp(14px, 1.1vw, 18px);
+}
+
+/* Scale down only on low-density and modest-width displays */
+@media (max-resolution: 1dppx) and (max-width: 1920px) {
+  html {
+    font-size: clamp(10px, 0.8vw, 14px);
+  }
+}
+
+body {
+  min-height: 100vh;
+  background: var(--bg-body);
+  font-family: var(--font-family-base);
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  overflow: auto;
+}
+
+/* ============================================================================
+ * Studio Container
+ * ============================================================================ */
+.studio {
+  min-height: 100vh;
+  background: var(--bg-gradient);
+  color: var(--text-primary);
+  margin: 0;
+  padding: var(--space-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-medium);
+  letter-spacing: 0.01em;
+}
+
+/* ============================================================================
+ * Studio Workspace (main content area)
+ * ============================================================================ */
+.studio-workspace {
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+  gap: var(--space-md);
+}
+
+/* ============================================================================
+ * Studio Footer
+ * ============================================================================ */
+.studio-footer {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}

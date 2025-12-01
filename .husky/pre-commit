@@ -1,0 +1,1 @@
+cd studio-api && npx lint-staged

@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: media-ml-worker
+  labels:
+    app: media-ml-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: media-ml-worker
+  template:
+    metadata:
+      labels:
+        app: media-ml-worker
+    spec:
+      containers:
+        - name: media-ml-worker
+          image: vabar/media-ml-worker:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: env-config
+          env:
+            - name: RABBITMQ_URL
+              value: "amqp://guest:guest@rabbitmq:5672//"
+            - name: MEDIA_INPUT_PATH
+              value: "/media/projects"
+            - name: MEDIA_OUTPUT_PATH
+              value: "/media/output"
+          volumeMounts:
+            - name: studio-data
+              mountPath: /media/projects
+              readOnly: true
+            - name: shared-media
+              mountPath: /media/output
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+      volumes:
+        - name: studio-data
+          persistentVolumeClaim:
+            claimName: studio-data-pvc
+        - name: shared-media
+          persistentVolumeClaim:
+            claimName: shared-media-pvc

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: studio-data-pvc
+  labels:
+    app: studio-api
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  # Use 'standard' for Minikube, 'oci-bv' for Oracle Cloud (OKE)
+  storageClassName: standard

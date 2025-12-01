@@ -1,0 +1,121 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: studio-api
+  labels:
+    app: studio-api
+spec:
+  # Use 1 replica with local storage (chunks go to same pod)
+  # For multi-replica, use shared storage (NFS, S3, etc.)
+  replicas: 1
+  selector:
+    matchLabels:
+      app: studio-api
+  template:
+    metadata:
+      labels:
+        app: studio-api
+    spec:
+      containers:
+        - name: studio-api
+          image: vabar/studio-api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "1024Mi"
+              cpu: "1000m"
+          env:
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: studio-config
+                  key: NODE_ENV
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: studio-config
+                  key: PORT
+            - name: STORAGE_PROVIDER
+              valueFrom:
+                configMapKeyRef:
+                  name: studio-config
+                  key: STORAGE_PROVIDER
+            - name: ORACLE_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: studio-config
+                  key: ORACLE_REGION
+            - name: ORACLE_NAMESPACE
+              valueFrom:
+                secretKeyRef:
+                  name: studio-secret
+                  key: ORACLE_NAMESPACE
+                  optional: true
+            - name: ORACLE_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: studio-secret
+                  key: ORACLE_BUCKET
+                  optional: true
+            - name: ORACLE_TENANCY_OCID
+              valueFrom:
+                secretKeyRef:
+                  name: studio-secret
+                  key: ORACLE_TENANCY_OCID
+                  optional: true
+            - name: ORACLE_USER_OCID
+              valueFrom:
+                secretKeyRef:
+                  name: studio-secret
+                  key: ORACLE_USER_OCID
+                  optional: true
+            - name: ORACLE_FINGERPRINT
+              valueFrom:
+                secretKeyRef:
+                  name: studio-secret
+                  key: ORACLE_FINGERPRINT
+                  optional: true
+            - name: AI_MUSIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: studio-secret
+                  key: AI_MUSIC_API_KEY
+                  optional: true
+            - name: AI_MUSIC_ACCOUNT
+              valueFrom:
+                secretKeyRef:
+                  name: studio-secret
+                  key: AI_MUSIC_ACCOUNT
+                  optional: true
+          volumeMounts:
+            - name: oci-secret
+              mountPath: "/root/.oci/"
+              readOnly: true
+            - name: studio-data
+              mountPath: /app/projects
+          livenessProbe:
+            httpGet:
+              path: /api/v1/workspaces
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/v1/workspaces
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: oci-secret
+          secret:
+            secretName: oci-secret
+            optional: true
+        - name: studio-data
+          persistentVolumeClaim:
+            claimName: studio-data-pvc
+      restartPolicy: Always

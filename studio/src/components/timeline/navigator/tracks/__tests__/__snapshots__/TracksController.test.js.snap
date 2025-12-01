@@ -1,0 +1,58 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`TracksController > Snapshots > matches DOM structure after creation > tracks-controller-initial 1`] = `
+"<div class="tracks-placeholder">
+      <div class="tracks-placeholder-content">
+        <i class="bi bi-music-note-list"></i>
+        <p>Select or drag audio tracks from the library</p>
+      </div>
+    </div>"
+`;
+
+exports[`TracksController > Snapshots > matches DOM structure after initialization > tracks-controller-after-init 1`] = `
+"<div class="tracks-placeholder">
+      <div class="tracks-placeholder-content">
+        <i class="bi bi-music-note-list"></i>
+        <p>Select or drag audio tracks from the library</p>
+      </div>
+    </div>"
+`;
+
+exports[`TracksController > Snapshots > matches public API shape > tracks-controller-public-api 1`] = `
+[
+  "addComposite",
+  "addTrack",
+  "back",
+  "clone",
+  "cutRegion",
+  "destroy",
+  "enterSplitMode",
+  "exitSplitMode",
+  "export",
+  "forward",
+  "getChild",
+  "getChildByIndex",
+  "getCount",
+  "getMaxEndTime",
+  "getNewId",
+  "getNumTracks",
+  "getPosXFromClientX",
+  "getRulerPosX",
+  "getSelected",
+  "getSplitZone",
+  "getTimeFromClientX",
+  "handleSplitClick",
+  "init",
+  "isSplitMode",
+  "moveTo",
+  "remove",
+  "removeByTrackId",
+  "select",
+  "toggleMute",
+  "togglePan",
+  "toggleVolume",
+  "updateFrame",
+  "updateSnapPoints",
+  "zoom",
+]
+`;
