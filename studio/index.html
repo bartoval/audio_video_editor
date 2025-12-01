@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Video Audio Sync Studio</title>
+</head>
+<body>
+
+<!-- Main App Container -->
+<div class="studio d-flex flex-column vh-100">
+
+    <!-- Loader Bar -->
+    <div class="studio-loader"></div>
+
+    <!-- Navbar -->
+    <nav class="studio-header navbar navbar-expand bg-body-tertiary border-bottom p-3">
+        <div class="container-fluid">
+            <!-- Brand / Project Selector will be injected here -->
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="studio-workspace d-flex overflow-hidden">
+
+        <!-- Left: Library Panel -->
+        <aside class="studio-library border-end p-3">
+            <div class="library h-100"></div>
+        </aside>
+
+        <!-- Right: Video Preview + Player -->
+        <section class="studio-preview d-flex flex-column p-3">
+            <!-- Video and Player components injected here -->
+        </section>
+
+    </main>
+
+    <!-- Resizer Handle -->
+    <div class="studio-resizer"></div>
+
+    <!-- Timeline -->
+    <footer class="studio-timeline">
+        <!-- Timeline component injected here -->
+    </footer>
+
+</div>
+
+<script type="module" src="src/App.js"></script>
+</body>
+</html>

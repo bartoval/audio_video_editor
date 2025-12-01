@@ -1,0 +1,19 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      # Persistent storage for uploaded files and projects
+      - app_data:/app/projects
+      - app_uploads:/app/data
+      - app_chunks:/app/.tmp_chunks
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+    restart: unless-stopped
+
+volumes:
+  app_data:
+  app_uploads:
+  app_chunks:

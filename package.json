@@ -1,0 +1,29 @@
+{
+  "author": "valerio_bartolini",
+  "name": "video_maker",
+  "version": "1.0.0",
+  "description": "video composer multi audio editing",
+  "scripts": {
+    "build": "cd studio && npm run build",
+    "postinstall": "npm run build",
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.18.1",
+    "compression": "^1.6.2",
+    "connect-multiparty": "^2.0.0",
+    "cors": "^2.8.4",
+    "express": "^4.13.4",
+    "fluent-ffmpeg": "^2.1.2",
+    "morgan": "^1.7.0",
+    "node-ffprobe": "^1.2.2",
+    "uuid": "^3.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
