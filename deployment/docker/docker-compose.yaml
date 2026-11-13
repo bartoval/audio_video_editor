@@ -1,34 +1,6 @@
 version: "3.8"
 
 services:
-  # Keycloak Authentication Server
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.0
-    command: start-dev --import-realm
-    environment:
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
-      KC_PROXY_HEADERS: xforwarded
-      KC_HTTP_ENABLED: "true"
-      KC_HOSTNAME_STRICT: "false"
-      # OAuth Provider Credentials
-      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
-      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-    volumes:
-      - ../keycloak/realm-export.json:/opt/keycloak/data/import/realm.json:ro
-      - ../keycloak/themes/studio:/opt/keycloak/themes/studio:ro
-      - keycloak-data:/opt/keycloak/data
-    ports:
-      - "8180:8080"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK'"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # Reverse Proxy
   reverse-proxy:
     image: ${DOCKER_USERNAME:-vabar}/studio-reverse-proxy:latest
@@ -42,20 +14,10 @@ services:
   # Backend API
   studio-api:
     image: ${DOCKER_USERNAME:-vabar}/studio-api:latest
-    depends_on:
-      keycloak:
-        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: 8080
       STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
-      # AI Music Generation
-      AI_MUSIC_API_KEY: ${AI_MUSIC_API_KEY:-}
-      AI_MUSIC_ACCOUNT: ${AI_MUSIC_ACCOUNT:-}
-      # Keycloak Auth
-      KEYCLOAK_URL: ${KEYCLOAK_URL:-http://keycloak:8080/auth}
-      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-studio}
-      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-studio-api}
       # Oracle Object Storage
       ORACLE_NAMESPACE: ${ORACLE_NAMESPACE:-}
       ORACLE_BUCKET: ${ORACLE_BUCKET:-}
@@ -79,4 +41,3 @@ services:
 volumes:
   studio-data:
   studio-tmp:
-  keycloak-data:

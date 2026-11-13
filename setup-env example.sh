@@ -14,10 +14,6 @@ export HW_ENCODER=
 export TMP_TTL_MINUTES=30
 export TMP_CLEANUP_INTERVAL_MINUTES=60
 
-# AI Music Generation
-export AI_MUSIC_API_KEY=
-export AI_MUSIC_ACCOUNT=
-
 # ML Worker - Networking
 # INTERNAL_API_URL: how the Docker ML worker reaches the host backend
 export INTERNAL_API_URL=http://host.docker.internal:8080
@@ -47,8 +43,6 @@ export DOCKER_RUNTIME=runc
 # export DOCKER_RUNTIME=nvidia
 
 echo "Environment variables set:"
-echo "  AI_MUSIC_API_KEY: ${AI_MUSIC_API_KEY:0:10}..."
-echo "  AI_MUSIC_ACCOUNT: $AI_MUSIC_ACCOUNT"
 echo "  WHISPER_MODEL: $WHISPER_MODEL"
 echo "  WHISPER_DEVICE: $WHISPER_DEVICE"
 echo "  DEMUCS_MODEL: $DEMUCS_MODEL"

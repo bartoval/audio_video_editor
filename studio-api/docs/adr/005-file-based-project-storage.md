@@ -8,7 +8,7 @@ Accepted
 
 Each workspace contains binary media (video, audio, thumbnails) alongside small JSON state files (project info, timeline, track list). A traditional database would handle JSON state well but would still need a filesystem or object storage for binary media.
 
-The application is designed for single-node deployment (one server per studio instance). There is no multi-user concurrent editing — each workspace is owned by one user.
+The application is designed for single-user, single-node deployment (one server per studio instance). All workspaces are available within the same instance. Concurrent editing is not supported.
 
 ## Decision
 

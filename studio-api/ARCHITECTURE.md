@@ -29,8 +29,6 @@ graph TB
         EditorH[Editor]
         EventsH[Events SSE]
         MLH[ML Bridge]
-        AiMusicH[AI Music]
-        ProxyH[Proxy]
         ConfigH[Config]
     end
 
@@ -42,7 +40,6 @@ graph TB
         StreamS[StreamService]
         EventS[EventService]
         MediaWorkerS[MediaWorkerService]
-        AiMusicS[AiMusicService]
     end
 
     subgraph Repositories["Repository Layer"]
@@ -59,7 +56,6 @@ graph TB
 
     subgraph External["External Services"]
         MLWorker[Media ML Worker]
-        Mureka[Mureka API]
     end
 
     Browser --> Middleware
@@ -72,7 +68,6 @@ graph TB
     EditorH --> StreamS
     EventsH --> EventS
     MLH --> MediaWorkerS
-    AiMusicH --> AiMusicS
 
     UploadS --> ChunkR
     UploadS --> FileR
@@ -88,7 +83,6 @@ graph TB
     FileR --> Oracle
 
     MediaWorkerS --> MLWorker
-    AiMusicS --> Mureka
 ```
 
 ---
@@ -112,13 +106,11 @@ Handlers are thin controllers that extract request parameters, delegate to servi
 
 | Handler | Responsibility |
 | ------- | -------------- |
-| **Project** | Workspace CRUD, sharing, permissions |
+| **Project** | Workspace CRUD |
 | **Upload** | Chunked video/audio upload, video conversion trigger, audio format retrieval |
 | **Editor** | Project state load/save, audio stretching, thumbnails, video streaming, exports |
 | **Events** | SSE subscription, 30s heartbeat, workspace-scoped event delivery |
 | **ML** | Bridge to media-ml-worker for transcription and stem separation, stem ZIP download |
-| **AI Music** | Mureka API proxy for music generation, lyrics, moods/genres |
-| **Proxy** | External file download with domain whitelist (mureka.ai, useapi.net) |
 | **Config** | Application configuration endpoint |
 
 ---
@@ -177,14 +169,6 @@ HTTP client to the Python ML worker (FastAPI on port 8001):
 - Status polling
 - Handles host-to-container path conversion for Docker environments
 
-### AiMusicService
-
-HTTPS client to Mureka API for generative music:
-
-- Lyrics and music generation
-- In-memory job tracking with 10-minute TTL
-- Fire-and-forget pattern with status polling
-
 ---
 
 ## Repository Layer
@@ -193,7 +177,7 @@ Repositories handle data access and persistence.
 
 | Repository | Responsibility |
 | ---------- | -------------- |
-| **ProjectRepository** | Project CRUD via `projects.json`. Creates project directory structure. Handles sharing permissions. |
+| **ProjectRepository** | Project CRUD via `projects.json`. Creates project directory structure. Reads workspace metadata (`uuid`, `title`, `isVideoLoaded`) while ignoring obsolete fields in existing registries. |
 | **ChunkRepository** | Temporary chunk storage in `.tmp_chunks/`. Saves, validates, and assembles chunks sequentially. Uses lazy `init()` for async directory creation. |
 | **FileRepository** | Abstraction over Storage adapters. Provides `readJson`, `writeJson`, `createReadStream`, `createWriteStream`, `exists`, `ensureDir`. All operations are async. |
 | **MediaRepository** | Facade composing four specialized sub-repositories (see below). |

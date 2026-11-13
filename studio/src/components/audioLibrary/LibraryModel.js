@@ -88,40 +88,6 @@ export default class LibraryModel {
     this.#applyFilterAndSort();
   }
 
-  addPlaceholder(placeholderId, name) {
-    const placeholder = {
-      id: placeholderId,
-      name,
-      duration: 0,
-      durationFormatted: '--:--',
-      isPlaceholder: true,
-      createdAt: new Date().toISOString()
-    };
-
-    this.#items.unshift(placeholder);
-    this.#applyFilterAndSort();
-
-    return placeholder;
-  }
-
-  updatePlaceholder(placeholderId, realItem) {
-    const index = this.#items.findIndex(item => item.id === placeholderId);
-
-    if (index === -1) {
-      return false;
-    }
-
-    this.#items[index] = { ...realItem, id: realItem.id };
-    this.#applyFilterAndSort();
-
-    return true;
-  }
-
-  removePlaceholder(placeholderId) {
-    this.#items = this.#items.filter(item => item.id !== placeholderId);
-    this.#applyFilterAndSort();
-  }
-
   setSearchQuery(query) {
     this.#searchQuery = query.toLowerCase().trim();
     this.#applyFilterAndSort();
@@ -157,10 +123,6 @@ export default class LibraryModel {
     const dir = this.#sortDesc ? -1 : 1;
 
     items.sort((a, b) => {
-      if (a.isPlaceholder !== b.isPlaceholder) {
-        return a.isPlaceholder ? -1 : 1;
-      }
-
       let result = 0;
 
       switch (this.#sortField) {

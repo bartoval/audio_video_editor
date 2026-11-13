@@ -19,34 +19,16 @@ function buildMenuItems(hasTranscription) {
 
 export function createItemRenderer(handlers) {
   return function renderItem(data, index, isSelected) {
-    const { id, name, duration, durationFormatted, isPlaceholder } = data;
+    const { id, name, duration, durationFormatted } = data;
     const safeName = escapeHtml(name);
     const metaString = escapeHtml(buildMetaString(data));
     const durationSec = duration / 1000 || 0;
 
     const $li = document.createElement('li');
-    $li.className = `list-group-item draggable p-0${isSelected ? ' selected' : ''}${isPlaceholder ? ' generating' : ''}`;
+    $li.className = `list-group-item draggable p-0${isSelected ? ' selected' : ''}`;
     $li.dataset.id = id;
     $li.dataset.index = index;
-    $li.draggable = !isPlaceholder;
-
-    if (isPlaceholder) {
-      $li.innerHTML = `
-        <div class="library-item-inner library-item-generating">
-          <i class="bi bi-grip-vertical drag-handle text-body-tertiary fs-4 align-self-center opacity-25"></i>
-          <div class="library-generating-icon align-self-center">
-            <i class="bi bi-music-note-beamed"></i>
-          </div>
-          <span class="text-truncate align-self-center library-track-name" title="${safeName}">${safeName}</span>
-          <div class="library-generating-status">
-            <div class="spinner-border spinner-border-sm text-info" role="status"></div>
-            <span class="text-body-tertiary">${LABEL.AI_MUSIC_GENERATING_STATUS}</span>
-          </div>
-        </div>
-      `;
-
-      return $li;
-    }
+    $li.draggable = true;
 
     $li.innerHTML = `
       <div class="library-item-inner">

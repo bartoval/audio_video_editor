@@ -14,13 +14,10 @@ const { dirs, files } = config.paths;
  * @property {string} uuid - Project unique identifier
  * @property {string} title - Project title
  * @property {boolean} isVideoLoaded - Whether video is loaded
- * @property {string} [ownerId] - Owner user ID (Keycloak sub claim)
- * @property {Array<{userId: string, permission: 'view' | 'edit'}>} [sharedWith] - Users with access
- * @property {boolean} [isPublic] - Whether project is public
  */
 
-function projectRepositoryCreator() {
-  const fileRepo = fileRepositoryCreator(config.projectsPath);
+function projectRepositoryCreator(deps = {}) {
+  const fileRepo = deps.fileRepo || fileRepositoryCreator(config.projectsPath);
   const projectsFile = path.join(config.projectsPath, files.projects);
 
   function getProjectPath(uuid) {
@@ -48,32 +45,11 @@ function projectRepositoryCreator() {
   async function findAll() {
     const data = await fileRepo.readJson(projectsFile);
 
-    return data?.projects || [];
-  }
-
-  /**
-   * Find all projects for a specific user (owned + shared + public)
-   * @param {string} userId - User ID (Keycloak sub claim)
-   * @returns {Promise<Project[]>}
-   */
-  async function findByUser(userId) {
-    const projects = await findAll();
-
-    return projects.filter(project => {
-      // User owns the project
-      if (project.ownerId === userId) return true;
-
-      // Project is shared with user
-      if (project.sharedWith?.some(share => share.userId === userId)) return true;
-
-      // Project is public
-      if (project.isPublic) return true;
-
-      // Legacy projects without owner (accessible to all for backward compatibility)
-      if (!project.ownerId) return true;
-
-      return false;
-    });
+    return (data?.projects || []).map(({ uuid, title, isVideoLoaded }) => ({
+      uuid,
+      title,
+      isVideoLoaded
+    }));
   }
 
   async function findByUuid(uuid) {
@@ -83,51 +59,17 @@ function projectRepositoryCreator() {
   }
 
   /**
-   * Check if user has access to a project
-   * @param {string} uuid - Project UUID
-   * @param {string} userId - User ID
-   * @param {'view' | 'edit'} [requiredPermission='view'] - Required permission level
-   * @returns {Promise<boolean>}
-   */
-  async function hasAccess(uuid, userId, requiredPermission = 'view') {
-    const project = await findByUuid(uuid);
-    if (!project) return false;
-
-    // Owner has full access
-    if (project.ownerId === userId) return true;
-
-    // Public projects have view access
-    if (project.isPublic && requiredPermission === 'view') return true;
-
-    // Legacy projects without owner (accessible to all)
-    if (!project.ownerId) return true;
-
-    // Check shared access
-    const share = project.sharedWith?.find(share => share.userId === userId);
-    if (!share) return false;
-
-    // 'edit' permission includes 'view'
-    if (requiredPermission === 'view') return true;
-
-    return share.permission === 'edit';
-  }
-
-  /**
    * Create a new project
    * @param {string} title - Project title
    * @param {string} [customUuid] - Custom UUID (optional)
-   * @param {string} [ownerId] - Owner user ID (optional, for multi-tenancy)
    * @returns {Promise<Project>}
    */
-  async function create(title, customUuid = null, ownerId = null) {
+  async function create(title, customUuid = null) {
     const projects = await findAll();
     const newProject = {
       uuid: customUuid || uuidv4(),
       title,
-      isVideoLoaded: false,
-      ownerId: ownerId || null,
-      sharedWith: [],
-      isPublic: false
+      isVideoLoaded: false
     };
 
     projects.push(newProject);
@@ -181,90 +123,12 @@ function projectRepositoryCreator() {
     return path.join(getProjectPath(uuid), dirs.thumbs, files.coverThumb);
   }
 
-  /**
-   * Share a project with another user
-   * @param {string} uuid - Project UUID
-   * @param {string} userId - User ID to share with
-   * @param {'view' | 'edit'} permission - Permission level
-   * @returns {Promise<Project|null>}
-   */
-  async function share(uuid, userId, permission = 'view') {
-    const projects = await findAll();
-    const project = projects.find(p => p.uuid === uuid);
-
-    if (!project) return null;
-
-    // Initialize sharedWith if not exists
-    if (!project.sharedWith) {
-      project.sharedWith = [];
-    }
-
-    // Remove existing share for this user
-    project.sharedWith = project.sharedWith.filter(share => share.userId !== userId);
-
-    // Add new share
-    project.sharedWith.push({ userId, permission });
-
-    await save(projects);
-    logger.info('Shared project', { uuid, userId, permission });
-
-    return project;
-  }
-
-  /**
-   * Remove sharing for a user
-   * @param {string} uuid - Project UUID
-   * @param {string} userId - User ID to remove
-   * @returns {Promise<boolean>}
-   */
-  async function unshare(uuid, userId) {
-    const projects = await findAll();
-    const project = projects.find(p => p.uuid === uuid);
-
-    if (!project || !project.sharedWith) return false;
-
-    const before = project.sharedWith.length;
-    project.sharedWith = project.sharedWith.filter(share => share.userId !== userId);
-
-    if (project.sharedWith.length === before) return false;
-
-    await save(projects);
-    logger.info('Unshared project', { uuid, userId });
-
-    return true;
-  }
-
-  /**
-   * Set project public/private status
-   * @param {string} uuid - Project UUID
-   * @param {boolean} isPublic - Public status
-   * @returns {Promise<Project|null>}
-   */
-  async function setPublic(uuid, isPublic) {
-    const projects = await findAll();
-    const project = projects.find(p => p.uuid === uuid);
-
-    if (!project) return null;
-
-    project.isPublic = isPublic;
-    await save(projects);
-
-    logger.info('Set project visibility', { uuid, isPublic });
-
-    return project;
-  }
-
   return {
     findAll,
-    findByUser,
     findByUuid,
-    hasAccess,
     create,
     remove,
     updateVideoLoaded,
-    share,
-    unshare,
-    setPublic,
     getProjectPath,
     getCoverPath
   };

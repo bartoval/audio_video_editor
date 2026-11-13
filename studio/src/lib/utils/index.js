@@ -18,7 +18,7 @@ export {
   scalesEqual
 } from './scale';
 export { generateUuid } from './uuid';
-export { isOnline, fetchAudioAsFile, downloadFromUrl } from './network';
+export { isOnline, downloadFromUrl } from './network';
 export { default as DragHandler } from './DragHandler';
 export { drawWaveform, drawWaveformWindow } from './waveform';
 export { debounce, throttle } from './timing';

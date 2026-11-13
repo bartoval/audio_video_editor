@@ -64,7 +64,6 @@ export default class LibraryView extends View {
       onImportFolder: () => this.openFolderPicker(),
       onDeleteSelected: () => this.handlers.onDeleteSelected?.(),
       onAddToTimeline: () => this.handlers.onAddToTimeline?.(),
-      onAiMusic: () => this.handlers.onAiMusic?.(),
       onSearch: query => this.handlers.onSearch?.(query),
       onSortField: field => this.handlers.onSort?.(field),
       onToggleSortDir: () => this.handlers.onToggleSortDir?.()

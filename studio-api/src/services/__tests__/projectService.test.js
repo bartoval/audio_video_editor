@@ -1,12 +1,8 @@
 const mockProjectRepo = {
   findAll: vi.fn(),
-  findByUser: vi.fn(),
   findByUuid: vi.fn(),
   create: vi.fn(),
   remove: vi.fn(),
-  share: vi.fn(),
-  unshare: vi.fn(),
-  hasAccess: vi.fn(),
   getCoverPath: vi.fn()
 };
 
@@ -30,7 +26,7 @@ describe('projectService', () => {
   });
 
   describe('listProjects', () => {
-    it('returns all projects when no userId', async () => {
+    it('returns all projects', async () => {
       const projects = [
         { uuid: '1', title: 'Project A' },
         { uuid: '2', title: 'Project B' }
@@ -41,16 +37,6 @@ describe('projectService', () => {
 
       expect(result).toEqual(projects);
       expect(mockProjectRepo.findAll).toHaveBeenCalled();
-    });
-
-    it('filters by user when userId provided', async () => {
-      const userProjects = [{ uuid: '1', title: 'My Project' }];
-      mockProjectRepo.findByUser.mockResolvedValue(userProjects);
-
-      const result = await service.listProjects('user-123');
-
-      expect(result).toEqual(userProjects);
-      expect(mockProjectRepo.findByUser).toHaveBeenCalledWith('user-123');
     });
   });
 
@@ -72,22 +58,14 @@ describe('projectService', () => {
   });
 
   describe('createProject', () => {
-    it('creates project with title and owner', async () => {
-      const newProject = { uuid: 'new-uuid', title: 'New Project', ownerId: 'user-1' };
+    it('creates project with title', async () => {
+      const newProject = { uuid: 'new-uuid', title: 'New Project' };
       mockProjectRepo.create.mockResolvedValue(newProject);
 
-      const result = await service.createProject('New Project', 'user-1');
+      const result = await service.createProject('New Project');
 
       expect(result).toEqual(newProject);
-      expect(mockProjectRepo.create).toHaveBeenCalledWith('New Project', null, 'user-1');
-    });
-
-    it('creates project without owner', async () => {
-      mockProjectRepo.create.mockResolvedValue({ uuid: 'x', title: 'Test' });
-
-      await service.createProject('Test');
-
-      expect(mockProjectRepo.create).toHaveBeenCalledWith('Test', null, null);
+      expect(mockProjectRepo.create).toHaveBeenCalledWith('New Project');
     });
   });
 
@@ -105,42 +83,6 @@ describe('projectService', () => {
       mockProjectRepo.remove.mockResolvedValue(false);
 
       await expect(service.deleteProject('missing')).rejects.toThrow('Project not found: missing');
-    });
-  });
-
-  describe('shareProject', () => {
-    it('shares project with user and permission', async () => {
-      mockProjectRepo.share.mockResolvedValue({
-        uuid: 'abc',
-        sharedWith: [{ userId: 'u2', permission: 'edit' }]
-      });
-
-      const result = await service.shareProject('abc', 'u2', 'edit');
-
-      expect(mockProjectRepo.share).toHaveBeenCalledWith('abc', 'u2', 'edit');
-      expect(result.sharedWith).toHaveLength(1);
-    });
-  });
-
-  describe('unshareProject', () => {
-    it('removes sharing for user', async () => {
-      mockProjectRepo.unshare.mockResolvedValue(true);
-
-      const result = await service.unshareProject('abc', 'u2');
-
-      expect(result).toBe(true);
-      expect(mockProjectRepo.unshare).toHaveBeenCalledWith('abc', 'u2');
-    });
-  });
-
-  describe('hasAccess', () => {
-    it('delegates to repository', async () => {
-      mockProjectRepo.hasAccess.mockResolvedValue(true);
-
-      const result = await service.hasAccess('abc', 'user-1', 'edit');
-
-      expect(result).toBe(true);
-      expect(mockProjectRepo.hasAccess).toHaveBeenCalledWith('abc', 'user-1', 'edit');
     });
   });
 });

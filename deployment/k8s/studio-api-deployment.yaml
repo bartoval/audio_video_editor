@@ -80,18 +80,6 @@ spec:
                   name: studio-secret
                   key: ORACLE_FINGERPRINT
                   optional: true
-            - name: AI_MUSIC_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: studio-secret
-                  key: AI_MUSIC_API_KEY
-                  optional: true
-            - name: AI_MUSIC_ACCOUNT
-              valueFrom:
-                secretKeyRef:
-                  name: studio-secret
-                  key: AI_MUSIC_ACCOUNT
-                  optional: true
           volumeMounts:
             - name: oci-secret
               mountPath: "/root/.oci/"

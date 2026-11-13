@@ -20,11 +20,6 @@ declare global {
 // Vite environment variables
 interface ImportMetaEnv {
   readonly VITE_API_URL?: string;
-  readonly VITE_AUTH_ENABLED?: string;
-  readonly VITE_AUTH_URL?: string;
-  readonly VITE_AUTH_CALLBACK_URL?: string;
-  readonly VITE_AUTH_CLIENT_ID?: string;
-  readonly VITE_AUTH_REALM?: string;
 }
 
 interface ImportMeta {
@@ -269,32 +264,6 @@ export interface TrackStructuredConfig {
   cut: CutInfo;
   transform: TransformInfo;
   waveform: WaveformInfo;
-}
-
-// ============================================================================
-// Auth Types
-// ============================================================================
-
-export interface UserInfo {
-  sub: string;
-  email?: string;
-  name?: string;
-  preferred_username?: string;
-}
-
-export type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'unauthenticated';
-
-export interface AuthState {
-  status: AuthStatus;
-  user: UserInfo | null;
-  error: string | null;
-}
-
-export interface TokenResponse {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-  token_type: string;
 }
 
 // ============================================================================

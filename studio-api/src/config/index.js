@@ -81,16 +81,6 @@ module.exports = {
   // Default zoom scale (used for priority thumbnail generation)
   defaultScale: '0.1',
 
-  // AI Music (Mureka)
-  aiMusic: {
-    defaultModel: 'V8',
-    models: [
-      { id: 'V8', name: 'V8' },
-      { id: 'V7.6', name: 'V7.6' },
-      { id: 'O2', name: 'O2' }
-    ]
-  },
-
   // Media ML Worker (transcription, stem separation)
   mediaWorker: {
     url: process.env.MEDIA_WORKER_URL || 'http://localhost:8001',

@@ -17,10 +17,6 @@ export function createToolbar($parent) {
             <i class="bi bi-folder2-open"></i>
             <span class="d-none d-lg-inline ms-1">Folder</span>
           </button>
-          <button class="btn btn-outline-primary library-ai-music" title="${LABEL.LIBRARY_AI_MUSIC}">
-            <i class="bi bi-magic"></i>
-            <span class="d-none d-lg-inline ms-1">${LABEL.LIBRARY_AI_MUSIC}</span>
-          </button>
         </div>
         <div class="d-flex align-items-center gap-2">
           <button class="btn btn-outline-info library-add-to-timeline" disabled title="${LABEL.LIBRARY_ADD_TO_TIMELINE}">
@@ -59,7 +55,6 @@ export function createToolbar($parent) {
   $el
     .querySelector('.library-import-folder')
     .addEventListener('click', () => handlers.onImportFolder?.());
-  $el.querySelector('.library-ai-music').addEventListener('click', () => handlers.onAiMusic?.());
   $deleteBtn.addEventListener('click', () => handlers.onDeleteSelected?.());
   $addBtn.addEventListener('click', () => handlers.onAddToTimeline?.());
   $el

@@ -1,21 +1,17 @@
 import { persist, rehydrate, clearPersisted } from './persist';
-import aiMusicStore from './aiMusicStore';
-import authStore, {
-  initAuth,
-  handleAuthCallback,
-  login,
-  logout,
-  isAuthenticated,
-  getUser
-} from './authStore';
 import playbackStore from './playbackStore';
 import timelineStore from './timelineStore';
 import transcriptionStore from './transcriptionStore';
 import uiStore from './uiStore';
 import workspaceStore from './workspaceStore';
 
-export { playbackStore, timelineStore, transcriptionStore, workspaceStore, uiStore, authStore, aiMusicStore };
-export { initAuth, handleAuthCallback, login, logout, isAuthenticated, getUser };
+export {
+  playbackStore,
+  timelineStore,
+  transcriptionStore,
+  workspaceStore,
+  uiStore
+};
 
 let persistUnsubscribers = [];
 

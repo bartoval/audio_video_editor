@@ -19,7 +19,6 @@ import * as EventService from './services/EventService';
 import * as ConfigStore from './services/ConfigStore';
 import * as JobTrackerService from './services/JobTrackerService';
 import * as ShortcutService from './services/ShortcutService';
-import AiMusicService from './services/aiMusic/AiMusicService';
 import { EVENT } from './config/constants';
 import { NAV } from './config/routes';
 import { isWasmSupported, setWasmEnabled } from './lib/audio/wasm';
@@ -112,7 +111,6 @@ class App {
 
     await AppLoader.hide();
     EventService.connect();
-    AiMusicService.recover();
 
     return true;
   }

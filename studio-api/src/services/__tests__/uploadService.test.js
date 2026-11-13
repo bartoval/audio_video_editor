@@ -66,12 +66,6 @@ vi.mock('../../config', () => ({
   }
 }));
 
-vi.mock('../aiMusicService', () => ({
-  aiMusicServiceCreator: () => ({
-    deleteSong: vi.fn()
-  })
-}));
-
 vi.mock('../../utils', () => ({
   createLogger: () => ({
     info: vi.fn(),

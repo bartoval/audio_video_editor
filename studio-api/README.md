@@ -91,7 +91,7 @@ Base path: `/api/v1`. Full list in [src/routes/index.js](src/routes/index.js).
 
 ## Security
 
-This API has **no auth** by default. Before production: add JWT/OAuth, rate limiting, CORS restrictions, HTTPS.
+This API currently has **no user authentication**. Before production: add JWT/OAuth, rate limiting, CORS restrictions, HTTPS.
 
 ## Further Reading
 

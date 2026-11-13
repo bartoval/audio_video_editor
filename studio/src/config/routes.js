@@ -3,7 +3,6 @@
 const BASE = '';
 const API = '/api/v1';
 const WORKSPACES = `${API}/workspaces`;
-const AI_MUSIC_API = `${API}/ai-music`;
 
 // In production SSE goes through nginx, in dev directly to backend (bypass Vite proxy buffering)
 const IS_DEV = import.meta.env.DEV;
@@ -11,8 +10,7 @@ const SSE_BASE = IS_DEV ? 'http://localhost:8080' : '';
 
 export const ROUTES = {
   workspaces: WORKSPACES,
-  config: `${API}/config`,
-  proxyDownload: `${API}/proxy/download`
+  config: `${API}/config`
 };
 
 export const buildUrl = (route, uuid, suffix = '') => {
@@ -50,13 +48,4 @@ export const ASSETS = {
 export const NAV = {
   home: BASE || '/',
   workspace: uuid => `${BASE}/${uuid}`
-};
-
-export const AI_MUSIC = {
-  config: `${AI_MUSIC_API}/config`,
-  moodsAndGenres: `${AI_MUSIC_API}/moods-genres`,
-  lyrics: `${AI_MUSIC_API}/lyrics`,
-  generate: `${AI_MUSIC_API}/generate`,
-  job: jobId => `${AI_MUSIC_API}/job/${jobId}`,
-  saveJob: jobId => `${AI_MUSIC_API}/job/${jobId}/save`
 };

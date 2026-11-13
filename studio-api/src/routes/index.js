@@ -17,29 +17,12 @@ router.get('/v1/health', handlers.health.getHealth);
 router.get('/v1/config', handlers.config.getConfig);
 
 // ============================================================================
-// AI Music
-// ============================================================================
-
-router.get('/v1/ai-music/config', handlers.aiMusic.getConfig);
-router.get('/v1/ai-music/moods-genres', handlers.aiMusic.getMoodsAndGenres);
-router.post('/v1/ai-music/lyrics', handlers.aiMusic.generateLyrics);
-router.post('/v1/ai-music/generate', handlers.aiMusic.generate);
-router.get('/v1/ai-music/job/:jobId', handlers.aiMusic.getJobStatus);
-router.post('/v1/ai-music/job/:jobId/save', handlers.aiMusic.saveJobTracks);
-
-// ============================================================================
-// Workspaces (auth temporarily disabled)
-// ============================================================================
-
-// ============================================================================
 // Workspaces
 // ============================================================================
 
 router.get('/v1/workspaces', handlers.project.listProjects);
 router.post('/v1/workspaces', handlers.project.createProject);
 router.delete('/v1/workspaces/:uuid', handlers.project.deleteProject);
-router.post('/v1/workspaces/:uuid/share', handlers.project.shareProject);
-router.delete('/v1/workspaces/:uuid/share/:userId', handlers.project.unshareProject);
 router.get('/v1/workspaces/:uuid/state', handlers.editor.loadProject);
 router.put('/v1/workspaces/:uuid/state', handlers.editor.saveProject);
 router.get('/v1/workspaces/:uuid/events', handlers.events.subscribe);
@@ -106,12 +89,6 @@ router.delete('/v1/workspaces/:uuid/timeline/:id', handlers.editor.removeAudio);
 router.post('/v1/workspaces/:uuid/exports', handlers.editor.exportProject);
 router.get('/v1/workspaces/:uuid/exports/out', handlers.editor.getPublished);
 router.get('/v1/workspaces/:uuid/exports/audio.:format', handlers.editor.getPublishedAudio);
-
-// ============================================================================
-// Proxy (for external downloads)
-// ============================================================================
-
-router.get('/v1/proxy/download', handlers.proxy.downloadFile);
 
 // ============================================================================
 // ML (transcription, stem separation)

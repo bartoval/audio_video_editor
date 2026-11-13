@@ -18,7 +18,6 @@ deployment/        Docker Compose, Kubernetes (OKE)
 - Audio time-stretching (WASM / server fallback)
 - Stem separation (vocals, drums, bass, other) via Demucs
 - Audio transcription with word-level timestamps via Whisper
-- AI music generation (Mureka integration)
 - Chunked file upload for large videos
 - Hardware-accelerated video encoding (NVIDIA GPU)
 - Real-time progress updates via SSE
@@ -93,25 +92,9 @@ Key environment variables (see component READMEs for full list):
 | `RABBITMQ_URL`     | ml-worker  | `amqp://guest:guest@localhost:5672//` | RabbitMQ connection                        |
 | `INTERNAL_API_URL` | studio-api | `http://localhost:8080`               | Callback URL for ML worker                 |
 
-## Authentication (Keycloak)
+## Authentication
 
-Auth is optional in development. To enable it locally:
-
-1. Run Keycloak and bootstrap a dev user:
-
-   ```bash
-   bash deployment/keycloak/scripts/bootstrap-keycloak-user.sh
-   ```
-
-2. Set in `studio/.env.local`:
-
-   ```
-   VITE_DEV_LOGIN_ENABLED=true
-   VITE_DEV_LOGIN_USERNAME=guest
-   VITE_DEV_LOGIN_PASSWORD=guest
-   ```
-
-See the bootstrap script for configurable variables (`KC_URL`, `KC_REALM`, etc.).
+Studio is a single-user application and runs without user authentication. All workspaces are available within the same studio instance.
 
 ## Deployment
 

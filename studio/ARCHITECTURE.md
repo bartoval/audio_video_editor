@@ -17,7 +17,6 @@ graph TB
         Player[Playback Controls]
         Navigator[Timeline Editor]
         Inspector[Inspector Panel]
-        AiMusic[AI Music]
     end
 
     subgraph Orchestration["Orchestration Layer"]
@@ -30,8 +29,6 @@ graph TB
         timelineStore[(timelineStore)]
         workspaceStore[(workspaceStore)]
         uiStore[(uiStore)]
-        aiMusicStore[(aiMusicStore)]
-        authStore[(authStore)]
     end
 
     subgraph Services["Service Layer"]
@@ -40,7 +37,6 @@ graph TB
         ToolMode[ToolMode]
         ShortcutService[ShortcutService]
         JobTracker[JobTrackerService]
-        AiMusicService[AiMusicService]
         Api[Api]
     end
 
@@ -56,7 +52,6 @@ graph TB
     Player --> PlaybackController
     Navigator --> EventService
     Inspector --> EventService
-    AiMusic --> AiMusicService
 
     Mediator --> Video
     Mediator --> Player
@@ -65,8 +60,6 @@ graph TB
     EventService --> playbackStore
     EventService --> timelineStore
     EventService --> workspaceStore
-
-    AiMusicService --> aiMusicStore
 
     PlaybackController --> MasterClock
     PlaybackController --> playbackStore
@@ -77,7 +70,6 @@ graph TB
     playbackStore --> Persist
     timelineStore --> Persist
     workspaceStore --> Persist
-    authStore --> Persist
 
     Api --> EventService
 ```
@@ -189,13 +181,10 @@ graph TB
         timelineStore["timelineStore<br/>tracks, markers, selection"]
         workspaceStore["workspaceStore<br/>videoUrl, config, uuid"]
         uiStore["uiStore<br/>toasts, tasks, toolMode"]
-        aiMusicStore["aiMusicStore<br/>status, jobId, tracks"]
-        authStore["authStore<br/>auth state, user info"]
     end
 
     subgraph Persistence["Persistence"]
         IndexedDB[(IndexedDB)]
-        LocalStorage[(LocalStorage)]
     end
 
     subgraph Components["Subscribers"]
@@ -207,7 +196,6 @@ graph TB
 
     timelineStore --> IndexedDB
     workspaceStore --> IndexedDB
-    authStore --> LocalStorage
 
     playbackStore -->|subscribe| Player
     playbackStore -->|subscribe| Navigator

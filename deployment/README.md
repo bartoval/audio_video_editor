@@ -6,11 +6,8 @@
 deployment/
 ├── docker/          # Build images (multi-arch)
 ├── oracle-vm/       # Production deploy (ARM64)
-├── keycloak/        # Auth server config (realm + theme) - currently disabled
 └── k8s/             # Kubernetes (local dev)
 ```
-
-> **Note**: Keycloak authentication is currently disabled (commented out in configs). References are kept for future use.
 
 ## Services
 

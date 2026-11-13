@@ -268,7 +268,6 @@ All events are defined in `src/config/constants.js` as `EVENT.*`. Use `EventServ
 | `MARKER_PREVIOUS` / `MARKER_NEXT` | — | Navigate between markers |
 | `LOOP_TOGGLE` | — | Toggle loop mode |
 | `TRANSCRIPTION_READY` | data | Whisper transcription completed |
-| `AI_MUSIC_GENERATING` / `AI_MUSIC_COMPLETE` / `AI_MUSIC_ERROR` | job data | AI music generation lifecycle |
 
 ---
 

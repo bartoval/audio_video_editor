@@ -14,7 +14,6 @@ import { ERROR_CONTEXT, EVENT, LABEL } from '../../config/constants';
 import {
   downloadFromUrl,
   escapeHtml,
-  fetchAudioAsFile,
   formatBitrate,
   formatBytes,
   formatDuration,
@@ -26,7 +25,6 @@ import * as EventService from '../../services/EventService';
 import * as JobTrackerService from '../../services/JobTrackerService';
 import * as apiService from '../../services/api';
 import transcriptionStore from '../../store/transcriptionStore';
-import { AiMusicModal } from '../aiMusic';
 import { Modal } from '../core';
 import TranscriptView from '../timeline/navigator/inspector/TranscriptView';
 
@@ -36,13 +34,11 @@ export default class LibraryPresenter {
   #infoModal = null;
   #transcriptModal = null;
   #transcriptView = null;
-  #aiMusicModal = null;
   #playback = null;
   #upload = null;
   #actions = null;
   #onEmpty = null;
   #onLoad = null;
-  #aiMusicPlaceholders = new Map();
 
   constructor($parent, config = {}) {
     const { api, onEmpty, onLoad, onAddToTimeline } = config;
@@ -58,12 +54,6 @@ export default class LibraryPresenter {
     this.#actions = new LibraryActions();
     this.#infoModal = new Modal({ showFooter: false });
     this.#transcriptModal = new Modal({ showFooter: false, size: 'lg', className: 'transcript-modal' });
-    this.#aiMusicModal = new AiMusicModal();
-
-    if (onAddToTimeline) {
-      this.#aiMusicModal.init();
-      this.#aiMusicModal.setOnGenerate(() => onAddToTimeline());
-    }
 
     this.#playback.setView(this.#view);
 
@@ -81,7 +71,6 @@ export default class LibraryPresenter {
     this.#bindViewCallbacks();
     this.#initVirtualScroll();
     this.#initOfflineHandler();
-    this.#initAiMusicHandler();
   }
 
   load() {
@@ -140,8 +129,7 @@ export default class LibraryPresenter {
       hasTranscription: id => this.#hasTranscription(id),
       onMiniPlayerPause: () => this.#playback.togglePlayPause(),
       onMiniPlayerGoTo: () => this.#playback.goToCurrentTrack(),
-      onMiniPlayerSeek: time => this.#playback.seek(time),
-      onAiMusic: () => this.#aiMusicModal.show()
+      onMiniPlayerSeek: time => this.#playback.seek(time)
     };
   }
 
@@ -164,91 +152,7 @@ export default class LibraryPresenter {
     });
   }
 
-  #initAiMusicHandler() {
-    EventService.on(EVENT.AI_MUSIC_GENERATING, ({ title, trackCount }) => {
-      this.#createAiMusicPlaceholders(title, trackCount);
-    });
-
-    EventService.on(EVENT.AI_MUSIC_COMPLETE, ({ tracks, savedByBackend }) => {
-      this.#handleAiMusicComplete(tracks, savedByBackend);
-    });
-
-    EventService.on(EVENT.AI_MUSIC_ERROR, () => {
-      this.#handleAiMusicError();
-    });
-  }
-
-  #createAiMusicPlaceholders(title, trackCount = 2) {
-    const baseName = title || LABEL.AI_MUSIC_UNTITLED;
-
-    for (let index = 0; index < trackCount; index++) {
-      const placeholderId = `ai-music-placeholder-${Date.now()}-${index}`;
-      const trackName = `${baseName} (${index + 1})`;
-
-      this.#model.addPlaceholder(placeholderId, trackName);
-      this.#aiMusicPlaceholders.set(index, placeholderId);
-    }
-
-    this.#view.setItems(this.#model.getItems());
-    this.#view.hideEmptyState();
-  }
-
-  async #handleAiMusicComplete(tracks, savedByBackend = false) {
-    if (!tracks || tracks.length === 0) {
-      this.#handleAiMusicError();
-
-      return;
-    }
-
-    this.#aiMusicPlaceholders.forEach(placeholderId => {
-      this.#model.removePlaceholder(placeholderId);
-    });
-    this.#aiMusicPlaceholders.clear();
-
-    if (savedByBackend) {
-      this.reload();
-
-      return;
-    }
-
-    for (const track of tracks) {
-      try {
-        const filename = `${track.title || 'ai-music'}.mp3`;
-        const file = await fetchAudioAsFile(track.url, filename);
-
-        this.#upload.handleFileSelect([file], {
-          extraFields: {
-            provider: track.provider || 'mureka',
-            source: 'ai-music',
-            providerId: track.id
-          }
-        });
-      } catch (error) {
-        ErrorHandler.handle(error, ERROR_CONTEXT.AI_MUSIC_GENERATE);
-      }
-    }
-
-    this.#view.setItems(this.#model.getItems());
-  }
-
-  #handleAiMusicError() {
-    this.#aiMusicPlaceholders.forEach(placeholderId => {
-      this.#model.removePlaceholder(placeholderId);
-    });
-
-    this.#aiMusicPlaceholders.clear();
-    this.#view.setItems(this.#model.getItems());
-
-    if (this.#model.isEmpty()) {
-      this.#view.showEmptyState();
-    }
-  }
-
   #onItemRendered(data) {
-    if (data.isPlaceholder) {
-      return;
-    }
-
     const currentId = this.#playback.getCurrentPlayingId();
 
     if (currentId === data.id) {
