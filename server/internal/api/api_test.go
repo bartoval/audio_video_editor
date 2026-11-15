@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/bartoval/audio_video_editor/server/internal/library"
+	"github.com/bartoval/audio_video_editor/server/internal/upload"
 	"github.com/bartoval/audio_video_editor/server/internal/workspace"
 )
 
@@ -27,7 +29,13 @@ func newTestServer(t *testing.T) (*httptest.Server, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	srv := httptest.NewServer(New(Config{Workspaces: store, LegacyAPI: target}))
+	uploads, err := upload.NewReceiver(filepath.Join(t.TempDir(), "chunks"), 1<<30)
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := httptest.NewServer(New(Config{
+		Workspaces: store, Library: library.New(store), Uploads: uploads, LegacyAPI: target,
+	}))
 	t.Cleanup(srv.Close)
 	return srv, root
 }
@@ -47,7 +55,8 @@ func call(t *testing.T, srv *httptest.Server, method, path, body string) (int, s
 func TestRouting(t *testing.T) {
 	srv, _ := newTestServer(t)
 	for _, tc := range []struct{ method, path, want string }{
-		{"GET", "/api/v1/workspaces/x/audio", "legacy GET /api/v1/workspaces/x/audio"},
+		{"GET", "/api/v1/workspaces/x/video", "legacy GET /api/v1/workspaces/x/video"},
+		{"GET", "/api/v1/workspaces/x/audio/a/stretch", "legacy GET /api/v1/workspaces/x/audio/a/stretch"},
 		{"GET", "/api/v1/workspaces/x", "legacy GET /api/v1/workspaces/x"},
 		{"POST", "/api/v1/health", "legacy POST /api/v1/health"},
 	} {

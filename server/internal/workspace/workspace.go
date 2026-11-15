@@ -18,6 +18,8 @@ import (
 	"regexp"
 	"slices"
 	"sync"
+
+	"github.com/bartoval/audio_video_editor/server/internal/files"
 )
 
 var (
@@ -74,7 +76,7 @@ func (s *Store) List() ([]Workspace, error) {
 	var data struct {
 		Projects []Workspace `json:"projects"`
 	}
-	err := readJSON(filepath.Join(s.root, "projects.json"), &data)
+	err := files.ReadJSON(filepath.Join(s.root, "projects.json"), &data)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, err
 	}
@@ -137,7 +139,7 @@ func initFolders(dir string) error {
 		Tracks map[string]any `json:"tracks"`
 		Filter filter         `json:"filter"`
 	}{map[string]any{}, filter{Sort: order{"desc", "desc"}, Page: 1}}
-	return writeJSON(filepath.Join(dir, "trackList.json"), trackList)
+	return files.WriteJSON(filepath.Join(dir, "trackList.json"), trackList)
 }
 
 // Delete removes a workspace and all its files.
@@ -160,7 +162,7 @@ func (s *Store) Delete(uuid string) error {
 }
 
 func (s *Store) save(list []Workspace) error {
-	return writeJSON(filepath.Join(s.root, "projects.json"), map[string]any{"projects": list})
+	return files.WriteJSON(filepath.Join(s.root, "projects.json"), map[string]any{"projects": list})
 }
 
 // LoadState returns the saved editor state, or {} if nothing valid was saved.
@@ -191,45 +193,7 @@ func (s *Store) SaveState(uuid string, state []byte) error {
 	if err := os.MkdirAll(filepath.Join(dir, "saved"), 0o755); err != nil {
 		return err
 	}
-	return writeFile(filepath.Join(dir, "saved", "backup.json"), state)
-}
-
-func readJSON(path string, v any) error {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(data, v)
-}
-
-// writeJSON writes v indented by two spaces, like the Node API.
-func writeJSON(path string, v any) error {
-	data, err := json.MarshalIndent(v, "", "  ")
-	if err != nil {
-		return err
-	}
-	return writeFile(path, data)
-}
-
-// writeFile replaces path atomically, so a crash never leaves a truncated file.
-func writeFile(path string, data []byte) error {
-	tmp, err := os.CreateTemp(filepath.Dir(path), ".tmp-*")
-	if err != nil {
-		return err
-	}
-	defer os.Remove(tmp.Name())
-	if err := tmp.Chmod(0o644); err != nil {
-		tmp.Close()
-		return err
-	}
-	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	return os.Rename(tmp.Name(), path)
+	return files.Write(filepath.Join(dir, "saved", "backup.json"), state)
 }
 
 // newUUID returns a random version 4 UUID.

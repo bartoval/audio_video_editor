@@ -11,10 +11,13 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/bartoval/audio_video_editor/server/internal/api"
+	"github.com/bartoval/audio_video_editor/server/internal/library"
+	"github.com/bartoval/audio_video_editor/server/internal/upload"
 	"github.com/bartoval/audio_video_editor/server/internal/workspace"
 )
 
@@ -40,7 +43,16 @@ func run() error {
 	if err := workspaces.EnsureDefault(); err != nil {
 		return err
 	}
-	cfg := api.Config{Workspaces: workspaces, LegacyAPI: legacy}
+	uploads, err := upload.NewReceiver(filepath.Join(root, env("TMP_CHUNKS_DIR", ".tmp_chunks")), maxUpload)
+	if err != nil {
+		return err
+	}
+	cfg := api.Config{
+		Workspaces: workspaces,
+		Library:    library.New(workspaces),
+		Uploads:    uploads,
+		LegacyAPI:  legacy,
+	}
 
 	srv := &http.Server{
 		Addr:              ":" + env("PORT", "8080"),
@@ -51,6 +63,9 @@ func run() error {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	go cleanUploads(ctx, uploads,
+		envMinutes("TMP_TTL_MINUTES", 30), envMinutes("TMP_CLEANUP_INTERVAL_MINUTES", 60))
 
 	errc := make(chan error, 1)
 	go func() {
@@ -71,6 +86,31 @@ func run() error {
 		return err
 	}
 	return srv.Close()
+}
+
+// maxUpload bounds a single uploaded file.
+const maxUpload = 4 << 30
+
+// cleanUploads removes abandoned partial uploads, at start and then every interval.
+func cleanUploads(ctx context.Context, uploads *upload.Receiver, ttl, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	for {
+		uploads.Clean(ttl)
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+	}
+}
+
+func envMinutes(key string, fallback int) time.Duration {
+	n, err := strconv.Atoi(os.Getenv(key))
+	if err != nil || n <= 0 {
+		n = fallback
+	}
+	return time.Duration(n) * time.Minute
 }
 
 func env(key, fallback string) string {

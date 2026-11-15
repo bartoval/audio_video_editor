@@ -10,25 +10,30 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/bartoval/audio_video_editor/server/internal/library"
+	"github.com/bartoval/audio_video_editor/server/internal/upload"
 	"github.com/bartoval/audio_video_editor/server/internal/workspace"
 )
 
 // Config holds what the handlers need.
 type Config struct {
 	Workspaces *workspace.Store
+	Library    *library.Library
+	Uploads    *upload.Receiver
 	// LegacyAPI is the Node API that still serves the routes not migrated yet.
 	LegacyAPI *url.URL
 }
 
 type server struct {
 	cfg     Config
+	legacy  http.Handler
 	started time.Time
 }
 
 // New returns the API handler. Migrated routes are served here, every other
 // /api request is forwarded to the legacy API.
 func New(cfg Config) http.Handler {
-	s := &server{cfg: cfg, started: time.Now()}
+	s := &server{cfg: cfg, legacy: legacyProxy(cfg.LegacyAPI), started: time.Now()}
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /api/v1/health", s.health)
@@ -40,7 +45,14 @@ func New(cfg Config) http.Handler {
 	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/state", s.loadState)
 	mux.HandleFunc("PUT /api/v1/workspaces/{uuid}/state", s.saveState)
 
-	mux.Handle("/api/", legacyProxy(cfg.LegacyAPI))
+	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/audio", s.listAudio)
+	mux.HandleFunc("POST /api/v1/workspaces/{uuid}/audio", s.uploadAudio)
+	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/audio/{id}", s.getAudio)
+	mux.HandleFunc("DELETE /api/v1/workspaces/{uuid}/audio/{id}", s.deleteAudio)
+	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/audio/{a}/{b}", s.getAudioPair)
+	mux.HandleFunc("POST /api/v1/workspaces/{uuid}/audio/{id}/stretch", s.stretchAudio)
+
+	mux.Handle("/api/", s.legacy)
 	return mux
 }
 
@@ -84,10 +96,12 @@ func writeError(w http.ResponseWriter, err error) {
 	status, code := http.StatusInternalServerError, "INTERNAL_ERROR"
 	var tooLarge *http.MaxBytesError
 	switch {
-	case errors.Is(err, workspace.ErrNotFound):
+	case errors.Is(err, workspace.ErrNotFound), errors.Is(err, library.ErrNotFound):
 		status, code = http.StatusNotFound, "NOT_FOUND"
-	case errors.Is(err, workspace.ErrInvalid):
+	case errors.Is(err, workspace.ErrInvalid), errors.Is(err, library.ErrInvalid), errors.Is(err, upload.ErrInvalid):
 		status, code = http.StatusBadRequest, "VALIDATION_ERROR"
+	case errors.Is(err, errFileType):
+		status, code = http.StatusBadRequest, "INVALID_FILE_TYPE"
 	case errors.As(err, &tooLarge):
 		status, code = http.StatusRequestEntityTooLarge, "FILE_TOO_LARGE"
 	}
