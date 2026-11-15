@@ -2188,56 +2188,6 @@ body.tool-split {
 }
 
 /* ============================================================================
- * Transcript Search (in statusbar-center)
- * ============================================================================ */
-.timeline-search-input {
-  width: 240px;
-  padding: 4px 10px;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: 0.8125rem;
-  outline: none;
-  transition: border-color 0.2s ease;
-}
-
-.timeline-search-input:focus {
-  border-color: var(--accent-dim);
-}
-
-.timeline-search-input::placeholder {
-  color: var(--bs-secondary-color);
-}
-
-.timeline-search-match-count {
-  font-size: 0.75rem;
-  color: var(--bs-secondary-color);
-  width: 100px;
-  margin-left: 4px;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.timeline-search-nav-btn {
-  background: none;
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
-  color: var(--bs-secondary-color);
-  padding: 3px 6px;
-  cursor: pointer;
-  font-size: 0.75rem;
-  line-height: 1;
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-
-.timeline-search-nav-btn:hover {
-  border-color: var(--accent-dim);
-  color: var(--accent-light);
-}
-
-
-/* ============================================================================
  * Studio Footer / Status Bar
  * ============================================================================ */
 .studio-statusbar {
@@ -2252,13 +2202,6 @@ body.tool-split {
 .statusbar-left {
   flex: 1;
   min-width: 0;
-}
-
-.statusbar-center {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: 0 0 auto;
 }
 
 .statusbar-right {

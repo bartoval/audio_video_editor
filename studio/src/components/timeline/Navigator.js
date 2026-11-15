@@ -35,7 +35,6 @@ export default class Navigator extends View {
   #unsubscribeMarkerPrevious = null;
   #unsubscribeMarkerNext = null;
   #unsubscribeLoopToggle = null;
-  #unsubscribeScrollTo = null;
   #cleanupShortcuts = null;
   #accumulatedDelta = 0;
   #rafId = null;
@@ -147,9 +146,6 @@ export default class Navigator extends View {
     this.#$nav.addEventListener('wheel', this.#handleWheel, { passive: false });
     this.#$nav.addEventListener('mousemove', this.#handleTooltipMove);
     this.#$nav.addEventListener('mouseleave', this.#handleTooltipLeave);
-    this.#unsubscribeScrollTo = EventService.on(EVENT.TIMELINE_SCROLL_TO, ({ time }) => {
-      this.moveTo(time);
-    });
 
     this.#cleanupShortcuts = registerNavigatorShortcuts({
       inspector: this.#inspector,
@@ -365,7 +361,6 @@ export default class Navigator extends View {
     this.#unsubscribeMarkerPrevious?.();
     this.#unsubscribeMarkerNext?.();
     this.#unsubscribeLoopToggle?.();
-    this.#unsubscribeScrollTo?.();
 
     this.tracks?.destroy();
     this.markers?.destroy();

@@ -30,7 +30,6 @@ export function createStatusBarView($parent) {
           <span data-ref="offline-label">${LABEL.OFFLINE}</span>
         </label>
       </div>
-      <div class="statusbar-center" data-ref="search-slot"></div>
       <div class="statusbar-right d-flex align-items-center justify-content-end gap-3">
         <div class="pending-ops d-flex align-items-center gap-2 small text-light" data-ref="pending-ops" role="button" tabindex="0">
           <i class="bi bi-check-circle" data-ref="pending-ops-icon"></i>

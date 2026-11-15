@@ -9,7 +9,6 @@ import Player from './components/playback/PlayerPresenter';
 import Toast from './components/core/Toast';
 import { Header } from './components/header';
 import { StatusBar } from './components/footer';
-import { TranscriptSearchPresenter } from './components/timeline/navigator/search';
 import { AppLoader } from './components/loader';
 import Mediator from './components/Mediator';
 import * as Workspace from './services/workspace';
@@ -58,7 +57,6 @@ class App {
     new Player(root.querySelector('.studio-preview'));
     new Header(root.querySelector('.studio-header .container-fluid'));
     new StatusBar(root.querySelector('.studio-footer'));
-    new TranscriptSearchPresenter(root.querySelector('[data-ref="search-slot"]'));
     new Navigator(root.querySelector('.studio-timeline'));
 
     try {
