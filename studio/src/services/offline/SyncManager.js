@@ -11,7 +11,6 @@
  */
 import IndexedDB from './IndexedDB';
 import { buildUrl } from '../../config/routes';
-import { EVENT } from '../../config/constants';
 import { isOnline } from '../../lib';
 import * as EventService from '../EventService';
 import BufferCache from '../../lib/audio/BufferCache';
@@ -19,6 +18,7 @@ import BufferCache from '../../lib/audio/BufferCache';
 class SyncManager {
   static #instance = null;
   #isSyncing = false;
+  #syncPromise = null;
   #isPrefetching = false;
   #listeners = new Set();
   #prefetchAbortController = null;
@@ -88,50 +88,59 @@ class SyncManager {
     // Listen to browser online event (fallback)
     window.addEventListener('online', this.#handleOnline);
 
-    // Listen to EventService connection events (SSE-based, more reliable)
-    EventService.on(EVENT.CONNECTION, this.#handleEventServiceConnection);
+    // Retry on the first successful connection too: startup sync can fail before
+    // SSE has had time to report an offline transition.
+    EventService.on('connected', this.#handleOnline);
 
     if (isOnline()) {
       this.sync();
     }
   }
 
-  async sync() {
-    if (this.#isSyncing || !isOnline()) {
-      return;
-    }
+  sync() {
+    if (this.#syncPromise) return this.#syncPromise;
+    if (!isOnline()) return Promise.resolve();
 
+    this.#syncPromise = this.#syncPending().finally(() => {
+      this.#syncPromise = null;
+    });
+
+    return this.#syncPromise;
+  }
+
+  async #syncPending() {
     this.#isSyncing = true;
+    let successCount = 0;
+    let failCount = 0;
 
     try {
-      const pending = await IndexedDB.getPendingSync();
+      // Drain again after each batch: a save may arrive while a request is in flight.
+      batches: while (isOnline()) {
+        const pending = await IndexedDB.getPendingSync();
+        if (pending.length === 0) break;
 
-      if (pending.length === 0) {
-        return;
-      }
+        this.#emit({ type: 'start', count: pending.length });
+        pending.sort((a, b) => a.createdAt - b.createdAt);
 
-      this.#emit({ type: 'start', count: pending.length });
+        for (const operation of pending) {
+          const current = await IndexedDB.getPendingSync();
+          if (!current.some(item => item.id === operation.id)) continue;
 
-      let successCount = 0;
-      let failCount = 0;
-
-      pending.sort((a, b) => a.createdAt - b.createdAt);
-
-      for (const operation of pending) {
-        try {
-          await this.#processOperation(operation);
-          await IndexedDB.clearPendingSync(operation.id);
-          successCount++;
-        } catch (error) {
-          if (error.message?.includes('fetch') || error.name === 'TypeError') {
-            break;
+          try {
+            await this.#processOperation(operation);
+            await IndexedDB.clearPendingSync(operation.id);
+            successCount++;
+          } catch {
+            // Keep the unsent snapshot. Never replay an older failed save after a newer one.
+            failCount++;
+            break batches;
           }
-
-          failCount++;
         }
       }
 
-      this.#emit({ type: 'complete', successCount, failCount });
+      if (successCount || failCount) {
+        this.#emit({ type: 'complete', successCount, failCount });
+      }
     } finally {
       this.#isSyncing = false;
     }
@@ -148,13 +157,6 @@ class SyncManager {
     }
 
     setTimeout(() => this.sync(), 1000);
-  };
-
-  #handleEventServiceConnection = async ({ online }) => {
-    // When EventService detects we're back online, trigger sync
-    if (online) {
-      await this.#handleOnline();
-    }
   };
 
   #emit(event) {
@@ -178,7 +180,8 @@ class SyncManager {
     const response = await fetch(buildUrl('state', uuid), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
+      signal: AbortSignal.timeout(5000)
     });
 
     if (!response.ok) {

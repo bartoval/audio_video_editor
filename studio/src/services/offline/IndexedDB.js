@@ -48,12 +48,12 @@ class IndexedDBService {
     return IndexedDBService.getInstance().getAll(STORES.WORKSPACES);
   }
 
-  static async saveWorkspace(uuid, data) {
-    return IndexedDBService.getInstance().put(STORES.WORKSPACES, {
-      uuid,
-      ...data,
-      updatedAt: Date.now()
-    });
+  static async saveWorkspace(uuid, data, options = {}) {
+    return IndexedDBService.getInstance().writeWorkspace(uuid, data, options);
+  }
+
+  static async saveWorkspaceBackup(uuid, data) {
+    return IndexedDBService.getInstance().writeWorkspace(uuid, data, { queueSync: true });
   }
 
   static async deleteWorkspace(uuid) {
@@ -218,6 +218,72 @@ class IndexedDBService {
   }
 
   // Instance API
+
+  /**
+   * Commit the local state and its pending backup together. Incoming server data
+   * cannot replace an unsent backup or a local save made while a load was in flight.
+   * @param {string} uuid
+   * @param {object} data
+   * @param {{queueSync?: boolean, expectedRevision?: number}} options
+   */
+  async writeWorkspace(uuid, data, { queueSync = false, expectedRevision } = {}) {
+    await this.#ensureDb();
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.#db.transaction(
+        [STORES.WORKSPACES, STORES.PENDING_SYNC],
+        'readwrite'
+      );
+      const workspaces = transaction.objectStore(STORES.WORKSPACES);
+      const pendingSync = transaction.objectStore(STORES.PENDING_SYNC);
+      let result;
+
+      transaction.oncomplete = () => resolve(result);
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(transaction.error || new Error('Local save aborted'));
+
+      const request = workspaces.get(uuid);
+      request.onsuccess = () => {
+        const existing = request.result;
+        const revision = existing?.localRevision || 0;
+
+        if (expectedRevision !== undefined && revision !== expectedRevision) {
+          result = existing;
+          return;
+        }
+
+        const pendingRequest = pendingSync.getAll();
+        pendingRequest.onsuccess = () => {
+          const pending = pendingRequest.result
+            .filter(operation => operation.type === 'backup' && operation.uuid === uuid)
+            .sort((a, b) => a.createdAt - b.createdAt);
+          const updatedAt = Date.now();
+          result = {
+            ...existing,
+            ...data,
+            ...(!queueSync ? pending.at(-1)?.data : {}),
+            uuid,
+            localRevision: revision + (queueSync ? 1 : 0),
+            updatedAt
+          };
+
+          workspaces.put(result);
+
+          if (queueSync) {
+            // Keep only the latest unsent snapshot for this project.
+            for (const operation of pending) pendingSync.delete(operation.id);
+            pendingSync.put({
+              id: crypto.randomUUID(),
+              type: 'backup',
+              uuid,
+              data,
+              createdAt: updatedAt
+            });
+          }
+        };
+      };
+    });
+  }
 
   async init() {
     if (!this.#isSupported) {

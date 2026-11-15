@@ -4,14 +4,9 @@ import timelineStore from './timelineStore';
 import transcriptionStore from './transcriptionStore';
 import uiStore from './uiStore';
 import workspaceStore from './workspaceStore';
+import { getUuid } from '../services/workspace';
 
-export {
-  playbackStore,
-  timelineStore,
-  transcriptionStore,
-  workspaceStore,
-  uiStore
-};
+export { playbackStore, timelineStore, transcriptionStore, workspaceStore, uiStore };
 
 let persistUnsubscribers = [];
 
@@ -22,11 +17,19 @@ let persistUnsubscribers = [];
  * Rehydrates persisted stores and sets up auto-save.
  */
 export async function initPersistence() {
-  await Promise.all([rehydrate(timelineStore, 'timeline'), rehydrate(workspaceStore, 'workspace')]);
+  stopPersistence();
+  const uuid = getUuid();
+  const timelineKey = `ui:${uuid}:timeline`;
+  const workspaceKey = `ui:${uuid}:workspace`;
+  await Promise.all([
+    rehydrate(timelineStore, timelineKey),
+    rehydrate(workspaceStore, workspaceKey)
+  ]);
+  workspaceStore.actions.setUuid(uuid);
 
   persistUnsubscribers = [
-    persist(timelineStore, { key: 'timeline', fields: ['tracks', 'selection'] }),
-    persist(workspaceStore, { key: 'workspace' })
+    persist(timelineStore, { key: timelineKey, fields: ['tracks', 'selection'] }),
+    persist(workspaceStore, { key: workspaceKey })
   ];
 }
 
@@ -36,5 +39,9 @@ export function stopPersistence() {
 }
 
 export async function clearAllPersisted() {
-  await Promise.all([clearPersisted('timeline'), clearPersisted('workspace')]);
+  const uuid = getUuid();
+  await Promise.all([
+    clearPersisted(`ui:${uuid}:timeline`),
+    clearPersisted(`ui:${uuid}:workspace`)
+  ]);
 }

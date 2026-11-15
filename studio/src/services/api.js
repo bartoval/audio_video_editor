@@ -3,7 +3,8 @@
 /** API - HTTP calls with offline fallback */
 import { ROUTES, buildUrl } from '../config/routes';
 import { getUuid } from './workspace';
-import { IndexedDB } from './offline';
+import IndexedDB from './offline/IndexedDB';
+import SyncManager from './offline/SyncManager';
 import { isOnline } from '../lib';
 import ErrorHandler from './ErrorHandler';
 
@@ -57,11 +58,35 @@ const safeFetch = async (url, options = {}, silent = false) => {
   }
 };
 
+const workspaceState = record => {
+  if (!record) return {};
+
+  const {
+    uuid: _uuid,
+    title: _title,
+    isVideoLoaded: _videoLoaded,
+    updatedAt: _updatedAt,
+    localRevision: _revision,
+    videoInfo: _videoInfo,
+    ...state
+  } = record;
+
+  return state;
+};
+
+const hasLocalState = record => Boolean(record && ('tracks' in record || 'video' in record));
+
 export const load = async () => {
   const uuid = getUuid();
+  const cached = await IndexedDB.getWorkspace(uuid);
+  const pending = (await IndexedDB.getPendingSync())
+    .filter(operation => operation.type === 'backup' && operation.uuid === uuid)
+    .sort((a, b) => a.createdAt - b.createdAt);
+
+  if (pending.length > 0) return pending.at(-1).data;
 
   try {
-    const response = await fetch(buildUrl('state', uuid));
+    const response = await fetch(buildUrl('state', uuid), { signal: AbortSignal.timeout(3000) });
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
@@ -69,19 +94,20 @@ export const load = async () => {
 
     const data = await response.json();
 
-    if (data && Object.keys(data).length > 0) {
-      await IndexedDB.saveWorkspace(uuid, data);
-    }
+    const saved = await IndexedDB.saveWorkspace(
+      uuid,
+      { video: null, tracks: [], markers: [], ...data },
+      {
+        expectedRevision: cached?.localRevision || 0
+      }
+    );
 
-    return data;
+    return workspaceState(saved);
   } catch {
-    const cached = await IndexedDB.getWorkspace(uuid);
+    const local = await IndexedDB.getWorkspace(uuid);
+    if (hasLocalState(local)) return workspaceState(local);
 
-    if (cached) {
-      return cached;
-    }
-
-    return {};
+    throw new Error('This project has no local save. Open it while connected first.');
   }
 };
 
@@ -94,23 +120,14 @@ export const backup = async ({ video, navigator, transcriptions }) => {
     transcriptions: transcriptions ?? {}
   };
 
-  await IndexedDB.saveWorkspace(uuid, data);
+  await IndexedDB.saveWorkspaceBackup(uuid, data);
+  await SyncManager.sync();
+  const pending = await IndexedDB.getPendingSync();
 
-  try {
-    return await safeFetch(
-      buildUrl('state', uuid),
-      {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      },
-      true // silent: don't show error toast, we handle offline gracefully
-    ).then(r => r.json());
-  } catch {
-    await IndexedDB.addPendingSync({ type: 'backup', uuid, data });
-
-    return { success: true, offline: true };
-  }
+  return {
+    success: true,
+    offline: pending.some(operation => operation.type === 'backup' && operation.uuid === uuid)
+  };
 };
 
 export const publish = ({ video, navigator, duration, format }) =>
@@ -150,27 +167,31 @@ export const getAudioList = async () => {
 
 export const getProjects = async () => {
   try {
-    const projects = await safeFetch(ROUTES.workspaces).then(r => r.json());
+    const projects = await safeFetch(
+      ROUTES.workspaces,
+      { signal: AbortSignal.timeout(3000) },
+      true
+    ).then(r => r.json());
 
     for (const project of projects) {
-      const existing = await IndexedDB.getWorkspace(project.uuid);
-
-      await IndexedDB.saveWorkspace(project.uuid, {
-        ...existing,
+      const local = await IndexedDB.saveWorkspace(project.uuid, {
         title: project.title,
         isVideoLoaded: project.isVideoLoaded
       });
+      project.hasLocalState = hasLocalState(local);
     }
 
     return projects;
   } catch {
-    const workspaces = await IndexedDB.getAllWorkspaces();
+    // Store persistence records are not projects (including legacy global keys).
+    const workspaces = (await IndexedDB.getAllWorkspaces()).filter(record => !('data' in record));
 
     if (workspaces.length > 0) {
-      return workspaces.map(({ uuid, title, isVideoLoaded }) => ({
-        uuid,
-        title: title || 'Untitled',
-        isVideoLoaded: isVideoLoaded || false
+      return workspaces.map(record => ({
+        uuid: record.uuid,
+        title: record.title || 'Untitled',
+        isVideoLoaded: record.isVideoLoaded || false,
+        hasLocalState: hasLocalState(record)
       }));
     }
 

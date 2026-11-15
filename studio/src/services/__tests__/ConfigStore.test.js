@@ -7,6 +7,7 @@ describe('ConfigStore', () => {
   beforeEach(async () => {
     originalFetch = global.fetch;
     vi.clearAllMocks();
+    localStorage.clear();
 
     // Reset module to get fresh state
     vi.resetModules();
@@ -97,6 +98,27 @@ describe('ConfigStore', () => {
 
       expect(config1).toBe(config2);
       expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('restores the saved configuration after a restart without the server', async () => {
+      const thumbs = { scales: [{ scale: '0.1' }], defaultScale: '0.1' };
+      global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ thumbs }) });
+      await ConfigStore.load();
+
+      vi.resetModules();
+      ConfigStore = await import('../ConfigStore');
+      global.fetch.mockRejectedValue(new TypeError('Failed to fetch'));
+
+      expect(await ConfigStore.load()).toEqual(thumbs);
+    });
+
+    it('allows retry after a failed load with no cached configuration', async () => {
+      global.fetch = vi.fn().mockRejectedValueOnce(new TypeError('Failed to fetch'));
+      await expect(ConfigStore.load()).rejects.toThrow('Failed to fetch');
+
+      const thumbs = { scales: [] };
+      global.fetch.mockResolvedValue({ ok: true, json: async () => ({ thumbs }) });
+      expect(await ConfigStore.load()).toEqual(thumbs);
     });
   });
 

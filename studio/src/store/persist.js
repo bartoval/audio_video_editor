@@ -38,7 +38,12 @@ export function persist(store, options) {
     }, debounce);
   };
 
-  return store.subscribe(debouncedSave);
+  const unsubscribe = store.subscribe(debouncedSave);
+
+  return () => {
+    clearTimeout(timeout);
+    unsubscribe();
+  };
 }
 
 /**

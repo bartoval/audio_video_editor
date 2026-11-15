@@ -112,13 +112,15 @@ export default class HeaderPresenter {
     try {
       const response = await api.load();
       this.#hasBackup = Object.keys(response).length > 0;
+      const project = this.#projects.find(project => project.uuid === this.#currentUuid);
+      if (project) project.hasLocalState = this.#hasBackup;
     } catch {
       this.#hasBackup = false;
     }
   }
 
   #handleSelectProject(uuid) {
-    if (this.#isOffline) {
+    if (this.#isOffline && !this.#projects.find(project => project.uuid === uuid)?.hasLocalState) {
       return;
     }
 
@@ -225,7 +227,7 @@ export default class HeaderPresenter {
   }
 
   async #handleLoad() {
-    if (this.#isLoading || this.#isOffline) {
+    if (this.#isLoading) {
       return;
     }
 
@@ -262,8 +264,11 @@ export default class HeaderPresenter {
 
     if (result.success) {
       this.#hasBackup = true;
+      const project = this.#projects.find(project => project.uuid === this.#currentUuid);
+      if (project) project.hasLocalState = true;
       uiStore.actions.pushToast({
         type: NOTIFY_TYPE.SUCCESS,
+        msg: result.offline ? LABEL.SAVED_LOCALLY : LABEL.SAVED,
         timeHide: TOAST_DURATION.short
       });
     } else {

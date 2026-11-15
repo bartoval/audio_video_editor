@@ -114,14 +114,14 @@ describe('createHeaderActions', () => {
       expect(loadBtn.disabled).toBe(true);
     });
 
-    it('save and preview remain disabled without tracks even with backup', () => {
+    it('allows saving an emptied project while preview remains disabled', () => {
       headerActions = createHeaderActions(container);
       headerActions.setState({ hasBackup: true, hasTracks: false });
 
       const saveBtn = container.querySelector('[data-action="save"]');
       const previewBtn = container.querySelector('[data-action="preview"]');
 
-      expect(saveBtn.disabled).toBe(true);
+      expect(saveBtn.disabled).toBe(false);
       expect(previewBtn.disabled).toBe(true);
     });
   });
@@ -140,14 +140,14 @@ describe('createHeaderActions', () => {
       expect(previewBtn.disabled).toBe(false);
     });
 
-    it('all buttons disabled when offline', () => {
+    it('allows loading a local backup while preview remains disabled offline', () => {
       headerActions = createHeaderActions(container);
       headerActions.setState({ hasTracks: true, hasBackup: true, offline: true });
 
       const loadBtn = container.querySelector('[data-action="load"]');
       const previewBtn = container.querySelector('[data-action="preview"]');
 
-      expect(loadBtn.disabled).toBe(true);
+      expect(loadBtn.disabled).toBe(false);
       expect(previewBtn.disabled).toBe(true);
     });
 

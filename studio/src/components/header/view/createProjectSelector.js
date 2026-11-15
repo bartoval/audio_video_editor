@@ -6,6 +6,7 @@ import { WORKSPACE } from '../../../config/ui';
 export function createProjectSelector($parent) {
   let handlers = {};
   let currentUuid = null;
+  let projects = [];
 
   const $el = createElement('div', {
     className: 'd-flex align-items-center gap-2',
@@ -66,6 +67,7 @@ export function createProjectSelector($parent) {
       }
 
       if (state.projects !== undefined) {
+        projects = state.projects;
         $select.innerHTML = '';
         state.projects.forEach(({ uuid, title }) => {
           const $option = document.createElement('option');
@@ -81,8 +83,12 @@ export function createProjectSelector($parent) {
       const isDefault = currentUuid === WORKSPACE.DEFAULT_UUID;
       const isDisabled = offline || disabled;
 
-      $select.disabled = isDisabled;
+      $select.disabled = disabled;
       $select.title = offline ? LABEL.SELECT_WORKSPACE_OFFLINE : '';
+      for (const option of $select.options) {
+        option.disabled =
+          offline && !projects.find(project => project.uuid === option.value)?.hasLocalState;
+      }
 
       $addBtn.disabled = isDisabled;
       $addBtn.title = offline ? LABEL.ADD_WORKSPACE_OFFLINE : LABEL.ADD_WORKSPACE;

@@ -108,9 +108,19 @@ self.addEventListener('install', (event) => {
 
   event.waitUntil(
     caches.open(STATIC_CACHE)
-      .then(cache => {
-        // Precache critical assets
-        return cache.addAll(PRECACHE_ASSETS);
+      .then(async cache => {
+        await cache.addAll(PRECACHE_ASSETS);
+
+        // On the first visit JS/CSS may load before this worker takes control.
+        // Vite's production manifest includes those files and their dependencies.
+        const response = await fetch('/.vite/manifest.json', { cache: 'no-cache' });
+        if (response.ok && response.headers.get('Content-Type')?.includes('application/json')) {
+          const manifest = await response.json();
+          const assets = Object.values(manifest).flatMap(entry =>
+            [entry.file, ...(entry.css || []), ...(entry.assets || [])]
+          );
+          await cache.addAll([...new Set(assets)].map(asset => `/${asset}`));
+        }
       })
       .then(() => {
         console.log('[SW] Precache complete, skipping waiting');

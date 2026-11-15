@@ -37,6 +37,7 @@ export default defineConfig({
   assetsInclude: ['**/*.wasm'],
   base: '/',
   build: {
+    manifest: true,
     outDir: 'dist',
     emptyOutDir: true,
     minify: 'esbuild',

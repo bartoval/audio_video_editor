@@ -6,6 +6,7 @@ import { ROUTES } from '../config/routes';
 let config = null;
 let loadPromise = null;
 const listeners = new Set();
+const STORAGE_KEY = 'studio-thumbnails-config-v1';
 
 /**
  * Load configuration from backend API
@@ -20,7 +21,7 @@ export const load = async () => {
     return loadPromise;
   }
 
-  loadPromise = fetch(ROUTES.config)
+  loadPromise = fetch(ROUTES.config, { signal: AbortSignal.timeout(3000) })
     .then(res => {
       if (!res.ok) {
         throw new Error('Failed to load config');
@@ -30,9 +31,28 @@ export const load = async () => {
     })
     .then(data => {
       config = data.thumbs;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+      } catch {
+        // Configuration can still be used when browser storage is unavailable.
+      }
       notifyListeners();
 
       return config;
+    })
+    .catch(error => {
+      try {
+        const cached = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (cached?.scales) {
+          config = cached;
+          notifyListeners();
+          return config;
+        }
+      } catch {
+        // A missing or invalid cache must not hide the original failure.
+      }
+      loadPromise = null;
+      throw error;
     });
 
   return loadPromise;

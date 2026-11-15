@@ -47,9 +47,7 @@ class HeaderActionsService {
   async save() {
     try {
       const data = await EventService.emitAsync(EVENT.WORKSPACE_GET_DATA);
-      await api.backup(data);
-
-      return { success: true };
+      return await api.backup(data);
     } catch (error) {
       return { success: false, error: String(error) };
     }

@@ -87,11 +87,17 @@ export function createHeaderActions($parent) {
       const { offline, isLoading, isSaving, isExporting, hasTracks, hasBackup } = currentState;
       const isBusy = isLoading || isSaving || isExporting;
 
-      // Load: enabled if backup exists and not offline/busy
-      setButtonState($loadBtn, $loadIcon, offline || isBusy || !hasBackup, isLoading, ICON_LOAD);
+      // Saved projects can be loaded from this device while offline.
+      setButtonState($loadBtn, $loadIcon, isBusy || !hasBackup, isLoading, ICON_LOAD);
 
       // Save/Preview: enabled if tracks exist and not busy
-      setButtonState($saveBtn, $saveIcon, isBusy || !hasTracks, isSaving, ICON_SAVE);
+      setButtonState(
+        $saveBtn,
+        $saveIcon,
+        isBusy || (!hasTracks && !hasBackup),
+        isSaving,
+        ICON_SAVE
+      );
       setButtonState(
         $previewBtn,
         $previewIcon,

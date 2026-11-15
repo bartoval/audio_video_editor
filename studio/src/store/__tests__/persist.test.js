@@ -177,6 +177,15 @@ describe('persist', () => {
       expect(() => unsubscribe()).not.toThrow();
     });
 
+    it('cancels pending writes when persistence is stopped', async () => {
+      const unsubscribe = persist(mockStore, { key: 'ui:first:timeline' });
+      mockStore._callback({ tracks: ['first-project'] });
+      unsubscribe();
+      await vi.runAllTimersAsync();
+
+      expect(mockInstance.put).not.toHaveBeenCalled();
+    });
+
     it('uses workspaces as store name', async () => {
       persist(mockStore, { key: 'test-key' });
 

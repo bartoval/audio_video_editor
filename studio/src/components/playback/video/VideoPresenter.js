@@ -1,6 +1,7 @@
 import Mediator from '../../Mediator';
 import ConfirmModal from '../../core/ConfirmModal';
-import { getRouteUrl } from '../../../services/workspace';
+import { getRouteUrl, getUuid } from '../../../services/workspace';
+import IndexedDB from '../../../services/offline/IndexedDB';
 import { MasterClock, isOnline } from '../../../lib';
 import { ERROR_CONTEXT, EVENT, LABEL } from '../../../config/constants';
 import ErrorHandler from '../../../services/ErrorHandler';
@@ -15,6 +16,7 @@ export default class VideoPresenter {
   #upload = null;
   #hasVideo = false;
   #urls = null;
+  #usingOfflineVideo = false;
   #unsubscribeVideoLoaded = null;
   #unsubscribeVideoDeleted = null;
 
@@ -37,6 +39,7 @@ export default class VideoPresenter {
   }
 
   #bindViewHandlers() {
+    this.#view.getPlayerElement().addEventListener('error', this.#handlePlaybackError, true);
     this.#view.handlers = {
       onFileSelect: files => this.#upload.handleFileSelect(files),
       onDelete: () => this.#handleDelete(),
@@ -73,14 +76,18 @@ export default class VideoPresenter {
 
   async load() {
     try {
-      const res = await window.fetch(getRouteUrl('video'));
-
-      if (!res.ok) {
-        this.#hasVideo = false;
-        throw Error('no video found');
+      let response;
+      try {
+        const res = await window.fetch(getRouteUrl('video'), { signal: AbortSignal.timeout(3000) });
+        if (!res.ok) throw Error('no video found');
+        response = await res.json();
+        await IndexedDB.saveWorkspace(getUuid(), { videoInfo: response }).catch(error => {
+          console.warn('[Video] Could not cache metadata:', error);
+        });
+      } catch (error) {
+        response = (await IndexedDB.getWorkspace(getUuid()))?.videoInfo;
+        if (!response) throw error;
       }
-
-      const response = await res.json();
 
       if (Object.keys(response).length === 0) {
         this.#hasVideo = false;
@@ -96,6 +103,7 @@ export default class VideoPresenter {
       const duration = response.duration / 1000;
       this.#view.setDisplayAspectRatio(response.displayAspectRatio);
       this.#urls = response.urls;
+      this.#usingOfflineVideo = false;
 
       const videoSrc = isOnline()
         ? this.#addCacheBuster(this.#urls.file)
@@ -135,12 +143,12 @@ export default class VideoPresenter {
     const offlineSrc = this.#urls.offline;
 
     try {
-      const cache = await caches.open('media-v15');
       const url = new URL(offlineSrc, window.location.origin);
       const cacheKey = url.origin + url.pathname;
-      const cached = await cache.match(cacheKey);
+      const cached = await caches.match(cacheKey);
 
       if (cached) {
+        this.#usingOfflineVideo = true;
         this.#view.showQualityBadge();
         return offlineSrc;
       }
@@ -150,6 +158,20 @@ export default class VideoPresenter {
 
     return this.#urls.file;
   }
+
+  #handlePlaybackError = async () => {
+    if (!this.#urls) return;
+
+    if (!this.#usingOfflineVideo) {
+      const source = await this.#getOfflineVideoSrc();
+      if (this.#usingOfflineVideo) {
+        this.#view.setSrc(source);
+        return;
+      }
+    }
+
+    this.#view.showOfflineOverlay();
+  };
 
   #addCacheBuster(url) {
     return `${url}?t=${Date.now()}`;
@@ -260,6 +282,7 @@ export default class VideoPresenter {
   }
 
   destroy() {
+    this.#view.getPlayerElement().removeEventListener('error', this.#handlePlaybackError, true);
     this.#unsubscribeVideoLoaded?.();
     this.#unsubscribeVideoDeleted?.();
   }

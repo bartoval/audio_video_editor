@@ -148,8 +148,10 @@ export const WARNING = {
 /** UI Labels */
 export const LABEL = {
   LOAD: 'Load',
-  LOAD_OFFLINE: 'Cannot load while offline',
+  LOAD_OFFLINE: 'Load local save',
   SAVE: 'Save',
+  SAVED: 'Saved',
+  SAVED_LOCALLY: 'Saved on this device. Will sync when connected.',
   SAVE_OFFLINE: 'Save locally (sync when online)',
   PREVIEW: 'Preview',
   PREVIEW_OFFLINE: 'Cannot preview while offline',
@@ -173,7 +175,7 @@ export const LABEL = {
   EXPORT: 'Export',
   ADD_WORKSPACE: 'Add Workspace',
   ADD_WORKSPACE_OFFLINE: 'Cannot create workspace while offline',
-  SELECT_WORKSPACE_OFFLINE: 'Cannot switch workspace while offline',
+  SELECT_WORKSPACE_OFFLINE: 'Open a project saved on this device',
   DELETE: 'Delete',
   DELETE_WORKSPACE: 'Delete Workspace',
   DELETE_WORKSPACE_OFFLINE: 'Cannot delete workspace while offline',

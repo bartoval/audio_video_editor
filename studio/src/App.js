@@ -27,14 +27,13 @@ import { initStoreConnectors } from './store/storeConnectors';
 
 class App {
   async init(workspaceUuid) {
+    Workspace.init(workspaceUuid);
     await ConfigStore.load();
     await initPersistence();
 
     initStoreConnectors();
     ShortcutService.init();
     JobTrackerService.init();
-
-    Workspace.init(workspaceUuid);
 
     const root = document.querySelector('.studio');
 
@@ -71,22 +70,6 @@ class App {
           transcriptionStore.actions.hydrate(response.transcriptions);
         }
 
-        let audioList = {};
-        try {
-          audioList = await Api.getAudioList();
-        } catch (error) {
-          console.warn('Audio list fetch failed, skipping orphan filter', error);
-        }
-
-        if (response.tracks && Array.isArray(response.tracks) && audioList) {
-          const before = response.tracks.length;
-          response.tracks = response.tracks.filter(track => audioList[track.idTrack]);
-          const removed = before - response.tracks.length;
-          if (removed > 0) {
-            console.warn(`Removed ${removed} orphan tracks (missing audio files)`);
-          }
-        }
-
         if (response.video) {
           await Mediator.onLoadVideo(response.video, response);
           console.log('[App] Workspace loaded with video');
@@ -104,8 +87,10 @@ class App {
         console.log('[App] Empty workspace (audio-only)');
       }
     } catch (err) {
-      console.log('[App] No saved workspace:', err);
-      await Mediator.initAudioOnly();
+      console.error('[App] Could not open workspace:', err);
+      renderWorkspaceUnavailable(workspaceUuid, err.message);
+      await AppLoader.hide();
+      return false;
     }
 
     await AppLoader.hide();
@@ -115,7 +100,7 @@ class App {
   }
 }
 
-function renderWorkspaceNotFound(uuid) {
+function renderWorkspaceUnavailable(uuid, message) {
   const $root = document.querySelector('.studio');
 
   if (!$root) {
@@ -127,11 +112,11 @@ function renderWorkspaceNotFound(uuid) {
 
   const $title = document.createElement('h1');
   $title.className = 'text-muted mb-3';
-  $title.textContent = 'Workspace not found';
+  $title.textContent = 'Workspace unavailable';
 
   const $message = document.createElement('p');
   $message.className = 'text-muted mb-4';
-  $message.textContent = `The workspace "${uuid}" does not exist.`;
+  $message.textContent = message || `The workspace "${uuid}" is not available on this device.`;
 
   const $link = document.createElement('a');
   $link.className = 'btn btn-primary';
@@ -162,7 +147,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // UUID in URL but doesn't exist → show error
     if (uuid && !projects.find(p => p.uuid === uuid)) {
       AppLoader.hide();
-      renderWorkspaceNotFound(uuid);
+      renderWorkspaceUnavailable(uuid);
 
       return;
     }
@@ -170,7 +155,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Error fetching projects:', err);
   }
 
-  new App().init(uuid);
+  try {
+    await new App().init(uuid);
+  } catch (err) {
+    console.error('[App] Could not initialize workspace:', err);
+    renderWorkspaceUnavailable(uuid, 'Connect to the server to prepare this project first.');
+    await AppLoader.hide();
+  }
 
   window.addEventListener('beforeunload', () => {
     Mediator.destroy?.();
