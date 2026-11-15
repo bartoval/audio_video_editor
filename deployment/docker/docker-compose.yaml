@@ -1,7 +1,4 @@
-version: "3.8"
-
 services:
-  # Reverse Proxy
   reverse-proxy:
     image: ${DOCKER_USERNAME:-vabar}/studio-reverse-proxy:latest
     ports:
@@ -11,29 +8,22 @@ services:
       - studio-api
       - studio-frontend
 
-  # Backend API
+  # Keep the service and image names for existing installations.
   studio-api:
     image: ${DOCKER_USERNAME:-vabar}/studio-api:latest
     environment:
-      NODE_ENV: production
       PORT: 8080
-      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
-      # Oracle Object Storage
-      ORACLE_NAMESPACE: ${ORACLE_NAMESPACE:-}
-      ORACLE_BUCKET: ${ORACLE_BUCKET:-}
-      ORACLE_REGION: ${ORACLE_REGION:-eu-frankfurt-1}
-      ORACLE_TENANCY_OCID: ${ORACLE_TENANCY_OCID:-}
-      ORACLE_USER_OCID: ${ORACLE_USER_OCID:-}
-      ORACLE_FINGERPRINT: ${ORACLE_FINGERPRINT:-}
+      ROOT_PATH: /app
+      STEMS_DEVICE: ${STEMS_DEVICE:-cpu}
+      STEMS_CACHE_DIR: /app/stems-cache
+      STEMS_OFFLINE: ${STEMS_OFFLINE:-false}
+      HW_ENCODER: ${HW_ENCODER:-}
     volumes:
-      # Local storage
       - studio-data:/app/projects
       - studio-tmp:/app/.tmp_chunks
-      # OCI credentials (when STORAGE_PROVIDER=oracle)
-      - ${HOME}/.oci:/root/.oci:ro
+      - stems-cache:/app/stems-cache
     restart: unless-stopped
 
-  # Frontend
   studio-frontend:
     image: ${DOCKER_USERNAME:-vabar}/studio-frontend:latest
     restart: unless-stopped
@@ -41,3 +31,4 @@ services:
 volumes:
   studio-data:
   studio-tmp:
+  stems-cache:

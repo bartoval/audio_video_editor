@@ -1,106 +1,37 @@
 # Deployment
 
-## Structure
+The application runs the Go API (`studio-api`), the frontend and an nginx reverse
+proxy. Service and image names stay unchanged so existing project volumes remain
+usable. Node is used to build the frontend.
 
-```
-deployment/
-├── docker/          # Build images (multi-arch)
-├── oracle-vm/       # Production deploy (ARM64)
-└── k8s/             # Kubernetes (local dev)
-```
+## Docker
 
-## Services
-
-| Service | Description | Port |
-|---------|-------------|------|
-| studio-frontend | Vanilla JS SPA (built with Vite, served by nginx) | 80/443 |
-| studio-api | Node.js backend | 8080 |
-| media-ml-worker | Python ML service (FastAPI) | 8001 |
-| celery-worker | Async task worker | - |
-| rabbitmq | Message broker | 5672, 15672 |
-
-## Quick Start
-
-### Local (dev)
+From the repository root:
 
 ```bash
-# First time: copy setup-env.example.sh to setup-env.sh and fill values
-source setup-env.sh
-
-# Backend
-cd studio-api && npm install && npm run dev    # :8080
-
-# Frontend
-cd studio && npm install && npm run dev        # :8081
-
-# ML Worker (optional, if needed)
-cd media-ml-worker
-docker compose -f ../deployment/docker/docker-compose.yaml up rabbitmq media-ml-worker celery-worker
+docker compose -f deployment/docker/docker-compose.yaml -f deployment/docker/docker-compose-build.yaml up --build -d
 ```
 
-### Docker (local)
+Open <http://localhost:8080>. The API image is built from `server/`, with FFmpeg
+and cgo support. Containers use CPU stems by default; model and runtime downloads
+are kept in the `stems-cache` volume. Set `STEMS_DEVICE=off` to skip preparation,
+or `STEMS_OFFLINE=true` to require an already prepared cache. CUDA additionally
+requires NVIDIA container GPU access.
+
+## Oracle VM
 
 ```bash
-source setup-env.sh
-cd deployment/docker
-docker compose -f docker-compose-build.yaml build
-docker compose up -d                           # :8080
+./deployment/docker/build.sh             # all | api | frontend | proxy
+./deployment/oracle-vm/deploy.sh          # all | api | frontend | sync | status | logs
 ```
 
-### Oracle VM (production)
+The build script publishes images; the deploy script updates the remote VM.
+Existing projects remain in the `studio-data` volume. Deployment removes orphaned
+containers without deleting their volumes.
 
-```bash
-# Build multi-arch images
-./deployment/docker/build.sh          # all | api | frontend | proxy | ml-worker
+## Kubernetes
 
-# Deploy
-./deployment/oracle-vm/deploy.sh      # all | api | frontend | sync | status | logs
-```
-
-**Environment variables on VM:**
-
-```bash
-ssh opc@<VM_IP>
-source setup-env.sh                       # Copy from setup-env.example.sh, fill values
-cd /home/opc/app && docker compose up -d
-```
-
-## Architecture
-
-```
-nginx (:80/:443)
-  ├── /api/*   → studio-api (:8080)
-  │                  │
-  │                  ├── /api/v1/ml/* → media-ml-worker (:8001)
-  │                  │                        │
-  │                  │                        └── celery-worker
-  │                  │                              │
-  │                  │                              └── rabbitmq
-  │                  │
-  └── /*       → studio-frontend
-                     │
-               File Storage (local | Oracle)
-```
-
-## ML Worker
-
-The `media-ml-worker` provides:
-- **Transcription** (Whisper): `POST /api/v1/ml/transcribe`
-- **Stem separation** (Demucs): `POST /api/v1/ml/stems`
-
-### Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `MEDIA_WORKER_URL` | `http://media-ml-worker:8000` | ML worker URL |
-| `WHISPER_MODEL` | `base` | tiny, base, small, medium, large |
-| `WHISPER_DEVICE` | `cpu` | cpu or cuda |
-| `RABBITMQ_URL` | `amqp://guest:guest@rabbitmq:5672//` | RabbitMQ connection |
-
-### RabbitMQ Management
-
-Access at http://localhost:15672 (guest/guest)
-
-## Environment
-
-See `setup-env.example.sh` in project root for all required variables. Copy to `setup-env.sh` and fill values.
+Manifests are in `deployment/k8s/`. The Go API uses `env-config` and the existing
+`studio-data-pvc`. Stem assets are cached under `/app/projects/.stems-cache`.
+CPU stem separation can use several GiB of RAM; adjust resource limits for the
+workload, or set `STEMS_DEVICE=off` if it is not needed.

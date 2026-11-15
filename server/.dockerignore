@@ -1,0 +1,5 @@
+projects/
+.tmp_chunks/
+stems-cache/
+server
+*.log

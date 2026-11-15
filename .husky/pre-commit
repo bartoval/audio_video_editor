@@ -1,1 +1,1 @@
-cd studio-api && npx lint-staged
+cd studio && ./node_modules/.bin/lint-staged

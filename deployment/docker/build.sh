@@ -34,21 +34,20 @@ build_image() {
     log_info "Pushed $image"
 }
 
-build_api()       { build_image "studio-api" "$PROJECT_ROOT/studio-api"; }
+build_api()       { build_image "studio-api" "$PROJECT_ROOT/server"; }
 build_frontend()  { build_image "studio-frontend" "$PROJECT_ROOT/studio"; }
 build_proxy()     { build_image "studio-reverse-proxy" "$SCRIPT_DIR"; }
-build_ml_worker() { build_image "media-ml-worker" "$PROJECT_ROOT/media-ml-worker"; }
-build_all()       { build_api; build_frontend; build_proxy; build_ml_worker; }
+build_all()       { build_api; build_frontend; build_proxy; }
 
 main() {
     local target="${1:-all}"
 
     case $target in
         -h|--help)
-            echo "Usage: $0 [all|api|frontend|proxy|ml-worker]"
+            echo "Usage: $0 [all|api|frontend|proxy]"
             echo "Env: DOCKER_USERNAME (default: vabar), PLATFORMS (default: linux/amd64,linux/arm64)"
             exit 0 ;;
-        api|frontend|proxy|ml-worker|all) ;;
+        api|frontend|proxy|all) ;;
         *) log_error "Unknown: $target"; exit 1 ;;
     esac
 
@@ -59,7 +58,6 @@ main() {
         api)       build_api ;;
         frontend)  build_frontend ;;
         proxy)     build_proxy ;;
-        ml-worker) build_ml_worker ;;
         all)       build_all ;;
     esac
 

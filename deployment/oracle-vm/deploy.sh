@@ -36,7 +36,7 @@ deploy_service() {
 deploy_all() {
     log_step "Deploying all services..."
     sync_config
-    ssh "$VM_HOST" "cd $APP_DIR && docker pull ${DOCKER_USERNAME}/studio-api:latest && docker pull ${DOCKER_USERNAME}/studio-frontend:latest && docker compose up -d"
+    ssh "$VM_HOST" "cd $APP_DIR && docker pull ${DOCKER_USERNAME}/studio-api:latest && docker pull ${DOCKER_USERNAME}/studio-frontend:latest && docker compose up -d --remove-orphans"
     log_info "All deployed"
 }
 

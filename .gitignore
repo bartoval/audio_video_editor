@@ -30,11 +30,9 @@ studio/dist/
 
 # Test coverage reports
 studio/coverage/
-studio-api/coverage/
 
 # Test temp files
 **/tmp-hash-*/
-media-ml-worker/tests/perf/results/*.json
 
 # SSL certificates
 certs/

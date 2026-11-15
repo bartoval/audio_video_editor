@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   reverse-proxy:
     build:
@@ -8,15 +6,10 @@ services:
 
   studio-api:
     build:
-      context: ../../studio-api
+      context: ../../server
     image: ${DOCKER_USERNAME:-vabar}/studio-api:latest
 
   studio-frontend:
     build:
       context: ../../studio
     image: ${DOCKER_USERNAME:-vabar}/studio-frontend:latest
-
-  media-ml-worker:
-    build:
-      context: ../../media-ml-worker
-    image: ${DOCKER_USERNAME:-vabar}/media-ml-worker:latest

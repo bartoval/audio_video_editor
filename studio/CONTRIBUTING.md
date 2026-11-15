@@ -253,7 +253,7 @@ All events are defined in `src/config/constants.js` as `EVENT.*`. Use `EventServ
 
 | Event | Payload | Fired when |
 |-------|---------|------------|
-| `JOB_COMPLETED` | job data | Async job finished (stems, transcription) |
+| `JOB_COMPLETED` | job data | Async job finished (stems, scenes) |
 | `JOB_FAILED` | job data | Async job failed |
 | `JOB_COUNT_CHANGED` | count | Active job count changed |
 
@@ -267,7 +267,6 @@ All events are defined in `src/config/constants.js` as `EVENT.*`. Use `EventServ
 | `MARKERS_CHANGED` | markers | Timeline markers updated |
 | `MARKER_PREVIOUS` / `MARKER_NEXT` | — | Navigate between markers |
 | `LOOP_TOGGLE` | — | Toggle loop mode |
-| `TRANSCRIPTION_READY` | data | Whisper transcription completed |
 
 ---
 

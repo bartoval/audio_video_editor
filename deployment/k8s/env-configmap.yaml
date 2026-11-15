@@ -3,13 +3,8 @@ kind: ConfigMap
 metadata:
   name: env-config
 data:
-  NODE_ENV: "production"
   PORT: "8080"
-  STORAGE_PROVIDER: "local"
-  # Oracle Object Storage (change STORAGE_PROVIDER to "oracle" to use)
-  ORACLE_REGION: "eu-frankfurt-1"
-  # Media ML Worker
-  MEDIA_WORKER_URL: "http://media-ml-worker:8000"
-  SHARED_MEDIA_PATH: "/media"
-  WHISPER_MODEL: "base"
-  WHISPER_DEVICE: "cpu"
+  ROOT_PATH: "/app"
+  STEMS_DEVICE: "cpu"
+  STEMS_CACHE_DIR: "/app/projects/.stems-cache"
+  STEMS_OFFLINE: "false"
