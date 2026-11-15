@@ -132,21 +132,13 @@ func (s *Service) convert(uuid, dir, priorityScale string) error {
 	meta := Metadata{
 		Status: "pending", ID: originalFile, Name: cmp.Or(info.Title, originalFile),
 		Duration: info.Duration * 1000, DurationFormatted: media.FormatDuration(info.Duration),
-		DisplayAspectRatio: info.AspectRatio, IsMuteVideo: true,
+		DisplayAspectRatio: info.AspectRatio, IsMuteVideo: true, ThumbnailsStatus: "processing",
 	}
 	if err := s.writeInfo(dir, meta); err != nil {
 		return err
 	}
 	thumbs := filepath.Join(dir, thumbsDir)
 	if err := os.RemoveAll(thumbs); err != nil {
-		return err
-	}
-	if err := media.MuteVideo(s.ctx, original, filepath.Join(dir, videoFile), info, s.encoder); err != nil {
-		return err
-	}
-
-	meta.Status, meta.ThumbnailsStatus = "ready", "processing"
-	if err := s.writeInfo(dir, meta); err != nil {
 		return err
 	}
 	if err := os.MkdirAll(thumbs, 0o755); err != nil {
@@ -159,55 +151,49 @@ func (s *Service) convert(uuid, dir, priorityScale string) error {
 	if err := files.WriteJSON(filepath.Join(thumbs, "manifest.json"), placeholder); err != nil {
 		return err
 	}
-	slog.Info("video ready, thumbnails in background", "workspace", uuid)
 
-	var wg sync.WaitGroup
-	wg.Go(func() {
-		small := filepath.Join(dir, smallFile)
-		if err := os.MkdirAll(filepath.Dir(small), 0o755); err == nil {
-			err = media.SmallVideo(s.ctx, original, small, smallHeight, s.encoder)
-			if err != nil {
-				slog.Error("small video failed", "workspace", uuid, "err", err)
-			}
+	// A web codec is copied at once and the video plays while the rest is
+	// made; otherwise the re-encoding shares the decoding with the rest.
+	copied := media.CanCopy(info)
+	if copied {
+		if err := media.CopyMuted(s.ctx, original, filepath.Join(dir, videoFile), info); err != nil {
+			return err
 		}
-	})
-	wg.Go(func() { s.thumbnails(uuid, dir, original, info, priorityScale) })
-	wg.Wait()
-	// Both copies are made: the original (with its audio) is no longer needed.
-	os.Remove(original)
-	return nil
-}
+		meta.Status = "ready"
+		if err := s.writeInfo(dir, meta); err != nil {
+			return err
+		}
+		slog.Info("video ready, thumbnails in background", "workspace", uuid)
+	}
 
-// thumbnails writes the sheets of every scale in one decoding pass, then
-// announces the scales, the priority one first.
-func (s *Service) thumbnails(uuid, dir, input string, info media.VideoInfo, priorityScale string) {
 	scales := slices.Clone(Scales)
 	if i := slices.IndexFunc(scales, func(sc Scale) bool { return sc.Name == priorityScale }); i > 0 {
 		priority := scales[i]
 		scales = append([]Scale{priority}, slices.Delete(scales, i, i+1)...)
 	}
-	thumbs := filepath.Join(dir, thumbsDir)
-	sets := make([]media.TileSet, len(scales))
-	for i, sc := range scales {
-		sets[i] = media.TileSet{Dir: filepath.Join(thumbs, sc.Name), FPS: sc.FPS}
+	plan := media.Plan{
+		Encoder: s.encoder, Small: filepath.Join(dir, smallFile), SmallHeight: smallHeight,
+		TileHeight: thumbHeight, Cols: TileCols, Rows: TileRows, Quality: thumbWebP,
+		Progress: s.thumbnailProgress(uuid, scales[0].Name, info.Duration),
 	}
-
-	lastPercent := -1
-	progress := func(t float64) {
-		percent := min(99, int(100*t/info.Duration))
-		if percent != lastPercent {
-			lastPercent = percent
-			s.notify(uuid, map[string]any{"status": "generating",
-				"progress": map[string]any{"percent": percent, "scale": scales[0].Name, "isChunkReady": false}})
-		}
+	if !copied {
+		plan.Muted = filepath.Join(dir, videoFile)
 	}
-	var err error
-	if info.Duration > 0 { // nothing to sample otherwise
-		err = media.Tiles(s.ctx, input, sets, thumbHeight, TileCols, TileRows, thumbWebP, progress)
+	for _, sc := range scales {
+		plan.Tiles = append(plan.Tiles, media.TileSet{Dir: filepath.Join(thumbs, sc.Name), FPS: sc.FPS})
+	}
+	if err := os.MkdirAll(filepath.Dir(plan.Small), 0o755); err != nil {
+		return err
+	}
+	err = media.Process(s.ctx, original, plan)
+	if err == nil && !copied {
+		meta.Status = "ready"
+		err = s.writeInfo(dir, meta)
 	}
 	if err == nil {
 		err = s.writeManifests(uuid, thumbs, scales, info)
 	}
+
 	status, event := "ready", map[string]any{"status": "complete", "progress": nil}
 	if err != nil {
 		slog.Error("thumbnails failed", "workspace", uuid, "err", err)
@@ -215,6 +201,30 @@ func (s *Service) thumbnails(uuid, dir, input string, info media.VideoInfo, prio
 	}
 	if s.updateInfo(dir, func(m *Metadata) { m.ThumbnailsStatus = status }) {
 		s.notify(uuid, event)
+	}
+	if err != nil && !copied {
+		return err // the video itself is missing
+	}
+	if err == nil {
+		os.Remove(original) // everything is made: the original (with its audio) is no longer needed
+	}
+	return nil
+}
+
+// thumbnailProgress returns the Progress callback that reports, at each new
+// percent, how far the thumbnails of the priority scale are.
+func (s *Service) thumbnailProgress(uuid, scale string, duration float64) func(float64) {
+	last := -1
+	return func(t float64) {
+		if duration <= 0 {
+			return
+		}
+		percent := min(99, int(100*t/duration))
+		if percent != last {
+			last = percent
+			s.notify(uuid, map[string]any{"status": "generating",
+				"progress": map[string]any{"percent": percent, "scale": scale, "isChunkReady": false}})
+		}
 	}
 }
 

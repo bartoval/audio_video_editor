@@ -58,6 +58,8 @@ func run() error {
 	defer stop()
 
 	hub := events.NewHub()
+	encoder := media.NewEncoder(ctx, os.Getenv("HW_ENCODER"))
+	slog.Info("video encoder", "name", encoder.Name())
 	lib := library.New(workspaces)
 	cfg := api.Config{
 		Workspaces: workspaces,
@@ -65,16 +67,15 @@ func run() error {
 		Uploads:    uploads,
 		Events:     hub,
 		LegacyAPI:  legacy,
-		Video: video.New(ctx, workspaces, media.NewEncoder(os.Getenv("HW_ENCODER")),
+		Video: video.New(ctx, workspaces, encoder,
 			func(uuid string, status map[string]any) { hub.PublishRetained(uuid, "thumbnails", status) }),
 	}
-	engine, err := newStemsEngine()
+	openStems, err := stemsModel()
 	if err != nil {
 		return err
 	}
-	if engine != nil {
-		defer engine.Close()
-		cfg.Stems = separation.New(ctx, engine, workspaces, lib, api.StemsDone(hub))
+	if openStems != nil {
+		cfg.Stems = separation.New(ctx, openStems, workspaces, lib, api.StemsDone(hub))
 	}
 
 	srv := &http.Server{
@@ -108,10 +109,10 @@ func run() error {
 	return srv.Close()
 }
 
-// newStemsEngine loads the stem separation model named by STEMS_MODEL, on the
-// GPU when STEMS_CUDA_DEVICE is set. Without STEMS_MODEL it returns nil and
-// stem separation is off.
-func newStemsEngine() (*stems.Engine, error) {
+// stemsModel returns how to load the stem separation model named by
+// STEMS_MODEL, on the GPU when STEMS_CUDA_DEVICE is set, after checking once
+// that it loads. Without STEMS_MODEL it returns nil and stem separation is off.
+func stemsModel() (separation.OpenEngine, error) {
 	opts := stems.Options{
 		ModelPath:      os.Getenv("STEMS_MODEL"),
 		CUDAOpsLibrary: os.Getenv("STEMS_CUDA_OPS"),
@@ -127,12 +128,20 @@ func newStemsEngine() (*stems.Engine, error) {
 		}
 		opts.CUDA, opts.CUDADevice = true, n
 	}
-	engine, err := stems.NewEngine(opts)
+	open := func() (separation.Engine, error) {
+		engine, err := stems.NewEngine(opts)
+		if err != nil {
+			return nil, err
+		}
+		return engine, nil
+	}
+	engine, err := open()
 	if err != nil {
 		return nil, fmt.Errorf("load stems model: %w", err)
 	}
+	engine.Close()
 	slog.Info("stem separation on", "model", opts.ModelPath, "cuda", opts.CUDA)
-	return engine, nil
+	return open, nil
 }
 
 // maxUpload bounds a single uploaded file.

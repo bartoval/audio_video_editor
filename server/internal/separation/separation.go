@@ -14,6 +14,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"math"
@@ -42,7 +43,11 @@ const sampleRate = 44100
 // Engine separates audio; *stems.Engine implements it.
 type Engine interface {
 	Separate(ctx context.Context, audio [][]float32, sampleRate int, progress func(float64)) ([]stems.Stem, error)
+	Close() error
 }
+
+// OpenEngine loads the model.
+type OpenEngine func() (Engine, error)
 
 // Result is reported when a job ends: Err is nil on success.
 type Result struct {
@@ -52,8 +57,13 @@ type Result struct {
 }
 
 // Service queues and runs separation jobs.
+//
+// The model is loaded when a job arrives and freed once the queue is empty:
+// on a GPU, ONNX Runtime keeps the memory of a run (over 6 GB for SCNet) until
+// the model is closed, while loading it again takes well under a second.
 type Service struct {
-	engine  Engine
+	open    OpenEngine
+	engine  Engine // nil while idle; used by the worker only
 	ws      *workspace.Store
 	library *library.Library
 	done    func(Result)
@@ -63,8 +73,8 @@ type Service struct {
 type job struct{ uuid, audioID, id, src string }
 
 // New starts the worker; it stops when ctx ends. done is called after every job.
-func New(ctx context.Context, engine Engine, ws *workspace.Store, lib *library.Library, done func(Result)) *Service {
-	s := &Service{engine: engine, ws: ws, library: lib, done: done, queue: make(chan job, 32)}
+func New(ctx context.Context, open OpenEngine, ws *workspace.Store, lib *library.Library, done func(Result)) *Service {
+	s := &Service{open: open, ws: ws, library: lib, done: done, queue: make(chan job, 32)}
 	go s.work(ctx)
 	return s
 }
@@ -85,6 +95,7 @@ func (s *Service) Start(uuid, audioID string) (string, error) {
 }
 
 func (s *Service) work(ctx context.Context) {
+	defer s.release()
 	for {
 		select {
 		case <-ctx.Done():
@@ -98,7 +109,18 @@ func (s *Service) work(ctx context.Context) {
 				slog.Info("stems separated", "job", j.id, "audio", j.audioID, "took", time.Since(started).Round(time.Millisecond))
 			}
 			s.done(Result{UUID: j.uuid, AudioID: j.audioID, JobID: j.id, Stems: names, Err: err})
+			if len(s.queue) == 0 {
+				s.release()
+			}
 		}
+	}
+}
+
+// release frees the model, and with it the memory of its last run.
+func (s *Service) release() {
+	if s.engine != nil {
+		s.engine.Close()
+		s.engine = nil
 	}
 }
 
@@ -109,6 +131,13 @@ func (s *Service) run(ctx context.Context, j job) ([]string, error) {
 	}
 	if len(audio[0]) == 0 {
 		return nil, errors.New("no audio in file")
+	}
+	if s.engine == nil {
+		engine, err := s.open()
+		if err != nil {
+			return nil, fmt.Errorf("load stems model: %w", err)
+		}
+		s.engine = engine
 	}
 	parts, err := s.engine.Separate(ctx, audio, sampleRate, nil)
 	if err != nil {

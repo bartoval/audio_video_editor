@@ -93,34 +93,46 @@ func aspectRatio(w, h int) string {
 // Encoder holds the ffmpeg arguments of the H.264 encoder.
 type Encoder []string
 
-// NewEncoder returns the NVIDIA encoder for "h264_nvenc" and the CPU one otherwise.
-func NewEncoder(name string) Encoder {
-	if name == "h264_nvenc" {
-		return Encoder{"-c:v", "h264_nvenc", "-preset", "p4", "-cq", "23", "-rc", "vbr", "-movflags", "+faststart"}
+var (
+	nvenc = Encoder{"-c:v", "h264_nvenc", "-preset", "p4", "-cq", "23", "-rc", "vbr", "-movflags", "+faststart"}
+	x264  = Encoder{"-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-movflags", "+faststart"}
+)
+
+// NewEncoder picks the H.264 encoder: "h264_nvenc" or "libx264" when named,
+// otherwise NVENC if this machine can use it (2.5 times faster than x264 on
+// a 1080p HEVC upload), else x264.
+func NewEncoder(ctx context.Context, name string) Encoder {
+	switch name {
+	case "h264_nvenc":
+		return nvenc
+	case "libx264":
+		return x264
 	}
-	return Encoder{"-c:v", "libx264", "-preset", "medium", "-crf", "23", "-movflags", "+faststart"}
+	// One black frame through NVENC tells whether the GPU and driver support it.
+	_, err := run(ctx, "ffmpeg", "-nostdin", "-v", "error", "-f", "lavfi", "-i", "color=size=256x256:duration=0.04",
+		"-c:v", "h264_nvenc", "-f", "null", "-")
+	if err != nil {
+		return x264
+	}
+	return nvenc
 }
 
-// MuteVideo writes the video stream of in to out as a browser-ready MP4
-// without audio. Web codecs are copied, the others re-encoded.
-func MuteVideo(ctx context.Context, in, out string, info VideoInfo, enc Encoder) error {
-	webCodec := info.Codec == "h264" || info.Codec == "vp9" || info.Codec == "av1"
-	if webCodec && !info.HasAudio && hasFaststart(in) {
+// Name is the encoder name, for logs.
+func (e Encoder) Name() string { return e[1] }
+
+// CanCopy reports whether browsers play the video stream as it is, so the
+// muted copy needs no re-encoding.
+func CanCopy(info VideoInfo) bool {
+	return info.Codec == "h264" || info.Codec == "vp9" || info.Codec == "av1"
+}
+
+// CopyMuted writes the video stream of in to out as an MP4 without audio and
+// with the index first, copying the stream (see CanCopy).
+func CopyMuted(ctx context.Context, in, out string, info VideoInfo) error {
+	if !info.HasAudio && hasFaststart(in) {
 		return copyFile(in, out)
 	}
-	args := []string{"-i", in, "-an"}
-	if webCodec {
-		args = append(args, "-c:v", "copy", "-movflags", "+faststart")
-	} else {
-		args = append(args, enc...)
-	}
-	return encode(ctx, out, args)
-}
-
-// SmallVideo writes a muted copy of in scaled to the given height.
-func SmallVideo(ctx context.Context, in, out string, height int, enc Encoder) error {
-	args := append([]string{"-i", in, "-an", "-vf", fmt.Sprintf("scale=-2:%d", height)}, enc...)
-	return encode(ctx, out, args)
+	return encode(ctx, out, []string{"-i", in, "-an", "-c:v", "copy", "-movflags", "+faststart"})
 }
 
 // ExtractFrame writes the frame at t seconds as WebP, scaled to the given height.
@@ -130,43 +142,97 @@ func ExtractFrame(ctx context.Context, video, out string, t float64, height int)
 }
 
 // TileSet is one series of thumbnail sheets: a frame every 1/FPS seconds,
-// Cols x Rows frames per sheet, written to Dir/tile_<n>.webp from 0. The
-// highest FPS must be a multiple of every other.
+// written to Dir/tile_<n>.webp from 0. The highest FPS of a Plan must be a
+// multiple of every other.
 type TileSet struct {
 	Dir string
 	FPS float64
 }
 
-// Tiles decodes the video once and writes every tile set. progress receives
-// the position reached, in seconds.
-func Tiles(ctx context.Context, video string, sets []TileSet, height, cols, rows, quality int, progress func(float64)) error {
+// Plan lists what Process derives from a video.
+type Plan struct {
+	Encoder Encoder
+
+	Muted string // when set, the video re-encoded without audio
+
+	Small       string // low resolution copy without audio
+	SmallHeight int    // even
+
+	Tiles      []TileSet
+	TileHeight int // of one thumbnail
+	Cols, Rows int // thumbnails per sheet
+	Quality    int // WebP
+
+	Progress func(seconds float64) // position reached in the video
+}
+
+// Process decodes the video once and writes everything in the plan. The
+// videos appear only if the whole run succeeds.
+func Process(ctx context.Context, video string, p Plan) error {
+	type output struct{ path, tmp string }
+	var outputs []*output
+	temp := func(path string) (string, error) {
+		f, err := files.Temp(path)
+		if err != nil {
+			return "", err
+		}
+		f.Close()
+		outputs = append(outputs, &output{path, f.Name()})
+		return f.Name(), nil
+	}
+	defer func() {
+		for _, o := range outputs {
+			os.Remove(o.tmp) // no-op once renamed
+		}
+	}()
+
+	// One decoder, split into the muted copy, the small copy and the
+	// thumbnails; the thumbnail branch is decimated and scaled once, then split
+	// into one branch per tile set plus one that only advances the progress clock.
+	branches := []string{"[th]", "[sm]"}
+	if p.Muted != "" {
+		branches = append(branches, "[mu]")
+	}
 	maxFPS := 0.0
-	for _, s := range sets {
+	for _, s := range p.Tiles {
 		maxFPS = max(maxFPS, s.FPS)
 	}
-	// Decimate and scale once, then split: one branch per set plus one that
-	// only advances the progress clock smoothly.
 	var graph strings.Builder
-	fmt.Fprintf(&graph, "[0:v]fps=%s,scale=-1:%d,split=%d", formatFloat(maxFPS), height, len(sets)+1)
-	for i := range len(sets) + 1 {
-		fmt.Fprintf(&graph, "[s%d]", i)
+	fmt.Fprintf(&graph, "[0:v]split=%d%s", len(branches), strings.Join(branches, ""))
+	fmt.Fprintf(&graph, ";[sm]scale=-2:%d[small]", p.SmallHeight)
+	fmt.Fprintf(&graph, ";[th]fps=%s,scale=-1:%d,split=%d", formatFloat(maxFPS), p.TileHeight, len(p.Tiles)+1)
+	for i := range len(p.Tiles) + 1 {
+		fmt.Fprintf(&graph, "[t%d]", i)
 	}
 	// Each set keeps every n-th decimated frame: unlike a second fps filter,
 	// this emits the first frame of a sparse set even on short videos.
-	for i, s := range sets {
+	for i, s := range p.Tiles {
 		every := max(1, int(math.Round(maxFPS/s.FPS)))
-		fmt.Fprintf(&graph, ";[s%d]select='not(mod(n\\,%d))',tile=%dx%d[o%d]", i, every, cols, rows, i)
+		fmt.Fprintf(&graph, ";[t%d]select='not(mod(n\\,%d))',tile=%dx%d[o%d]", i, every, p.Cols, p.Rows, i)
 	}
-	args := []string{"-nostdin", "-v", "error", "-i", video, "-filter_complex", graph.String()}
-	for i, s := range sets {
+
+	args := []string{"-nostdin", "-v", "error", "-y", "-i", video, "-filter_complex", graph.String()}
+	if p.Muted != "" {
+		tmp, err := temp(p.Muted)
+		if err != nil {
+			return err
+		}
+		args = append(append(append(args, "-map", "[mu]", "-an"), p.Encoder...), tmp)
+	}
+	tmp, err := temp(p.Small)
+	if err != nil {
+		return err
+	}
+	args = append(append(append(args, "-map", "[small]", "-an"), p.Encoder...), tmp)
+	for i, s := range p.Tiles {
 		if err := os.MkdirAll(s.Dir, 0o755); err != nil {
 			return err
 		}
 		args = append(args, "-map", fmt.Sprintf("[o%d]", i), "-fps_mode", "passthrough",
-			"-c:v", "libwebp", "-quality", strconv.Itoa(quality), "-start_number", "0",
+			"-c:v", "libwebp", "-quality", strconv.Itoa(p.Quality), "-start_number", "0",
 			s.Dir+"/tile_%d.webp")
 	}
-	args = append(args, "-map", fmt.Sprintf("[s%d]", len(sets)), "-f", "null", "-", "-progress", "pipe:1")
+	args = append(args, "-map", fmt.Sprintf("[t%d]", len(p.Tiles)), "-f", "null", "-", "-progress", "pipe:1")
 
 	cmd := exec.CommandContext(ctx, "ffmpeg", args...)
 	var stderr bytes.Buffer
@@ -180,14 +246,19 @@ func Tiles(ctx context.Context, video string, sets []TileSet, height, cols, rows
 	}
 	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {
-		if v, ok := strings.CutPrefix(scanner.Text(), "out_time_us="); ok && progress != nil {
+		if v, ok := strings.CutPrefix(scanner.Text(), "out_time_us="); ok && p.Progress != nil {
 			if us, err := strconv.ParseInt(v, 10, 64); err == nil && us > 0 {
-				progress(float64(us) / 1e6)
+				p.Progress(float64(us) / 1e6)
 			}
 		}
 	}
 	if err := cmd.Wait(); err != nil {
 		return fmt.Errorf("ffmpeg: %w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	for _, o := range outputs {
+		if err := os.Rename(o.tmp, o.path); err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -16,6 +16,12 @@ func TestVideo(t *testing.T) {
 	if _, err := exec.LookPath("ffmpeg"); err != nil {
 		t.Skip("ffmpeg not installed")
 	}
+	// H.264 is copied; MPEG-4 Part 2 is re-encoded in the same pass as the rest.
+	t.Run("copy", func(t *testing.T) { testVideo(t, "clip.mkv", "libx264") })
+	t.Run("reencode", func(t *testing.T) { testVideo(t, "clip.avi", "mpeg4") })
+}
+
+func testVideo(t *testing.T, name, codec string) {
 	srv, root := newTestServer(t)
 	_, body := call(t, srv, "POST", "/api/v1/workspaces", `{"title":"Clip"}`)
 	var ws struct{ UUID string }
@@ -26,10 +32,10 @@ func TestVideo(t *testing.T) {
 		t.Errorf("metadata before upload: status %d, want 404", status)
 	}
 
-	// 25 s of 640x360 H.264 with audio, in an MKV: copied without re-encoding.
-	src := filepath.Join(t.TempDir(), "clip.mkv")
+	// 25 s of 640x360 video with audio.
+	src := filepath.Join(t.TempDir(), name)
 	err := exec.Command("ffmpeg", "-v", "error", "-f", "lavfi", "-i", "testsrc2=size=640x360:rate=25:duration=25",
-		"-f", "lavfi", "-i", "sine=duration=25", "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
+		"-f", "lavfi", "-i", "sine=duration=25", "-c:v", codec, "-pix_fmt", "yuv420p",
 		"-c:a", "aac", "-metadata", "title=Test clip", src).Run()
 	if err != nil {
 		t.Fatal(err)
@@ -38,7 +44,7 @@ func TestVideo(t *testing.T) {
 	const chunk = 64 << 10
 	var last map[string]any
 	for n := 1; n <= (len(data)+chunk-1)/chunk; n++ {
-		last = uploadChunk(t, srv.URL+base+"/file", "vid-1", "clip.mkv", data, n, chunk)
+		last = uploadChunk(t, srv.URL+base+"/file", "vid-1", name, data, n, chunk)
 	}
 	if last["status"] != "complete" {
 		t.Fatalf("upload: %v", last)
@@ -128,6 +134,10 @@ func TestVideo(t *testing.T) {
 	}
 	if got := probe("/file"); got != "video,360" {
 		t.Errorf("video streams %q", got)
+	}
+	if out, _ := exec.Command("ffprobe", "-v", "error", "-show_entries", "stream=codec_name", "-of", "csv=p=0",
+		srv.URL+base+"/file").Output(); strings.TrimSpace(string(out)) != "h264" {
+		t.Errorf("video codec %q, want h264", out)
 	}
 	if got := probe("/small"); got != "video,156" {
 		t.Errorf("small video streams %q", got)

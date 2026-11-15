@@ -47,9 +47,10 @@ func newTestServerWith(t *testing.T, engine separation.Engine) (*httptest.Server
 	lib := library.New(store)
 	srv := httptest.NewServer(New(Config{
 		Workspaces: store, Library: lib, Uploads: uploads, Events: hub, LegacyAPI: target,
-		Video: video.New(t.Context(), store, media.NewEncoder(""),
+		Video: video.New(t.Context(), store, media.NewEncoder(t.Context(), "libx264"),
 			func(uuid string, status map[string]any) { hub.PublishRetained(uuid, "thumbnails", status) }),
-		Stems: separation.New(t.Context(), engine, store, lib, StemsDone(hub)),
+		Stems: separation.New(t.Context(), func() (separation.Engine, error) { return engine, nil },
+			store, lib, StemsDone(hub)),
 	}))
 	t.Cleanup(srv.Close)
 	return srv, root

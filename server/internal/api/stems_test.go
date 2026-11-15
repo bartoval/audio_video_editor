@@ -22,6 +22,8 @@ import (
 // fakeEngine splits the input into four stems scaled by 1/4.
 type fakeEngine struct{ err error }
 
+func (fakeEngine) Close() error { return nil }
+
 func (f fakeEngine) Separate(_ context.Context, audio [][]float32, _ int, _ func(float64)) ([]stems.Stem, error) {
 	if f.err != nil {
 		return nil, f.err
