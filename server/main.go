@@ -21,8 +21,10 @@ import (
 	"github.com/bartoval/audio_video_editor/server/internal/api"
 	"github.com/bartoval/audio_video_editor/server/internal/events"
 	"github.com/bartoval/audio_video_editor/server/internal/library"
+	"github.com/bartoval/audio_video_editor/server/internal/media"
 	"github.com/bartoval/audio_video_editor/server/internal/separation"
 	"github.com/bartoval/audio_video_editor/server/internal/upload"
+	"github.com/bartoval/audio_video_editor/server/internal/video"
 	"github.com/bartoval/audio_video_editor/server/internal/workspace"
 )
 
@@ -63,6 +65,8 @@ func run() error {
 		Uploads:    uploads,
 		Events:     hub,
 		LegacyAPI:  legacy,
+		Video: video.New(ctx, workspaces, media.NewEncoder(os.Getenv("HW_ENCODER")),
+			func(uuid string, status map[string]any) { hub.PublishRetained(uuid, "thumbnails", status) }),
 	}
 	engine, err := newStemsEngine()
 	if err != nil {

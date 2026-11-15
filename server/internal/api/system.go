@@ -4,25 +4,8 @@ import (
 	"net/http"
 	"os"
 	"time"
-)
 
-// thumbScale is a timeline zoom level and the rate at which thumbnails are
-// extracted for it.
-type thumbScale struct {
-	Scale string
-	FPS   float64
-}
-
-var thumbScales = []thumbScale{
-	{"0.01", 2}, {"0.02", 1}, {"0.05", 0.4}, {"0.1", 0.2},
-	{"0.2", 0.1}, {"0.5", 0.04}, {"1", 0.02}, {"2", 0.01},
-}
-
-const (
-	defaultThumbScale = "0.1" // generated first
-	thumbTileCols     = 10
-	thumbTileRows     = 10
-	thumbExt          = ".webp"
+	"github.com/bartoval/audio_video_editor/server/internal/video"
 )
 
 // health reports whether the server can reach the project storage.
@@ -47,16 +30,16 @@ func (s *server) config(w http.ResponseWriter, _ *http.Request) {
 		Scale      string `json:"scale"`
 		IsPriority bool   `json:"isPriority"`
 	}
-	scales := make([]scale, len(thumbScales))
-	for i, t := range thumbScales {
-		scales[i] = scale{t.Scale, t.Scale == defaultThumbScale}
+	scales := make([]scale, len(video.Scales))
+	for i, t := range video.Scales {
+		scales[i] = scale{t.Name, t.Name == video.DefaultScale}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"thumbs": map[string]any{
 			"scales":       scales,
-			"defaultScale": defaultThumbScale,
-			"tiles":        map[string]int{"cols": thumbTileCols, "rows": thumbTileRows},
-			"extension":    thumbExt,
+			"defaultScale": video.DefaultScale,
+			"tiles":        map[string]int{"cols": video.TileCols, "rows": video.TileRows},
+			"extension":    video.ThumbExt,
 		},
 	})
 }

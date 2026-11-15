@@ -162,3 +162,11 @@ func run(ctx context.Context, name string, args ...string) ([]byte, error) {
 }
 
 func formatFloat(f float64) string { return strconv.FormatFloat(f, 'f', -1, 64) }
+
+// FormatDuration formats seconds as MM:SS.cc, like the Node API.
+func FormatDuration(seconds float64) string {
+	minutes := int(seconds/60) % 60
+	secs := int(seconds) % 60
+	centis := int(math.Mod(seconds*100, 100))
+	return fmt.Sprintf("%02d:%02d.%02d", minutes, secs, centis)
+}

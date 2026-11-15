@@ -171,7 +171,7 @@ func (l *Library) Import(ctx context.Context, uuid string, in Import) (ImportRes
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return ImportResult{}, err
 	}
-	if err := move(in.Src, path); err != nil {
+	if err := files.Move(in.Src, path); err != nil {
 		return ImportResult{}, err
 	}
 
@@ -185,7 +185,7 @@ func (l *Library) Import(ctx context.Context, uuid string, in Import) (ImportRes
 		slog.Warn("probe audio", "id", id, "err", err)
 	} else {
 		track.Duration = info.Duration * 1000
-		track.DurationFormatted = formatDuration(info.Duration)
+		track.DurationFormatted = media.FormatDuration(info.Duration)
 		track.Bitrate, track.Codec = info.Bitrate, info.Codec
 		track.SampleRate, track.BitDepth = info.SampleRate, info.BitDepth
 		track.ChannelLayout = info.ChannelLayout
@@ -365,14 +365,6 @@ func idNumber(f float64) string {
 	return strings.ReplaceAll(strconv.FormatFloat(f, 'f', -1, 64), ".", "_")
 }
 
-// formatDuration formats seconds as MM:SS.cc, like the Node API.
-func formatDuration(seconds float64) string {
-	minutes := int(seconds/60) % 60
-	secs := int(seconds) % 60
-	centis := int(math.Mod(seconds*100, 100))
-	return fmt.Sprintf("%02d:%02d.%02d", minutes, secs, centis)
-}
-
 func hashFile(path string) (hash string, size int64, err error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -382,34 +374,6 @@ func hashFile(path string) (hash string, size int64, err error) {
 	h := sha1.New()
 	size, err = io.Copy(h, f)
 	return hex.EncodeToString(h.Sum(nil)), size, err
-}
-
-// move renames src to dst, copying when they are on different file systems.
-func move(src, dst string) error {
-	if err := os.Rename(src, dst); err == nil {
-		return nil
-	}
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-	tmp, err := files.Temp(dst)
-	if err != nil {
-		return err
-	}
-	defer os.Remove(tmp.Name())
-	if _, err := io.Copy(tmp, in); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	if err := os.Rename(tmp.Name(), dst); err != nil {
-		return err
-	}
-	return os.Remove(src)
 }
 
 func isFile(path string) bool {

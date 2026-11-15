@@ -48,43 +48,12 @@ func (s *server) listAudio(w http.ResponseWriter, r *http.Request) {
 // uploadAudio receives one chunk of an audio file and, with the last one,
 // adds the file to the library.
 func (s *server) uploadAudio(w http.ResponseWriter, r *http.Request) {
-	r.Body = http.MaxBytesReader(w, r.Body, maxChunkRequest)
-	if err := r.ParseMultipartForm(chunkMemory); err != nil {
-		writeError(w, fmt.Errorf("%w: %v", upload.ErrInvalid, err))
+	res, ok := s.receiveChunk(w, r)
+	if !ok {
 		return
 	}
-	defer r.MultipartForm.RemoveAll()
-
-	filename := r.FormValue("flowFilename")
-	if !uploadExts[strings.ToLower(filepath.Ext(filename))] {
-		writeError(w, fmt.Errorf("%w: %q", errFileType, filepath.Ext(filename)))
-		return
-	}
-	data, _, err := r.FormFile("file")
-	if err != nil {
-		writeError(w, fmt.Errorf("%w: missing file", upload.ErrInvalid))
-		return
-	}
-	defer data.Close()
-
-	number, _ := strconv.Atoi(r.FormValue("flowChunkNumber"))
-	chunkSize, _ := strconv.ParseInt(r.FormValue("flowChunkSize"), 10, 64)
-	totalSize, _ := strconv.ParseInt(r.FormValue("flowTotalSize"), 10, 64)
-	res, err := s.cfg.Uploads.Add(upload.Chunk{
-		ID: r.FormValue("flowIdentifier"), Number: number,
-		ChunkSize: chunkSize, TotalSize: totalSize, Data: data,
-	})
-	if err != nil {
-		writeError(w, err)
-		return
-	}
-	if !res.Done {
-		writeJSON(w, http.StatusOK, map[string]any{"status": "partly_done", "chunk": number, "total": res.Total})
-		return
-	}
-
 	imported, err := s.cfg.Library.Import(r.Context(), r.PathValue("uuid"), library.Import{
-		Src: res.Path, Filename: filename,
+		Src: res.Path, Filename: r.FormValue("flowFilename"),
 		Provider: r.FormValue("provider"), Source: r.FormValue("source"),
 	})
 	if err != nil {
@@ -96,6 +65,47 @@ func (s *server) uploadAudio(w http.ResponseWriter, r *http.Request) {
 		status = "duplicate"
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"status": status, "file": imported.ID, "metadata": imported.Track})
+}
+
+// receiveChunk stores one chunk of a ChunkedUploader upload. It answers the
+// request itself unless the chunk completed the file: then ok is true, the
+// form stays readable and res.Path is the assembled file.
+func (s *server) receiveChunk(w http.ResponseWriter, r *http.Request) (res upload.Result, ok bool) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxChunkRequest)
+	if err := r.ParseMultipartForm(chunkMemory); err != nil {
+		writeError(w, fmt.Errorf("%w: %v", upload.ErrInvalid, err))
+		return res, false
+	}
+	defer r.MultipartForm.RemoveAll() // temporary files only: form values stay readable
+
+	filename := r.FormValue("flowFilename")
+	if !uploadExts[strings.ToLower(filepath.Ext(filename))] {
+		writeError(w, fmt.Errorf("%w: %q", errFileType, filepath.Ext(filename)))
+		return res, false
+	}
+	data, _, err := r.FormFile("file")
+	if err != nil {
+		writeError(w, fmt.Errorf("%w: missing file", upload.ErrInvalid))
+		return res, false
+	}
+	defer data.Close()
+
+	number, _ := strconv.Atoi(r.FormValue("flowChunkNumber"))
+	chunkSize, _ := strconv.ParseInt(r.FormValue("flowChunkSize"), 10, 64)
+	totalSize, _ := strconv.ParseInt(r.FormValue("flowTotalSize"), 10, 64)
+	res, err = s.cfg.Uploads.Add(upload.Chunk{
+		ID: r.FormValue("flowIdentifier"), Number: number,
+		ChunkSize: chunkSize, TotalSize: totalSize, Data: data,
+	})
+	if err != nil {
+		writeError(w, err)
+		return res, false
+	}
+	if !res.Done {
+		writeJSON(w, http.StatusOK, map[string]any{"status": "partly_done", "chunk": number, "total": res.Total})
+		return res, false
+	}
+	return res, true
 }
 
 func (s *server) deleteAudio(w http.ResponseWriter, r *http.Request) {
@@ -230,7 +240,9 @@ func serveFile(w http.ResponseWriter, r *http.Request, path, contentType, etag, 
 	}
 	h := w.Header()
 	h.Set("Content-Type", contentType)
-	h.Set("Cache-Control", cacheControl)
+	if cacheControl != "" {
+		h.Set("Cache-Control", cacheControl)
+	}
 	if etag != "" {
 		h.Set("ETag", etag)
 	}

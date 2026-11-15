@@ -14,6 +14,7 @@ import (
 	"github.com/bartoval/audio_video_editor/server/internal/library"
 	"github.com/bartoval/audio_video_editor/server/internal/separation"
 	"github.com/bartoval/audio_video_editor/server/internal/upload"
+	"github.com/bartoval/audio_video_editor/server/internal/video"
 	"github.com/bartoval/audio_video_editor/server/internal/workspace"
 )
 
@@ -23,6 +24,7 @@ type Config struct {
 	Library    *library.Library
 	Uploads    *upload.Receiver
 	Events     *events.Hub
+	Video      *video.Service
 	Stems      *separation.Service // nil when no model is configured
 	// LegacyAPI is the Node API that still serves the routes not migrated yet.
 	LegacyAPI *url.URL
@@ -50,6 +52,16 @@ func New(cfg Config) http.Handler {
 	mux.HandleFunc("PUT /api/v1/workspaces/{uuid}/state", s.saveState)
 	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/events", s.subscribeEvents)
 
+	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/video", s.getVideo)
+	mux.HandleFunc("DELETE /api/v1/workspaces/{uuid}/video", s.deleteVideo)
+	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/video/file", s.getVideoFile)
+	mux.HandleFunc("POST /api/v1/workspaces/{uuid}/video/file", s.uploadVideo)
+	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/video/small", s.getSmallVideo)
+	mux.HandleFunc("POST /api/v1/workspaces/{uuid}/video/convert", s.convertVideo)
+	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/video/convert", s.conversionStatus)
+	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/video/thumbnails/{id}", s.getThumb)
+	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/video/thumbnails/{scale}/{file}", s.getThumbTile)
+
 	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/audio", s.listAudio)
 	mux.HandleFunc("POST /api/v1/workspaces/{uuid}/audio", s.uploadAudio)
 	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/audio/{id}", s.getAudio)
@@ -58,6 +70,8 @@ func New(cfg Config) http.Handler {
 	mux.HandleFunc("POST /api/v1/workspaces/{uuid}/audio/{id}/stretch", s.stretchAudio)
 	mux.HandleFunc("POST /api/v1/workspaces/{uuid}/audio/{id}/stems", s.startStems)
 	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/audio/{id}/stems/{jobId}/download", s.downloadStems)
+
+	mux.HandleFunc("POST /api/v1/internal/jobs/callback", s.jobCallback)
 
 	mux.Handle("/api/", s.legacy)
 	return mux
@@ -103,7 +117,7 @@ func writeError(w http.ResponseWriter, err error) {
 	status, code := http.StatusInternalServerError, "INTERNAL_ERROR"
 	var tooLarge *http.MaxBytesError
 	switch {
-	case errors.Is(err, workspace.ErrNotFound), errors.Is(err, library.ErrNotFound):
+	case errors.Is(err, workspace.ErrNotFound), errors.Is(err, library.ErrNotFound), errors.Is(err, video.ErrNotFound):
 		status, code = http.StatusNotFound, "NOT_FOUND"
 	case errors.Is(err, workspace.ErrInvalid), errors.Is(err, library.ErrInvalid), errors.Is(err, upload.ErrInvalid):
 		status, code = http.StatusBadRequest, "VALIDATION_ERROR"

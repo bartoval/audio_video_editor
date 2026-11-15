@@ -108,10 +108,6 @@ func TestStems(t *testing.T) {
 
 		events := eventStream(t, srv.URL+base+"/events")
 		waitEvent(t, events, "connected")
-		// Events still emitted by the Node API arrive on the same stream.
-		if p := waitEvent(t, events, "thumbnails"); p["status"] != "ready" {
-			t.Errorf("relayed thumbnails event: %v", p)
-		}
 
 		status, body := call(t, srv, "POST", base+"/audio/"+id+"/stems", `{}`)
 		var started struct{ JobID string }

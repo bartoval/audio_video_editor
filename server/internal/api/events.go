@@ -1,13 +1,9 @@
 package api
 
 import (
-	"bufio"
-	"bytes"
-	"context"
-	"io"
+	"encoding/json"
 	"log/slog"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/bartoval/audio_video_editor/server/internal/events"
@@ -28,8 +24,6 @@ func (s *server) subscribeEvents(w http.ResponseWriter, r *http.Request) {
 
 	local, unsubscribe := s.cfg.Events.Subscribe(uuid)
 	defer unsubscribe()
-	legacy := make(chan []byte, 16)
-	go relayLegacyEvents(r.Context(), s.cfg.LegacyAPI, uuid, legacy)
 
 	rc := http.NewResponseController(w)
 	send := func(msg []byte) bool {
@@ -51,7 +45,6 @@ func (s *server) subscribeEvents(w http.ResponseWriter, r *http.Request) {
 		case <-r.Context().Done():
 			return
 		case msg = <-local:
-		case msg = <-legacy:
 		case <-heartbeat.C:
 			msg = []byte(": heartbeat\n\n")
 		}
@@ -61,56 +54,41 @@ func (s *server) subscribeEvents(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// relayLegacyEvents forwards the events the Node API still emits (thumbnails,
-// ML worker callbacks) until ctx ends, reconnecting when the stream drops.
-// Remove it together with the Node API.
-func relayLegacyEvents(ctx context.Context, legacy *url.URL, uuid string, out chan<- []byte) {
-	streamURL := legacy.JoinPath("api/v1/workspaces", uuid, "events").String()
-	for ctx.Err() == nil {
-		if err := relayOnce(ctx, streamURL, out); err != nil && ctx.Err() == nil {
-			slog.Debug("legacy event stream", "workspace", uuid, "err", err)
-		}
-		select {
-		case <-ctx.Done():
-		case <-time.After(2 * time.Second):
-		}
+// jobCallback receives the end of an ML worker job (transcription, scene
+// detection) and announces it to the workspace as "job:completed".
+func (s *server) jobCallback(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	var body map[string]any
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxStateSize)).Decode(&body); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid body"})
+		return
 	}
-}
-
-func relayOnce(ctx context.Context, streamURL string, out chan<- []byte) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, streamURL, nil)
-	if err != nil {
-		return err
+	uuid, jobID := q.Get("uuid"), body["job_id"]
+	if uuid == "" || jobID == nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "Missing uuid or job_id"})
+		return
 	}
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
+	jobType := q.Get("type")
+	if jobType == "" {
+		jobType = "stems"
 	}
-	defer res.Body.Close()
-
-	// SSE messages end with a blank line. Comments (heartbeats) and the
-	// legacy "connected" message are dropped: the Go stream sends its own.
-	in := bufio.NewReader(res.Body)
-	var msg bytes.Buffer
-	for {
-		line, err := in.ReadBytes('\n')
-		if err != nil {
-			return err
-		}
-		if len(bytes.TrimSpace(line)) > 0 {
-			if line[0] != ':' {
-				msg.Write(line)
-			}
-			continue
-		}
-		if msg.Len() > 0 && !bytes.Contains(msg.Bytes(), []byte(`"type":"connected"`)) {
-			msg.WriteString("\n")
-			select {
-			case out <- bytes.Clone(msg.Bytes()):
-			case <-ctx.Done():
-				return io.EOF
-			}
-		}
-		msg.Reset()
+	payload := map[string]any{
+		"type": jobType, "jobId": jobID, "audioId": q.Get("audioId"),
+		"status": body["status"], "error": body["error"],
 	}
+	var fields []string
+	switch jobType {
+	case "stems":
+		fields = []string{"stems"}
+	case "transcribe":
+		fields = []string{"text", "segments", "language", "duration"}
+	case "scene-detect":
+		fields = []string{"scenes", "fps", "duration"}
+	}
+	for _, f := range fields {
+		payload[f] = body[f]
+	}
+	slog.Info("job callback", "workspace", uuid, "job", jobID, "type", jobType, "status", body["status"])
+	s.cfg.Events.Publish(uuid, "job:completed", payload)
+	writeJSON(w, http.StatusOK, map[string]bool{"received": true})
 }

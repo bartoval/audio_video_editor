@@ -52,7 +52,7 @@ cd studio && npm test && npm run typecheck
 | `ROOT_PATH` / `DATA_DIR` | server | `../studio-api` / `projects` | Workspace storage, shared with studio-api |
 | `STEMS_MODEL` | server | none | [steammeros](https://github.com/bartoval/steammeros) model; empty turns stem separation off. GPU: also `STEMS_CUDA_DEVICE`, `STEMS_CUDA_OPS` |
 | `STEMS_ORT_LIBRARY` | server | system | ONNX Runtime shared library |
-| `HW_ENCODER` | studio-api | none | `h264_nvenc` for NVIDIA GPUs |
+| `HW_ENCODER` | server | none (libx264) | `h264_nvenc` for NVIDIA GPUs |
 | `WHISPER_MODEL` | ml-worker | `base` | `tiny` … `large` |
 | `INTERNAL_API_URL` | studio-api | `http://localhost:8080` | Callback URL for the ML worker |
 

@@ -12,15 +12,18 @@ import (
 
 // Hub fans events out to the subscribers of each workspace.
 type Hub struct {
-	mu   sync.Mutex
-	subs map[string]map[chan []byte]struct{}
+	mu       sync.Mutex
+	subs     map[string]map[chan []byte]struct{}
+	retained map[string][]byte // last retained message per workspace
 }
 
 // NewHub returns an empty hub.
-func NewHub() *Hub { return &Hub{subs: map[string]map[chan []byte]struct{}{}} }
+func NewHub() *Hub {
+	return &Hub{subs: map[string]map[chan []byte]struct{}{}, retained: map[string][]byte{}}
+}
 
 // Subscribe returns the channel of SSE messages for a workspace and a function
-// to stop receiving them.
+// to stop receiving them. The last retained message, if any, comes first.
 func (h *Hub) Subscribe(uuid string) (<-chan []byte, func()) {
 	ch := make(chan []byte, 16)
 	h.mu.Lock()
@@ -28,6 +31,9 @@ func (h *Hub) Subscribe(uuid string) (<-chan []byte, func()) {
 		h.subs[uuid] = map[chan []byte]struct{}{}
 	}
 	h.subs[uuid][ch] = struct{}{}
+	if msg := h.retained[uuid]; msg != nil {
+		ch <- msg
+	}
 	h.mu.Unlock()
 
 	return ch, func() {
@@ -43,6 +49,17 @@ func (h *Hub) Subscribe(uuid string) (<-chan []byte, func()) {
 // Publish sends an event to every subscriber of a workspace. A subscriber
 // that does not keep up loses the event instead of blocking the others.
 func (h *Hub) Publish(uuid, typ string, payload any) {
+	h.publish(uuid, typ, payload, false)
+}
+
+// PublishRetained publishes an event and keeps it for later subscribers of
+// the workspace, replacing the previous retained one. Used for progress
+// that a page opened later must still see.
+func (h *Hub) PublishRetained(uuid, typ string, payload any) {
+	h.publish(uuid, typ, payload, true)
+}
+
+func (h *Hub) publish(uuid, typ string, payload any, retain bool) {
 	msg, err := Message(typ, payload)
 	if err != nil {
 		slog.Error("encode event", "type", typ, "err", err)
@@ -50,6 +67,9 @@ func (h *Hub) Publish(uuid, typ string, payload any) {
 	}
 	h.mu.Lock()
 	defer h.mu.Unlock()
+	if retain {
+		h.retained[uuid] = msg
+	}
 	for ch := range h.subs[uuid] {
 		select {
 		case ch <- msg:

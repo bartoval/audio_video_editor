@@ -13,8 +13,10 @@ import (
 
 	"github.com/bartoval/audio_video_editor/server/internal/events"
 	"github.com/bartoval/audio_video_editor/server/internal/library"
+	"github.com/bartoval/audio_video_editor/server/internal/media"
 	"github.com/bartoval/audio_video_editor/server/internal/separation"
 	"github.com/bartoval/audio_video_editor/server/internal/upload"
+	"github.com/bartoval/audio_video_editor/server/internal/video"
 	"github.com/bartoval/audio_video_editor/server/internal/workspace"
 )
 
@@ -22,19 +24,11 @@ func newTestServer(t *testing.T) (*httptest.Server, string) {
 	return newTestServerWith(t, fakeEngine{})
 }
 
-// newTestServerWith starts the API in front of a fake Node API, which answers
-// "legacy <method> <path>" and streams one thumbnails event on /events.
+// newTestServerWith starts the API in front of a fake Node API, which
+// answers "legacy <method> <path>".
 func newTestServerWith(t *testing.T, engine separation.Engine) (*httptest.Server, string) {
 	t.Helper()
 	legacy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, "/events") {
-			w.Header().Set("Content-Type", "text/event-stream")
-			io.WriteString(w, "event: message\ndata: {\"type\":\"connected\",\"payload\":{}}\n\n: heartbeat\n\n")
-			io.WriteString(w, "event: message\ndata: {\"type\":\"thumbnails\",\"payload\":{\"status\":\"ready\"}}\n\n")
-			w.(http.Flusher).Flush()
-			<-r.Context().Done()
-			return
-		}
 		io.WriteString(w, "legacy "+r.Method+" "+r.URL.Path)
 	}))
 	t.Cleanup(legacy.Close)
@@ -53,6 +47,8 @@ func newTestServerWith(t *testing.T, engine separation.Engine) (*httptest.Server
 	lib := library.New(store)
 	srv := httptest.NewServer(New(Config{
 		Workspaces: store, Library: lib, Uploads: uploads, Events: hub, LegacyAPI: target,
+		Video: video.New(t.Context(), store, media.NewEncoder(""),
+			func(uuid string, status map[string]any) { hub.PublishRetained(uuid, "thumbnails", status) }),
 		Stems: separation.New(t.Context(), engine, store, lib, StemsDone(hub)),
 	}))
 	t.Cleanup(srv.Close)
@@ -74,7 +70,7 @@ func call(t *testing.T, srv *httptest.Server, method, path, body string) (int, s
 func TestRouting(t *testing.T) {
 	srv, _ := newTestServer(t)
 	for _, tc := range []struct{ method, path, want string }{
-		{"GET", "/api/v1/workspaces/x/video", "legacy GET /api/v1/workspaces/x/video"},
+		{"POST", "/api/v1/workspaces/x/video/scene-detect", "legacy POST /api/v1/workspaces/x/video/scene-detect"},
 		{"GET", "/api/v1/workspaces/x/audio/a/stretch", "legacy GET /api/v1/workspaces/x/audio/a/stretch"},
 		{"GET", "/api/v1/workspaces/x", "legacy GET /api/v1/workspaces/x"},
 		{"POST", "/api/v1/health", "legacy POST /api/v1/health"},
