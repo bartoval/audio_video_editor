@@ -1,6 +1,6 @@
 # Studio
 
-Browser-based video/audio editor: multi-track timeline, waveforms, time-stretch, stem separation (Demucs) and transcription (Whisper).
+Browser-based video/audio editor: multi-track timeline, waveforms, time-stretch, stem separation ([steammeros](https://github.com/bartoval/steammeros)) and transcription (Whisper).
 
 Single-user, no authentication: run it locally or behind a protected network, never exposed publicly.
 
@@ -50,6 +50,8 @@ cd studio && npm test && npm run typecheck
 | `PORT` | server, studio-api | `8080` | Use `8090` for studio-api when running with the Go server |
 | `LEGACY_API_URL` | server | `http://localhost:8090` | Where unmigrated routes are forwarded |
 | `ROOT_PATH` / `DATA_DIR` | server | `../studio-api` / `projects` | Workspace storage, shared with studio-api |
+| `STEMS_MODEL` | server | none | [steammeros](https://github.com/bartoval/steammeros) model; empty turns stem separation off. GPU: also `STEMS_CUDA_DEVICE`, `STEMS_CUDA_OPS` |
+| `STEMS_ORT_LIBRARY` | server | system | ONNX Runtime shared library |
 | `HW_ENCODER` | studio-api | none | `h264_nvenc` for NVIDIA GPUs |
 | `WHISPER_MODEL` | ml-worker | `base` | `tiny` … `large` |
 | `INTERNAL_API_URL` | studio-api | `http://localhost:8080` | Callback URL for the ML worker |

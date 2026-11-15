@@ -10,7 +10,9 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/bartoval/audio_video_editor/server/internal/events"
 	"github.com/bartoval/audio_video_editor/server/internal/library"
+	"github.com/bartoval/audio_video_editor/server/internal/separation"
 	"github.com/bartoval/audio_video_editor/server/internal/upload"
 	"github.com/bartoval/audio_video_editor/server/internal/workspace"
 )
@@ -20,6 +22,8 @@ type Config struct {
 	Workspaces *workspace.Store
 	Library    *library.Library
 	Uploads    *upload.Receiver
+	Events     *events.Hub
+	Stems      *separation.Service // nil when no model is configured
 	// LegacyAPI is the Node API that still serves the routes not migrated yet.
 	LegacyAPI *url.URL
 }
@@ -44,6 +48,7 @@ func New(cfg Config) http.Handler {
 	mux.HandleFunc("DELETE /api/v1/workspaces/{uuid}", s.deleteWorkspace)
 	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/state", s.loadState)
 	mux.HandleFunc("PUT /api/v1/workspaces/{uuid}/state", s.saveState)
+	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/events", s.subscribeEvents)
 
 	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/audio", s.listAudio)
 	mux.HandleFunc("POST /api/v1/workspaces/{uuid}/audio", s.uploadAudio)
@@ -51,6 +56,8 @@ func New(cfg Config) http.Handler {
 	mux.HandleFunc("DELETE /api/v1/workspaces/{uuid}/audio/{id}", s.deleteAudio)
 	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/audio/{a}/{b}", s.getAudioPair)
 	mux.HandleFunc("POST /api/v1/workspaces/{uuid}/audio/{id}/stretch", s.stretchAudio)
+	mux.HandleFunc("POST /api/v1/workspaces/{uuid}/audio/{id}/stems", s.startStems)
+	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/audio/{id}/stems/{jobId}/download", s.downloadStems)
 
 	mux.Handle("/api/", s.legacy)
 	return mux
@@ -102,6 +109,10 @@ func writeError(w http.ResponseWriter, err error) {
 		status, code = http.StatusBadRequest, "VALIDATION_ERROR"
 	case errors.Is(err, errFileType):
 		status, code = http.StatusBadRequest, "INVALID_FILE_TYPE"
+	case errors.Is(err, separation.ErrNotReady):
+		status, code = http.StatusBadRequest, "NOT_READY"
+	case errors.Is(err, separation.ErrBusy):
+		status, code = http.StatusServiceUnavailable, "BUSY"
 	case errors.As(err, &tooLarge):
 		status, code = http.StatusRequestEntityTooLarge, "FILE_TOO_LARGE"
 	}

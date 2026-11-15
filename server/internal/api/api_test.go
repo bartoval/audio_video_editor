@@ -11,14 +11,30 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/bartoval/audio_video_editor/server/internal/events"
 	"github.com/bartoval/audio_video_editor/server/internal/library"
+	"github.com/bartoval/audio_video_editor/server/internal/separation"
 	"github.com/bartoval/audio_video_editor/server/internal/upload"
 	"github.com/bartoval/audio_video_editor/server/internal/workspace"
 )
 
 func newTestServer(t *testing.T) (*httptest.Server, string) {
+	return newTestServerWith(t, fakeEngine{})
+}
+
+// newTestServerWith starts the API in front of a fake Node API, which answers
+// "legacy <method> <path>" and streams one thumbnails event on /events.
+func newTestServerWith(t *testing.T, engine separation.Engine) (*httptest.Server, string) {
 	t.Helper()
 	legacy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/events") {
+			w.Header().Set("Content-Type", "text/event-stream")
+			io.WriteString(w, "event: message\ndata: {\"type\":\"connected\",\"payload\":{}}\n\n: heartbeat\n\n")
+			io.WriteString(w, "event: message\ndata: {\"type\":\"thumbnails\",\"payload\":{\"status\":\"ready\"}}\n\n")
+			w.(http.Flusher).Flush()
+			<-r.Context().Done()
+			return
+		}
 		io.WriteString(w, "legacy "+r.Method+" "+r.URL.Path)
 	}))
 	t.Cleanup(legacy.Close)
@@ -33,8 +49,11 @@ func newTestServer(t *testing.T) (*httptest.Server, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	hub := events.NewHub()
+	lib := library.New(store)
 	srv := httptest.NewServer(New(Config{
-		Workspaces: store, Library: library.New(store), Uploads: uploads, LegacyAPI: target,
+		Workspaces: store, Library: lib, Uploads: uploads, Events: hub, LegacyAPI: target,
+		Stems: separation.New(t.Context(), engine, store, lib, StemsDone(hub)),
 	}))
 	t.Cleanup(srv.Close)
 	return srv, root

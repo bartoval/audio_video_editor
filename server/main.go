@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -15,8 +16,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/bartoval/steammeros/stems"
+
 	"github.com/bartoval/audio_video_editor/server/internal/api"
+	"github.com/bartoval/audio_video_editor/server/internal/events"
 	"github.com/bartoval/audio_video_editor/server/internal/library"
+	"github.com/bartoval/audio_video_editor/server/internal/separation"
 	"github.com/bartoval/audio_video_editor/server/internal/upload"
 	"github.com/bartoval/audio_video_editor/server/internal/workspace"
 )
@@ -47,11 +52,25 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	hub := events.NewHub()
+	lib := library.New(workspaces)
 	cfg := api.Config{
 		Workspaces: workspaces,
-		Library:    library.New(workspaces),
+		Library:    lib,
 		Uploads:    uploads,
+		Events:     hub,
 		LegacyAPI:  legacy,
+	}
+	engine, err := newStemsEngine()
+	if err != nil {
+		return err
+	}
+	if engine != nil {
+		defer engine.Close()
+		cfg.Stems = separation.New(ctx, engine, workspaces, lib, api.StemsDone(hub))
 	}
 
 	srv := &http.Server{
@@ -60,9 +79,6 @@ func run() error {
 		ReadHeaderTimeout: 10 * time.Second,
 		IdleTimeout:       2 * time.Minute,
 	}
-
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 
 	go cleanUploads(ctx, uploads,
 		envMinutes("TMP_TTL_MINUTES", 30), envMinutes("TMP_CLEANUP_INTERVAL_MINUTES", 60))
@@ -86,6 +102,33 @@ func run() error {
 		return err
 	}
 	return srv.Close()
+}
+
+// newStemsEngine loads the stem separation model named by STEMS_MODEL, on the
+// GPU when STEMS_CUDA_DEVICE is set. Without STEMS_MODEL it returns nil and
+// stem separation is off.
+func newStemsEngine() (*stems.Engine, error) {
+	opts := stems.Options{
+		ModelPath:      os.Getenv("STEMS_MODEL"),
+		CUDAOpsLibrary: os.Getenv("STEMS_CUDA_OPS"),
+	}
+	if opts.ModelPath == "" {
+		slog.Info("stem separation off: STEMS_MODEL not set")
+		return nil, nil
+	}
+	if device := os.Getenv("STEMS_CUDA_DEVICE"); device != "" {
+		n, err := strconv.Atoi(device)
+		if err != nil {
+			return nil, fmt.Errorf("STEMS_CUDA_DEVICE: %w", err)
+		}
+		opts.CUDA, opts.CUDADevice = true, n
+	}
+	engine, err := stems.NewEngine(opts)
+	if err != nil {
+		return nil, fmt.Errorf("load stems model: %w", err)
+	}
+	slog.Info("stem separation on", "model", opts.ModelPath, "cuda", opts.CUDA)
+	return engine, nil
 }
 
 // maxUpload bounds a single uploaded file.

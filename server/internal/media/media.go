@@ -4,6 +4,7 @@ package media
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -74,6 +75,23 @@ func channelLayout(layout string, channels int) string {
 		return fmt.Sprintf("%dch", channels)
 	}
 	return "stereo"
+}
+
+// DecodeStereo decodes the audio of any audio or video file to planar float32
+// stereo at the given sample rate: audio[channel][sample].
+func DecodeStereo(ctx context.Context, path string, sampleRate int) ([][]float32, error) {
+	raw, err := run(ctx, "ffmpeg", "-nostdin", "-v", "error", "-i", path, "-vn",
+		"-ac", "2", "-ar", strconv.Itoa(sampleRate), "-f", "f32le", "pipe:1")
+	if err != nil {
+		return nil, err
+	}
+	frames := len(raw) / 8
+	audio := [][]float32{make([]float32, frames), make([]float32, frames)}
+	for i := range frames {
+		audio[0][i] = math.Float32frombits(binary.LittleEndian.Uint32(raw[i*8:]))
+		audio[1][i] = math.Float32frombits(binary.LittleEndian.Uint32(raw[i*8+4:]))
+	}
+	return audio, nil
 }
 
 // Stretch describes a time stretch of a section of audio.
