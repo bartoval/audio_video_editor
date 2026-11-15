@@ -1,16 +1,6 @@
 /** StatusBar presenter - orchestrates view and manages state from services/stores */
 import { isOnline } from '../../lib';
 import { EVENT } from '../../config/constants';
-import {
-  isWasmEnabled,
-  isWasmSupported,
-  setWasmEnabled,
-  isWorkerEnabled,
-  isWorkerSupported,
-  setWorkerEnabled,
-  isParallelStretchEnabled,
-  setParallelStretchEnabled
-} from '../../lib/audio/wasm';
 import { ServiceWorker } from '../../services/offline';
 import * as EventService from '../../services/EventService';
 import * as JobTrackerService from '../../services/JobTrackerService';
@@ -32,9 +22,6 @@ export default class StatusBarPresenter {
   #initView($parent) {
     this.#view = createStatusBarView($parent);
     this.#view.bind({
-      onWasmToggle: enabled => this.#handleWasmToggle(enabled),
-      onWorkerToggle: enabled => this.#handleWorkerToggle(enabled),
-      onParallelStretchToggle: enabled => this.#handleParallelStretchToggle(enabled),
       onOfflineToggle: enabled => this.#handleOfflineToggle(enabled),
       onPendingOpsClick: () => this.#toggleJobPanel(),
       onJobDismiss: jobId => this.#handleJobDismiss(jobId)
@@ -42,18 +29,8 @@ export default class StatusBarPresenter {
   }
 
   #initState() {
-    const wasmSupported = isWasmSupported();
-    const workerSupported = isWorkerSupported();
-    const wasmEnabled = isWasmEnabled();
-
     this.#view.setState({
       online: isOnline(),
-      wasmEnabled,
-      wasmSupported,
-      workerEnabled: isWorkerEnabled(),
-      workerDisabled: !wasmSupported || !workerSupported || !wasmEnabled,
-      parallelStretchEnabled: isParallelStretchEnabled(),
-      parallelStretchDisabled: !wasmSupported || !workerSupported || !wasmEnabled,
       offlineEnabled: ServiceWorker.isEnabled(),
       offlineSupported: ServiceWorker.isSupported(),
       tasks: uiStore.getState().tasks,
@@ -90,36 +67,6 @@ export default class StatusBarPresenter {
 
   #handleJobDismiss(jobId) {
     JobTrackerService.untrack(jobId);
-  }
-
-  #handleWasmToggle(enabled) {
-    setWasmEnabled(enabled);
-
-    const workerSupported = isWorkerSupported();
-    const dependentDisabled = !enabled || !workerSupported;
-
-    if (!enabled) {
-      setWorkerEnabled(false);
-      setParallelStretchEnabled(false);
-    }
-
-    this.#view.setState({
-      wasmEnabled: enabled,
-      workerEnabled: enabled ? isWorkerEnabled() : false,
-      workerDisabled: dependentDisabled,
-      parallelStretchEnabled: enabled ? isParallelStretchEnabled() : false,
-      parallelStretchDisabled: dependentDisabled
-    });
-  }
-
-  #handleWorkerToggle(enabled) {
-    setWorkerEnabled(enabled);
-    this.#view.setState({ workerEnabled: enabled });
-  }
-
-  #handleParallelStretchToggle(enabled) {
-    setParallelStretchEnabled(enabled);
-    this.#view.setState({ parallelStretchEnabled: enabled });
   }
 
   async #handleOfflineToggle(enabled) {

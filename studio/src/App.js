@@ -21,7 +21,7 @@ import * as JobTrackerService from './services/JobTrackerService';
 import * as ShortcutService from './services/ShortcutService';
 import { EVENT } from './config/constants';
 import { NAV } from './config/routes';
-import { isWasmSupported, setWasmEnabled } from './lib/audio/wasm';
+import { isWasmSupported } from './lib/audio/wasm';
 import { initPersistence, transcriptionStore } from './store';
 import { initStoreConnectors } from './store/storeConnectors';
 
@@ -45,7 +45,6 @@ class App {
       console.warn('[App] To enable WASM, serve with headers:');
       console.warn('  Cross-Origin-Opener-Policy: same-origin');
       console.warn('  Cross-Origin-Embedder-Policy: require-corp');
-      setWasmEnabled(false);
     } else {
       console.log('[App] WASM support detected');
     }

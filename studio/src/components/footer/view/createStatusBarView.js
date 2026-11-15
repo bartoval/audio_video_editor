@@ -9,9 +9,6 @@ const IDLE_ICON = 'bi-check-circle';
 export function createStatusBarView($parent) {
   let $statusIcon = null;
   let $statusLabel = null;
-  let $wasmCheckbox = null;
-  let $workerCheckbox = null;
-  let $parallelStretchCheckbox = null;
   let $offlineCheckbox = null;
   let $taskStatus = null;
   let $pendingOpsIcon = null;
@@ -28,18 +25,6 @@ export function createStatusBarView($parent) {
           <i class="bi bi-wifi" data-ref="status-icon"></i>
           <span class="status-label" data-ref="status-label">${LABEL.STATUS_ONLINE}</span>
         </div>
-        <label class="d-flex align-items-center gap-1 small text-secondary mb-0" style="cursor: pointer">
-          <input type="checkbox" class="form-check-input mt-0" data-ref="wasm-toggle">
-          <span data-ref="wasm-label">${LABEL.WASM}</span>
-        </label>
-        <label class="d-flex align-items-center gap-1 small text-secondary mb-0" style="cursor: pointer">
-          <input type="checkbox" class="form-check-input mt-0" data-ref="worker-toggle">
-          <span data-ref="worker-label">${LABEL.WORKER}</span>
-        </label>
-        <label class="d-flex align-items-center gap-1 small text-secondary mb-0" style="cursor: pointer">
-          <input type="checkbox" class="form-check-input mt-0" data-ref="parallel-stretch-toggle">
-          <span data-ref="parallel-stretch-label">${LABEL.PARALLEL_STRETCH}</span>
-        </label>
         <label class="d-flex align-items-center gap-1 small text-secondary mb-0" style="cursor: pointer">
           <input type="checkbox" class="form-check-input mt-0" data-ref="offline-toggle">
           <span data-ref="offline-label">${LABEL.OFFLINE}</span>
@@ -60,33 +45,15 @@ export function createStatusBarView($parent) {
   const $indicator = $el.querySelector('[data-ref="status-indicator"]');
   $statusIcon = $el.querySelector('[data-ref="status-icon"]');
   $statusLabel = $el.querySelector('[data-ref="status-label"]');
-  $wasmCheckbox = $el.querySelector('[data-ref="wasm-toggle"]');
-  $workerCheckbox = $el.querySelector('[data-ref="worker-toggle"]');
-  $parallelStretchCheckbox = $el.querySelector('[data-ref="parallel-stretch-toggle"]');
   $offlineCheckbox = $el.querySelector('[data-ref="offline-toggle"]');
   $taskStatus = $el.querySelector('[data-ref="task-status"]');
   $pendingOpsIcon = $el.querySelector('[data-ref="pending-ops-icon"]');
   $pendingOpsCount = $el.querySelector('[data-ref="pending-ops-count"]');
 
   const $pendingOps = $el.querySelector('[data-ref="pending-ops"]');
-  const $wasmLabel = $el.querySelector('[data-ref="wasm-label"]');
-  const $workerLabel = $el.querySelector('[data-ref="worker-label"]');
-  const $parallelStretchLabel = $el.querySelector('[data-ref="parallel-stretch-label"]');
   const $offlineLabel = $el.querySelector('[data-ref="offline-label"]');
 
   const jobPanel = createJobPanelView();
-
-  const handleWasmChange = event => {
-    handlers.onWasmToggle?.(event.target.checked);
-  };
-
-  const handleWorkerChange = event => {
-    handlers.onWorkerToggle?.(event.target.checked);
-  };
-
-  const handleParallelStretchChange = event => {
-    handlers.onParallelStretchToggle?.(event.target.checked);
-  };
 
   const handleOfflineChange = event => {
     handlers.onOfflineToggle?.(event.target.checked);
@@ -103,9 +70,6 @@ export function createStatusBarView($parent) {
     }
   };
 
-  $wasmCheckbox.addEventListener('change', handleWasmChange);
-  $workerCheckbox.addEventListener('change', handleWorkerChange);
-  $parallelStretchCheckbox.addEventListener('change', handleParallelStretchChange);
   $offlineCheckbox.addEventListener('change', handleOfflineChange);
   $pendingOps.addEventListener('click', handlePendingOpsClick);
   $pendingOps.addEventListener('keydown', handlePendingOpsKeydown);
@@ -147,35 +111,6 @@ export function createStatusBarView($parent) {
         $statusLabel.textContent = online ? LABEL.STATUS_ONLINE : LABEL.STATUS_OFFLINE;
       }
 
-      if (state.wasmEnabled !== undefined) {
-        $wasmCheckbox.checked = state.wasmEnabled;
-      }
-
-      if (state.wasmSupported !== undefined) {
-        $wasmCheckbox.disabled = !state.wasmSupported;
-        $wasmLabel.title = state.wasmSupported ? LABEL.WASM_BROWSER : LABEL.WASM_SERVER;
-      }
-
-      if (state.workerEnabled !== undefined) {
-        $workerCheckbox.checked = state.workerEnabled;
-      }
-
-      if (state.workerDisabled !== undefined) {
-        $workerCheckbox.disabled = state.workerDisabled;
-        $workerLabel.title = state.workerDisabled ? LABEL.WORKER_DISABLED : LABEL.WORKER_ENABLED;
-      }
-
-      if (state.parallelStretchEnabled !== undefined) {
-        $parallelStretchCheckbox.checked = state.parallelStretchEnabled;
-      }
-
-      if (state.parallelStretchDisabled !== undefined) {
-        $parallelStretchCheckbox.disabled = state.parallelStretchDisabled;
-        $parallelStretchLabel.title = state.parallelStretchDisabled
-          ? LABEL.PARALLEL_STRETCH_DISABLED
-          : LABEL.PARALLEL_STRETCH_ENABLED;
-      }
-
       if (state.offlineEnabled !== undefined) {
         $offlineCheckbox.checked = state.offlineEnabled;
       }
@@ -213,9 +148,6 @@ export function createStatusBarView($parent) {
     },
 
     destroy() {
-      $wasmCheckbox.removeEventListener('change', handleWasmChange);
-      $workerCheckbox.removeEventListener('change', handleWorkerChange);
-      $parallelStretchCheckbox.removeEventListener('change', handleParallelStretchChange);
       $offlineCheckbox.removeEventListener('change', handleOfflineChange);
       $pendingOps.removeEventListener('click', handlePendingOpsClick);
       $pendingOps.removeEventListener('keydown', handlePendingOpsKeydown);
