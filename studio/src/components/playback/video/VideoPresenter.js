@@ -4,7 +4,7 @@ import { getUuid } from '../../../services/workspace';
 import IndexedDB from '../../../services/offline/IndexedDB';
 import * as LocalMedia from '../../../services/offline/LocalMedia';
 import { MasterClock, isOnline } from '../../../lib';
-import { ERROR_CONTEXT, EVENT, LABEL } from '../../../config/constants';
+import { AUDIO_ONLY, ERROR_CONTEXT, EVENT, LABEL } from '../../../config/constants';
 import ErrorHandler from '../../../services/ErrorHandler';
 import * as EventService from '../../../services/EventService';
 import * as apiService from '../../../services/api';
@@ -17,6 +17,7 @@ export default class VideoPresenter {
   #localUrl = null;
   #upload = null;
   #hasVideo = false;
+  #duration = 0;
   #urls = null;
   #usingOfflineVideo = false;
   #unsubscribeVideoLoaded = null;
@@ -84,24 +85,30 @@ export default class VideoPresenter {
 
   async load() {
     try {
-      const response = (await IndexedDB.getWorkspace(getUuid()))?.videoInfo;
-      if (!response)
-        throw new Error('Video metadata is not on this device. Use Sync server first.');
-
-      if (Object.keys(response).length === 0) {
+      const project = await IndexedDB.getWorkspace(getUuid());
+      const response = project?.videoInfo || {};
+      if (!project?.video && Object.keys(response).length === 0) {
         this.#hasVideo = false;
         throw Error('no video found');
       }
 
-      this.#hasVideo = true;
+      this.#hasVideo = false;
       this.#view.setLoading(false);
       this.#view.show();
       this.#view.hideOfflineOverlay();
       this.#view.hideQualityBadge();
 
-      const duration = response.duration / 1000;
-      this.#view.setDisplayAspectRatio(response.displayAspectRatio);
-      this.#urls = response.urls;
+      const duration =
+        response.duration > 0
+          ? response.duration / 1000
+          : (project?.tracks || []).reduce(
+              (max, track) => Math.max(max, (track.startTime || 0) + (track.durationTime || 0)),
+              AUDIO_ONLY.DEFAULT_DURATION
+            );
+      this.#duration = duration;
+      const displayAspectRatio = response.displayAspectRatio || '16:9';
+      this.#view.setDisplayAspectRatio(displayAspectRatio);
+      this.#urls = { ...response.urls, file: response.urls?.file || project?.video };
       this.#usingOfflineVideo = false;
 
       if (this.#localUrl) URL.revokeObjectURL(this.#localUrl);
@@ -115,19 +122,25 @@ export default class VideoPresenter {
         videoSrc = this.#localUrl;
       } else {
         videoSrc = await this.#getOfflineVideoSrc();
-        if (!this.#usingOfflineVideo)
-          throw new Error('Video is not on this device. Use Sync server first.');
       }
       this.#view.getPlayerElement().volume = response.isMuteVideo ? 0 : 1;
-      this.#view.setSrc(videoSrc);
+      this.#hasVideo = Boolean(videoSrc);
+      if (videoSrc) {
+        this.#view.setSrc(videoSrc);
+      } else {
+        // Missing media must not block the editor or its manual sync button.
+        this.#view.resetPlayer();
+        this.#view.setLoading(false);
+        this.#view.showOfflineOverlay();
+      }
       this.#view.resize();
 
-      MasterClock.registerVideo(this.#view.getPlayerElement());
+      MasterClock.registerVideo(videoSrc ? this.#view.getPlayerElement() : null);
 
       return {
         url: videoSrc,
         duration,
-        displayAspectRatio: response.displayAspectRatio,
+        displayAspectRatio,
         tracks: [],
         urls: this.#urls
       };
@@ -150,23 +163,21 @@ export default class VideoPresenter {
       return null;
     }
 
-    const offlineSrc = this.#urls.offline;
-
     try {
-      const url = new URL(offlineSrc, window.location.origin);
-      const cacheKey = url.origin + url.pathname;
-      const cached = await caches.match(cacheKey);
-
-      if (cached) {
+      for (const source of [this.#urls.file, this.#urls.offline].filter(Boolean)) {
+        const url = new URL(source, window.location.origin);
+        const cached = await caches.match(url.origin + url.pathname);
+        if (!cached?.ok) continue;
         this.#usingOfflineVideo = true;
-        this.#view.showQualityBadge();
-        return offlineSrc;
+        if (source === this.#urls.offline) this.#view.showQualityBadge();
+        this.#localUrl = URL.createObjectURL(await cached.blob());
+        return this.#localUrl;
       }
     } catch (err) {
       console.log('[Video] Cache check failed:', err);
     }
 
-    return this.#urls.file;
+    return null;
   }
 
   #handlePlaybackError = async () => {
@@ -241,7 +252,8 @@ export default class VideoPresenter {
   }
 
   getDuration() {
-    return this.#view.getDuration();
+    const duration = this.#view.getDuration();
+    return this.#hasVideo && Number.isFinite(duration) ? duration : this.#duration;
   }
 
   setCurrentTime(time) {
@@ -249,7 +261,7 @@ export default class VideoPresenter {
       throw new Error('wrong input: current time is ' + time);
     }
 
-    this.#view.setCurrentTime(time);
+    if (this.#hasVideo) this.#view.setCurrentTime(time);
     return true;
   }
 
@@ -262,7 +274,7 @@ export default class VideoPresenter {
   }
 
   play() {
-    this.#view.play();
+    if (this.#hasVideo) this.#view.play();
     return true;
   }
 
@@ -272,7 +284,7 @@ export default class VideoPresenter {
     }
 
     this.#view.pause();
-    this.#view.setCurrentTime(time);
+    if (this.#hasVideo) this.#view.setCurrentTime(time);
     return true;
   }
 

@@ -10,11 +10,13 @@ export default class LibraryUpload {
   #uploadState = { totalFiles: 0, currentIndex: 0, currentPercent: 0 };
   #view = null;
   #onComplete = null;
+  #hideTimer = null;
 
   constructor() {
     this.#uploader = new AudioUploader({
       onStart: files => this.#handleUploadStart(files),
       onFileStart: (file, index) => this.#handleFileStart(index),
+      onFileStage: (file, index, stage) => this.#view?.setUploadItemState(index, stage),
       onFileProgress: (file, index, percent) => this.#handleFileProgress(index, percent),
       onFileComplete: (file, index) => this.#handleFileComplete(index),
       onFileError: (file, index, error) => this.#handleFileError(index, error),
@@ -119,8 +121,11 @@ export default class LibraryUpload {
   }
 
   #handleUploadStart(files) {
+    clearTimeout(this.#hideTimer);
+    this.#hideTimer = null;
     this.#uploadState = { totalFiles: files.length, currentIndex: 0, currentPercent: 0 };
 
+    this.#view?.hideUploadList();
     this.#view?.showUploadList();
     this.#view?.createUploadHeader(files.length);
 
@@ -135,7 +140,7 @@ export default class LibraryUpload {
     this.#uploadState.currentIndex = index;
     this.#uploadState.currentPercent = 0;
 
-    this.#view?.setUploadItemState(index, 'uploading');
+    this.#view?.setUploadItemState(index, 'reading');
     this.#updateTotalProgress();
   }
 
@@ -167,8 +172,9 @@ export default class LibraryUpload {
 
     this.#view?.setUploadComplete(successCount, totalFiles);
 
-    setTimeout(() => {
+    this.#hideTimer = setTimeout(() => {
       this.#view?.hideUploadList();
+      this.#hideTimer = null;
     }, TIMING.UPLOAD_COMPLETE_DELAY);
 
     if (successCount > 0) {

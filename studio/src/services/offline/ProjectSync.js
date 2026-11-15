@@ -130,7 +130,9 @@ async function downloadMissingMedia(project, notify) {
     await LocalMedia.store(uuid, id, blob, { ...metadata, filename: id }, 'audio', true);
   }
   await IndexedDB.saveWorkspace(uuid, { audioLibrary: library });
-  if (project.video && !project.videoInfo?.localMediaId) {
+  const videoId = project.videoInfo?.localMediaId;
+  const localVideo = videoId ? await LocalMedia.get(uuid, videoId) : null;
+  if (project.video && !localVideo?.blob) {
     const info = await (await request(buildUrl('video', uuid))).json();
     const blob = await (await request(buildUrl('videoFile', uuid))).blob();
     const id = `${crypto.randomUUID()}.mp4`;

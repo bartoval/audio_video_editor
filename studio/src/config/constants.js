@@ -196,7 +196,7 @@ export const LABEL = {
   CONFIRM: 'Confirm',
   STATUS_ONLINE: 'Online',
   STATUS_OFFLINE: 'Offline',
-  VIDEO_OFFLINE: 'Video not available offline',
+  VIDEO_OFFLINE: 'Video is not on this device. Use Sync server, then reopen the project.',
   VIDEO_LOW_QUALITY: 'Low quality (offline)',
   LIBRARY_OFFLINE: 'Offline',
   LIBRARY_OFFLINE_HINT: 'Library unavailable while offline',

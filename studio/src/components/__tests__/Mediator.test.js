@@ -151,4 +151,36 @@ describe('Mediator video events', () => {
     expect(uploader.showEmptyState).toHaveBeenCalled();
     expect(emitLocalMock).toHaveBeenCalledWith('video:deleted', undefined);
   });
+
+  it('initializes the saved timeline when the video is missing locally', async () => {
+    const saved = {
+      video: '/video/file',
+      tracks: [{ id: 'track-1', startTime: 2, durationTime: 5 }],
+      markers: [{ time: 3 }]
+    };
+    const navigator = {
+      init: vi.fn().mockResolvedValue(true),
+      tracks: { getMaxEndTime: vi.fn().mockReturnValue(7) }
+    };
+    Mediator.registerVideo({
+      load: vi.fn().mockResolvedValue({ url: null, duration: 10, displayAspectRatio: '16:9' }),
+      hasVideo: () => false
+    });
+    Mediator.registerPlayer({ init: vi.fn() });
+    Mediator.registerNavigator(navigator);
+
+    await expect(Mediator.onLoadVideo(saved.video, saved)).resolves.toEqual({ success: true });
+
+    expect(navigator.init).toHaveBeenCalledWith(
+      10,
+      expect.objectContaining({
+        video: '/video/file',
+        tracks: saved.tracks,
+        markers: saved.markers
+      })
+    );
+    expect(workspaceStore.getState().videoMeta.duration).toBe(10);
+    expect(document.querySelector('.studio').classList.contains('has-video')).toBe(true);
+    expect(emitLocalMock).not.toHaveBeenCalledWith('video:deleted', undefined);
+  });
 });

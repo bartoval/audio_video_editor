@@ -79,29 +79,65 @@ export async function library(uuid = getUuid()) {
   return items;
 }
 
-export async function importAudio(file, uuid = getUuid()) {
-  const context = new AudioContext();
-  let metadata;
+async function readAudioDuration(file) {
+  const audio = document.createElement('audio');
+  const url = URL.createObjectURL(file);
+  let timeout;
   try {
-    const buffer = await context.decodeAudioData(await file.arrayBuffer());
-    metadata = {
-      name: file.name.replace(/\.[^.]+$/, ''),
-      duration: buffer.duration * 1000,
-      durationFormatted: formatDuration(buffer.duration),
-      channels: buffer.numberOfChannels,
-      sampleRate: buffer.sampleRate,
-      format: file.name.split('.').pop().toLowerCase(),
-      fileSize: file.size,
-      createdAt: new Date().toISOString()
-    };
-  } catch {
-    throw new Error(`The browser cannot decode "${file.name}". Import a supported audio format.`);
+    return await new Promise((resolve, reject) => {
+      timeout = setTimeout(() => reject(new Error('Audio metadata timed out')), 15000);
+      audio.onloadedmetadata = () => {
+        if (Number.isFinite(audio.duration) && audio.duration > 0) resolve(audio.duration);
+        else reject(new Error('Audio duration is unavailable'));
+      };
+      audio.onerror = () => reject(new Error('Audio metadata is unavailable'));
+      audio.preload = 'metadata';
+      audio.src = url;
+    });
   } finally {
-    await context.close();
+    clearTimeout(timeout);
+    audio.onloadedmetadata = null;
+    audio.onerror = null;
+    audio.removeAttribute('src');
+    audio.load();
+    URL.revokeObjectURL(url);
+  }
+}
+
+export async function importAudio(file, uuid = getUuid(), onStage = () => {}) {
+  onStage('reading');
+  let duration;
+  let details = {};
+  try {
+    // Read container metadata without allocating PCM for the entire song.
+    duration = await readAudioDuration(file);
+  } catch {
+    // Preserve support for files Web Audio can decode but the media element cannot inspect.
+    onStage('decoding');
+    const context = new AudioContext();
+    try {
+      const buffer = await context.decodeAudioData(await file.arrayBuffer());
+      duration = buffer.duration;
+      details = { channels: buffer.numberOfChannels, sampleRate: buffer.sampleRate };
+    } catch {
+      throw new Error(`The browser cannot decode "${file.name}". Import a supported audio format.`);
+    } finally {
+      await context.close();
+    }
   }
   const extension = file.name.split('.').pop().toLowerCase();
   const id = `${crypto.randomUUID()}.${extension}`;
-  metadata.id = id;
+  const metadata = {
+    id,
+    name: file.name.replace(/\.[^.]+$/, ''),
+    duration: duration * 1000,
+    durationFormatted: formatDuration(duration),
+    ...details,
+    format: extension,
+    fileSize: file.size,
+    createdAt: new Date().toISOString()
+  };
+  onStage('saving');
   await store(uuid, id, file, { ...metadata, filename: file.name });
   return { status: 'complete', file: id, metadata };
 }

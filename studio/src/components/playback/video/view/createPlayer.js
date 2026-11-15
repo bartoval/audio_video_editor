@@ -52,7 +52,7 @@ export function createPlayer($parent) {
     reset() {
       $video.pause();
       $video.currentTime = 0;
-      $source.src = '';
+      $source.removeAttribute('src');
       $video.load();
     }
   };

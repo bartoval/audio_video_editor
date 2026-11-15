@@ -47,7 +47,7 @@ class Mediator {
           config.url = params.url;
           config.displayAspectRatio = params.displayAspectRatio;
           config.tracks = config.tracks === undefined ? params.tracks : config.tracks;
-          workspaceStore.actions.setVideo(config.url || null, {
+          workspaceStore.actions.setVideo(config.url || config.video || null, {
             duration: config.duration,
             displayAspectRatio: config.displayAspectRatio
           });

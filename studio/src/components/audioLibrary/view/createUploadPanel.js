@@ -29,7 +29,7 @@ export function createUploadPanel() {
         className: 'rounded p-2 mb-2 border border-info-subtle bg-info bg-opacity-10',
         html: `
           <div class="d-flex align-items-center gap-2 mb-2">
-            <i class="bi bi-cloud-arrow-up text-info"></i>
+            <i class="bi bi-file-earmark-music text-info"></i>
             <span class="small fw-medium text-white" data-ref="totalText">Importing 0/${totalFiles}</span>
           </div>
           <div class="progress" style="height: 6px;">
@@ -55,7 +55,7 @@ export function createUploadPanel() {
           <div class="progress" style="width: 100px; height: 4px;">
             <div class="progress-bar bg-info" data-ref="bar" style="width: 0%"></div>
           </div>
-          <span class="text-body-secondary small text-end" style="width: 40px" data-ref="status">Waiting...</span>
+          <span class="text-body-secondary small text-end" style="width: 100px" data-ref="status">Queued</span>
         `,
         parent: $el
       });
@@ -79,6 +79,10 @@ export function createUploadPanel() {
       const $status = $item.querySelector('[data-ref="status"]');
 
       if ($bar) {
+        const busy = ['reading', 'decoding', 'saving'].includes(state);
+        $bar.classList.toggle('progress-bar-striped', busy);
+        $bar.classList.toggle('progress-bar-animated', busy);
+        $bar.style.width = busy || state === 'complete' || state === 'duplicate' ? '100%' : '0%';
         $bar.classList.remove('bg-info', 'bg-success', 'bg-danger', 'bg-warning');
         const barColorMap = {
           uploading: 'bg-info',
@@ -90,7 +94,15 @@ export function createUploadPanel() {
       }
 
       if ($status) {
-        const statusMap = { uploading: '0%', complete: '✓', duplicate: '!', error: '✗' };
+        const statusMap = {
+          reading: 'Reading…',
+          decoding: 'Decoding…',
+          saving: 'Saving locally…',
+          uploading: '0%',
+          complete: '✓',
+          duplicate: '!',
+          error: '✗'
+        };
         const statusColorMap = {
           uploading: 'text-body-secondary',
           complete: 'text-success',

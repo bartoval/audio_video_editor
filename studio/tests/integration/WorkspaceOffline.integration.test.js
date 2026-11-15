@@ -6,6 +6,7 @@ import * as Api from '../../src/services/api';
 import * as Workspace from '../../src/services/workspace';
 import { isOnline, on } from '../../src/services/EventService';
 import { initPersistence, stopPersistence, timelineStore } from '../../src/store';
+import { audioBufferToWavBlob } from '../../src/lib/audio/utils/AudioBufferSerializer';
 
 vi.mock('../../src/services/EventService', () => ({
   isOnline: vi.fn(() => true),
@@ -68,6 +69,32 @@ describe('Local projects with explicit server synchronization', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it('imports audio metadata without full decoding and keeps the original file locally', async () => {
+    const buffer = new AudioBuffer({ length: 8000, sampleRate: 8000, numberOfChannels: 1 });
+    const file = new File([audioBufferToWavBlob(buffer)], 'Song.wav', { type: 'audio/wav' });
+    const decode = vi.spyOn(AudioContext.prototype, 'decodeAudioData');
+    const stages = vi.fn();
+
+    const result = await LocalMedia.importAudio(file, 'first', stages);
+
+    expect(result.metadata.duration).toBeCloseTo(1000);
+    expect(stages.mock.calls.map(([stage]) => stage)).toEqual(['reading', 'saving']);
+    expect(decode).not.toHaveBeenCalled();
+    const saved = await LocalMedia.get('first', result.file);
+    expect(new Uint8Array(await saved.blob.arrayBuffer())).toEqual(
+      new Uint8Array(await file.arrayBuffer())
+    );
+    expect(saved.synced).toBe(false);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('rejects unreadable audio without adding a broken library item', async () => {
+    const file = new File(['not audio'], 'Broken.wav', { type: 'audio/wav' });
+    await expect(LocalMedia.importAudio(file, 'first')).rejects.toThrow('cannot decode');
+    expect(await LocalMedia.list('first')).toEqual([]);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it('rolls back a save when the pending operation cannot be committed', async () => {
     await IndexedDB.saveWorkspace('first', snapshot('before'));
     const put = IDBObjectStore.prototype.put;
@@ -118,6 +145,41 @@ describe('Local projects with explicit server synchronization', () => {
     expect(uploads[0][0]).toContain('/sync/derived/used.wav');
     expect((await LocalMedia.get('first', 'old.wav')).synced).toBe(false);
   });
+
+  it.each([null, 'lost.mp4'])(
+    'recovers a missing video on explicit sync (local ID: %s)',
+    async localMediaId => {
+      const video = '/api/v1/workspaces/first/video/file';
+      const info = { duration: 10000, displayAspectRatio: '16:9', urls: { file: video } };
+      const saved = { ...snapshot('keep timeline'), video };
+      await IndexedDB.saveWorkspace('first', {
+        ...saved,
+        videoInfo: { ...info, localMediaId },
+        syncedVideoId: localMediaId
+      });
+      expect((await Api.load()).video).toBe(video);
+      expect(fetch).not.toHaveBeenCalled();
+      fetch.mockImplementation((url, opts = {}) => {
+        if (url === video) return Promise.resolve(new Response('server video'));
+        if (url.endsWith('/video')) return Promise.resolve(response(info));
+        return server(url, opts);
+      });
+
+      await SyncManager.sync();
+
+      const project = await IndexedDB.getWorkspace('first');
+      expect(project.tracks).toEqual(saved.tracks);
+      expect(project.video).toBe(video);
+      expect(project.syncedVideoId).toBe(project.videoInfo.localMediaId);
+      expect(
+        await (await LocalMedia.get('first', project.videoInfo.localMediaId)).blob.text()
+      ).toBe('server video');
+      expect(fetch.mock.calls.some(([, opts]) => opts.method === 'POST')).toBe(false);
+      fetch.mockClear();
+      await SyncManager.sync();
+      expect(fetch.mock.calls.some(([url]) => url === video)).toBe(false);
+    }
+  );
 
   it('requires explicit media sync before server operations, without uploading automatically', async () => {
     await IndexedDB.saveWorkspace('first', { ...snapshot('synced'), serverSynced: true });

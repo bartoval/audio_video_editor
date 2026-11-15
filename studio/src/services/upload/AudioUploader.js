@@ -62,6 +62,11 @@ export default class AudioUploader {
   }
 
   async uploadFiles(fileList) {
+    if (this.isUploading) {
+      this.callbacks.onError?.('An import is already in progress. Wait for it to finish.');
+      return { success: 0, failed: 0 };
+    }
+
     const files = Array.from(fileList);
     const { validFiles } = this.filterValidFiles(files);
 
@@ -97,7 +102,9 @@ export default class AudioUploader {
       this.callbacks.onFileStart?.(file, i);
 
       try {
-        const result = await importAudio(file, uuid);
+        const result = await importAudio(file, uuid, stage => {
+          this.callbacks.onFileStage?.(file, i, stage);
+        });
         this.callbacks.onFileProgress?.(file, i, 100);
         this.callbacks.onFileComplete?.(file, i, result);
         successCount++;

@@ -7,7 +7,7 @@
  * - Media files (video, audio): Cache-first for performance
  */
 
-const CACHE_VERSION = 'v16';
+const CACHE_VERSION = 'v17';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 // Retain previously downloaded media/catalogues when updating the app shell.
 const API_CACHE = 'api-v15';
