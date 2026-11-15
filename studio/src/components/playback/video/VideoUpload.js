@@ -1,117 +1,37 @@
-import { getVideoUploadUrl, convertVideo, isVideoConverted } from '../../../services/api';
-import { getUuid, invalidateCache } from '../../../services/workspace';
-import { getDefaultScale } from '../../../services/ConfigStore';
-import { ChunkedUploader } from '../../../services/upload';
-import { UPLOAD } from '../../../config/ui';
-import { TIMING } from '../../../config/constants';
+import { importVideo } from '../../../services/offline/LocalMedia';
+import { getUuid } from '../../../services/workspace';
+import ErrorHandler from '../../../services/ErrorHandler';
+import { ERROR_CONTEXT } from '../../../config/constants';
 
 export default class VideoUpload {
-  #uploader = null;
   #view = null;
-  #isUploading = false;
-  #isConverting = false;
-  #onVideoDeleted = null;
+  #active = false;
   #onLoadVideo = null;
-
-  constructor() {
-    this.#uploader = new ChunkedUploader(getVideoUploadUrl(), {
-      chunkSize: UPLOAD.CHUNK_SIZE,
-      parallelUploads: UPLOAD.PARALLEL_UPLOADS
-    });
-  }
-
+  #getState = null;
   setView(view) {
     this.#view = view;
   }
-
-  setCallbacks({ onVideoDeleted, onLoadVideo }) {
-    this.#onVideoDeleted = onVideoDeleted;
+  setCallbacks({ onLoadVideo, getState }) {
     this.#onLoadVideo = onLoadVideo;
+    this.#getState = getState;
   }
-
   isActive() {
-    return this.#isUploading || this.#isConverting;
+    return this.#active;
   }
-
   async handleFileSelect(files) {
-    if (!files || files.length === 0) {
-      return;
-    }
-
+    if (!files?.length || this.#active) return;
     const file = files[0];
-
-    if (!file.type.startsWith('video/')) {
-      console.error('Please select a video file');
-      return;
-    }
-
-    const uuid = getUuid();
-    if (!uuid) {
-      console.error('No project selected');
-      return;
-    }
-
-    this.#onVideoDeleted?.();
-
-    this.#isUploading = true;
+    this.#active = true;
     this.#view?.showUploadProgress(file.name, file.size);
-
     try {
-      await this.#uploader.upload(file, uuid, {
-        onProgress: percent => this.#view?.updateUploadProgress(percent, file.name),
-        onComplete: () => {
-          this.#isUploading = false;
-          invalidateCache();
-          this.#startConversion();
-        },
-        onError: err => {
-          this.#isUploading = false;
-          this.#view?.hideUploadProgress();
-          this.#view?.showEmptyState();
-          console.error('Upload error:', err.message);
-        }
-      });
-    } catch (err) {
-      this.#isUploading = false;
+      await importVideo(file, getUuid(), this.#getState);
+      this.#view?.updateUploadProgress(100, file.name);
+      await this.#onLoadVideo?.();
+    } catch (error) {
+      ErrorHandler.handle(error, ERROR_CONTEXT.UPLOAD_FILE);
+    } finally {
+      this.#active = false;
       this.#view?.hideUploadProgress();
-      this.#view?.showEmptyState();
-      console.error('Upload error:', err.message);
     }
-  }
-
-  async #startConversion() {
-    this.#isConverting = true;
-    this.#view?.showConversionProgress();
-
-    const priorityScale = getDefaultScale();
-    await convertVideo(priorityScale);
-    this.#pollConversionStatus();
-  }
-
-  #pollConversionStatus() {
-    const checkStatus = async () => {
-      try {
-        const data = await isVideoConverted();
-
-        if (data.conversionComplete) {
-          this.#isConverting = false;
-          this.#view?.hideUploadProgress();
-          invalidateCache();
-          this.#onLoadVideo?.();
-        } else if (data.metadata?.status === 'error') {
-          this.#isConverting = false;
-          this.#view?.hideUploadProgress();
-          this.#view?.showEmptyState();
-          console.error('Video conversion failed');
-        } else {
-          setTimeout(checkStatus, TIMING.RETRY_DELAY);
-        }
-      } catch (err) {
-        console.error('Error checking conversion status:', err);
-        setTimeout(checkStatus, TIMING.POLL_INTERVAL);
-      }
-    };
-
-    checkStatus();
   }
 }

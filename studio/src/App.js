@@ -92,7 +92,6 @@ class App {
     }
 
     await AppLoader.hide();
-    EventService.connect();
 
     return true;
   }
@@ -133,10 +132,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     const projects = await Api.getProjects();
+    if (!uuid && !projects.some(project => project.hasLocalState)) {
+      const created = await Api.createProject('My project');
+      window.location.href = NAV.workspace(created.uuid);
+      return;
+    }
 
     if (!uuid) {
       if (projects.length > 0) {
-        window.location.href = NAV.workspace(projects[0].uuid);
+        window.location.href = NAV.workspace(projects.find(project => project.hasLocalState).uuid);
 
         return;
       }

@@ -72,6 +72,13 @@ describe('ScaleManager', () => {
       expect(scales).not.toContain(10);
     });
 
+    it('fits a short clip when every preset is narrower than the viewport', () => {
+      scaleManager.init({ duration: 4, availableScales: [0.01, 0.1, 1], viewportWidth: 1000 });
+      scaleManager.setInitialScale(0.1);
+      expect(scaleManager.getScaleList()).toEqual([0.004]);
+      expect(scaleManager.getWidth()).toBe(1000);
+    });
+
     it('returns this for chaining', () => {
       const result = scaleManager.init({
         duration: 60,

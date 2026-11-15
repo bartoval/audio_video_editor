@@ -1,38 +1,20 @@
 import { isWasmEnabled, isWorkerEnabled } from './wasm';
 import WasmProcessor from './processors/WasmProcessor';
-import MainThreadProcessor from './processors/MainThreadProcessor';
-import ServerProcessor from './processors/ServerProcessor';
 import { AUDIO } from '../../config/constants';
 
 const { MAX_DURATION_WASM } = AUDIO;
 
-/** Select processor based on config and buffer duration */
+/** Processing remains local; never silently fall back to a server request. */
 const getProcessor = buffer => {
-  if (!isWasmEnabled()) {
-    return ServerProcessor;
+  if (!isWasmEnabled() || !isWorkerEnabled()) {
+    throw new Error('Local audio processing requires WASM and Worker support.');
   }
-
   if (buffer?.duration > MAX_DURATION_WASM) {
-    console.warn('[AudioProcessor] File too long for WASM, using server');
-
-    return ServerProcessor;
+    throw new Error(
+      `Local audio processing supports clips up to ${MAX_DURATION_WASM / 60} minutes. Split the clip first.`
+    );
   }
-
-  // WASM on main thread (blocks UI) or worker (background)
-  return isWorkerEnabled() ? WasmProcessor : MainThreadProcessor;
-};
-
-/** Get processor name for logging */
-const getProcessorName = processor => {
-  if (processor === WasmProcessor) {
-    return 'WASM (Worker)';
-  }
-
-  if (processor === MainThreadProcessor) {
-    return 'WASM (Main Thread - UI BLOCKS)';
-  }
-
-  return 'Server';
+  return WasmProcessor;
 };
 
 /** Time-stretch audio */
@@ -44,7 +26,7 @@ export const stretch = async (buffer, idTrack, stretchFactor, pitchValue, contex
   }
 
   const processor = getProcessor(sourceBuffer);
-  const processorName = getProcessorName(processor);
+  const processorName = 'WASM (Worker)';
   console.log(
     `[AudioProcessor] stretch via ${processorName} | factor: ${stretchFactor} | pitch: ${pitchValue}`
   );

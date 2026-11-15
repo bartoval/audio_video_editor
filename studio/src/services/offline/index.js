@@ -28,12 +28,9 @@ export const init = async () => {
   const { default: ServiceWorker } = await import('./ServiceWorker');
   const { default: IndexedDB } = await import('./IndexedDB');
   const { default: SyncManager } = await import('./SyncManager');
-  const { default: OfflinePrefetch } = await import('./OfflinePrefetch');
 
   ServiceWorker.register();
   await IndexedDB.init();
-  SyncManager.init();
-  OfflinePrefetch.init();
 
   // Handle sync events with toasts
   SyncManager.onSyncComplete(handleSyncEvent);
@@ -43,14 +40,12 @@ const handleSyncEvent = event => {
   const { type, successCount, failCount } = event;
 
   switch (type) {
-    case 'online':
-      uiStore.actions.pushToast({
-        type: NOTIFY_TYPE.INFO,
-        msg: 'Back online - syncing changes...',
-        timeHide: TOAST_DURATION.short
-      });
+    case 'progress':
+      uiStore.actions.setTaskStatus('project-sync', { status: event.status, type: 'info' });
       break;
-
+    case 'idle':
+      uiStore.actions.clearTaskStatus('project-sync');
+      break;
     case 'complete':
       if (successCount > 0) {
         uiStore.actions.pushToast({

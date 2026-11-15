@@ -1,5 +1,5 @@
 /**
- * SyncManager - synchronizes pending operations when back online
+ * SyncManager - synchronizes projects only on explicit request
  *
  * Events emitted via listeners:
  * - { type: 'start' }
@@ -10,9 +10,8 @@
  * - { type: 'audio-prefetch-complete', successCount, failCount }
  */
 import IndexedDB from './IndexedDB';
-import { buildUrl } from '../../config/routes';
+import { syncProjects } from './ProjectSync';
 import { isOnline } from '../../lib';
-import * as EventService from '../EventService';
 import BufferCache from '../../lib/audio/BufferCache';
 
 class SyncManager {
@@ -84,109 +83,27 @@ class SyncManager {
 
   // Instance API
 
-  init() {
-    // Listen to browser online event (fallback)
-    window.addEventListener('online', this.#handleOnline);
-
-    // Retry on the first successful connection too: startup sync can fail before
-    // SSE has had time to report an offline transition.
-    EventService.on('connected', this.#handleOnline);
-
-    if (isOnline()) {
-      this.sync();
-    }
-  }
+  // Synchronization is explicit; starting the app or reconnecting never sends edits.
+  init() {}
 
   sync() {
     if (this.#syncPromise) return this.#syncPromise;
-    if (!isOnline()) return Promise.resolve();
-
-    this.#syncPromise = this.#syncPending().finally(() => {
-      this.#syncPromise = null;
-    });
-
+    this.#isSyncing = true;
+    this.#syncPromise = syncProjects(status => this.#emit({ type: 'progress', status }))
+      .then(result => {
+        this.#emit({ type: 'complete', ...result });
+        return result;
+      })
+      .finally(() => {
+        this.#isSyncing = false;
+        this.#syncPromise = null;
+        this.#emit({ type: 'idle' });
+      });
     return this.#syncPromise;
   }
 
-  async #syncPending() {
-    this.#isSyncing = true;
-    let successCount = 0;
-    let failCount = 0;
-
-    try {
-      // Drain again after each batch: a save may arrive while a request is in flight.
-      batches: while (isOnline()) {
-        const pending = await IndexedDB.getPendingSync();
-        if (pending.length === 0) break;
-
-        this.#emit({ type: 'start', count: pending.length });
-        pending.sort((a, b) => a.createdAt - b.createdAt);
-
-        for (const operation of pending) {
-          const current = await IndexedDB.getPendingSync();
-          if (!current.some(item => item.id === operation.id)) continue;
-
-          try {
-            await this.#processOperation(operation);
-            await IndexedDB.clearPendingSync(operation.id);
-            successCount++;
-          } catch {
-            // Keep the unsent snapshot. Never replay an older failed save after a newer one.
-            failCount++;
-            break batches;
-          }
-        }
-      }
-
-      if (successCount || failCount) {
-        this.#emit({ type: 'complete', successCount, failCount });
-      }
-    } finally {
-      this.#isSyncing = false;
-    }
-  }
-
-  // Private Methods
-
-  #handleOnline = async () => {
-    // Only show toast if there are pending operations to sync
-    const pending = await IndexedDB.getPendingSync();
-
-    if (pending.length > 0) {
-      this.#emit({ type: 'online' });
-    }
-
-    setTimeout(() => this.sync(), 1000);
-  };
-
   #emit(event) {
     this.#listeners.forEach(cb => cb(event));
-  }
-
-  async #processOperation(operation) {
-    const { type, uuid, data } = operation;
-
-    switch (type) {
-      case 'backup':
-        await this.#syncBackup(uuid, data);
-        break;
-
-      default:
-        console.warn('[SyncManager] Unknown operation type:', type);
-    }
-  }
-
-  async #syncBackup(uuid, data) {
-    const response = await fetch(buildUrl('state', uuid), {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-      signal: AbortSignal.timeout(5000)
-    });
-
-    if (!response.ok) {
-      throw new Error(`Backup failed: ${response.status}`);
-    }
   }
 
   // Audio Prefetch Methods

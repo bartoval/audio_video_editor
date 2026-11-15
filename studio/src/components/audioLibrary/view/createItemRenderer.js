@@ -5,6 +5,7 @@ import { ContextMenu } from '../../common/ContextMenu';
 
 function buildMenuItems(hasTranscription) {
   const items = [
+    { id: 'original', label: 'Download original', icon: 'bi-download' },
     { id: 'mp3', label: LABEL.DOWNLOAD_MP3, icon: 'bi-file-earmark-music' },
     { id: 'wav', label: LABEL.DOWNLOAD_WAV, icon: 'bi-file-earmark-music' },
     { type: 'divider' },

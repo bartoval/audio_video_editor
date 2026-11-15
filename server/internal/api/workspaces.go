@@ -47,6 +47,22 @@ func (s *server) deleteWorkspace(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]bool{"success": true})
 }
 
+func (s *server) ensureWorkspace(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Title string `json:"title"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxTitleBody)).Decode(&body); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid project"})
+		return
+	}
+	ws, err := s.cfg.Workspaces.Ensure(body.Title, r.PathValue("uuid"))
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, ws)
+}
+
 func (s *server) loadState(w http.ResponseWriter, r *http.Request) {
 	state, err := s.cfg.Workspaces.LoadState(r.PathValue("uuid"))
 	if err != nil {

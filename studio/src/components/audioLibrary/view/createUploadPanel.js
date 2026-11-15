@@ -30,7 +30,7 @@ export function createUploadPanel() {
         html: `
           <div class="d-flex align-items-center gap-2 mb-2">
             <i class="bi bi-cloud-arrow-up text-info"></i>
-            <span class="small fw-medium text-white" data-ref="totalText">Uploading 0/${totalFiles}</span>
+            <span class="small fw-medium text-white" data-ref="totalText">Importing 0/${totalFiles}</span>
           </div>
           <div class="progress" style="height: 6px;">
             <div class="progress-bar bg-info" data-ref="totalBar" style="width: 0%"></div>
@@ -134,7 +134,7 @@ export function createUploadPanel() {
       const totalProgress = ((completedFiles + currentFileProgress) / totalFiles) * 100;
 
       $totalBar.style.width = `${totalProgress}%`;
-      $totalText.textContent = `Uploading ${completedFiles + 1}/${totalFiles} (${Math.round(totalProgress)}%)`;
+      $totalText.textContent = `Importing ${completedFiles + 1}/${totalFiles} (${Math.round(totalProgress)}%)`;
     },
 
     setComplete(successCount, totalFiles) {

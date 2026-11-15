@@ -46,7 +46,13 @@ func (s *server) uploadVideo(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if err := s.cfg.Video.Accept(r.PathValue("uuid"), res.Path); err != nil {
+	var err error
+	if r.FormValue("localSync") == "true" {
+		err = s.cfg.Video.AcceptLocal(r.Context(), r.PathValue("uuid"), res.Path, r.FormValue("flowFilename"))
+	} else {
+		err = s.cfg.Video.Accept(r.PathValue("uuid"), res.Path)
+	}
+	if err != nil {
 		writeError(w, err)
 		return
 	}
@@ -103,6 +109,15 @@ func (s *server) getSmallVideo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	serveFile(w, r, path, "video/mp4", "", immutable)
+}
+
+func (s *server) getOriginalVideo(w http.ResponseWriter, r *http.Request) {
+	path, err := s.cfg.Video.Original(r.PathValue("uuid"))
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	serveFile(w, r, path, "application/octet-stream", "", "")
 }
 
 // getThumb serves the master manifest, a legacy strip (*.webp) or the frame

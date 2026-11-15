@@ -1,4 +1,5 @@
-import { getLibraryTrackUrl } from '../../services/workspace';
+import ErrorHandler from '../../services/ErrorHandler';
+import { audioUrl } from '../../services/offline/LocalMedia';
 
 /**
  * LibraryPlaybackEngine - handles audio playback and oscilloscope visualization
@@ -14,15 +15,26 @@ export default class LibraryPlaybackEngine {
     this.#createAudioElement();
   }
 
-  play(id, { onReady, onEnded, onTimeUpdate } = {}) {
-    this.#$audio.src = getLibraryTrackUrl(id);
+  async play(id, { onReady, onEnded, onTimeUpdate } = {}) {
+    try {
+      this.#$audio.src = await audioUrl(id);
+    } catch (error) {
+      ErrorHandler.handle(error);
+      onEnded?.();
+      return;
+    }
     this.#$audio.load();
 
     this.#$audio.onloadeddata = async () => {
-      await this.#initAudioContext();
-      this.#$audio.play();
-      this.#isPlaying = true;
-      onReady?.(this.#$audio.duration);
+      try {
+        await this.#initAudioContext();
+        await this.#$audio.play();
+        this.#isPlaying = true;
+        await onReady?.(this.#$audio.duration);
+      } catch (error) {
+        ErrorHandler.handle(error);
+        onEnded?.();
+      }
     };
 
     this.#$audio.ontimeupdate = () => {

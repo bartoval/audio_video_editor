@@ -23,6 +23,7 @@ export default class HeaderPresenter {
 
   #isLoading = false;
   #isSaving = false;
+  #isSyncing = false;
   #isExporting = false;
   #isOffline = false;
 
@@ -54,6 +55,7 @@ export default class HeaderPresenter {
     this.#headerActions.bind({
       onLoad: () => this.#handleLoad(),
       onSave: () => this.#handleSave(),
+      onSync: () => this.#handleSync(),
       onPreview: () => this.#handlePreview()
     });
 
@@ -120,7 +122,7 @@ export default class HeaderPresenter {
   }
 
   #handleSelectProject(uuid) {
-    if (this.#isOffline && !this.#projects.find(project => project.uuid === uuid)?.hasLocalState) {
+    if (!this.#projects.find(project => project.uuid === uuid)?.hasLocalState) {
       return;
     }
 
@@ -128,10 +130,6 @@ export default class HeaderPresenter {
   }
 
   #handleAddProject() {
-    if (this.#isOffline) {
-      return;
-    }
-
     this.#pendingAction = 'add';
     this.#modal.show({
       title: LABEL.ADD_WORKSPACE,
@@ -142,10 +140,6 @@ export default class HeaderPresenter {
   }
 
   #handleDeleteProject(uuid) {
-    if (this.#isOffline) {
-      return;
-    }
-
     const project = this.#projects.find(proj => proj.uuid === uuid);
 
     if (!project) {
@@ -278,6 +272,23 @@ export default class HeaderPresenter {
     this.#syncUIState();
   }
 
+  async #handleSync() {
+    if (this.#isSyncing) return;
+    this.#isSyncing = true;
+    this.#syncUIState();
+    const result = await HeaderActionsService.sync();
+    this.#isSyncing = false;
+    if (result.success) {
+      await this.#loadProjects();
+      uiStore.actions.pushToast({
+        type: NOTIFY_TYPE.SUCCESS,
+        msg: 'Projects synchronized with server.',
+        timeHide: TOAST_DURATION.short
+      });
+    } else this.#showError(result.error);
+    this.#syncUIState();
+  }
+
   async #handlePreview() {
     if (this.#isExporting || this.#isOffline) {
       return;
@@ -325,7 +336,7 @@ export default class HeaderPresenter {
   }
 
   #syncUIState() {
-    const isBusy = this.#isLoading || this.#isSaving || this.#isExporting;
+    const isBusy = this.#isLoading || this.#isSaving || this.#isSyncing || this.#isExporting;
 
     this.#projectSelector.setState({
       currentUuid: this.#currentUuid,
@@ -338,6 +349,7 @@ export default class HeaderPresenter {
       offline: this.#isOffline,
       isLoading: this.#isLoading,
       isSaving: this.#isSaving,
+      isSyncing: this.#isSyncing,
       isExporting: this.#isExporting,
       hasTracks: this.#hasTracks,
       hasBackup: this.#hasBackup

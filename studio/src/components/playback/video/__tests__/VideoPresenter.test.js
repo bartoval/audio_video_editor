@@ -7,6 +7,8 @@ vi.mock('../../../../services/offline/IndexedDB', () => ({
   }
 }));
 
+vi.mock('../../../../services/offline/LocalMedia', () => ({ get: vi.fn() }));
+
 vi.mock('../../../Mediator', () => ({
   default: {
     registerVideo: vi.fn(),
@@ -114,25 +116,6 @@ describe('VideoPresenter', () => {
     expect(videoContainer.classList.contains('hide')).toBe(true);
   });
 
-  it('plays the server video even when metadata cannot be cached', async () => {
-    const IndexedDB = (await import('../../../../services/offline/IndexedDB')).default;
-    const urls = { file: '/video/file', offline: '/video/small' };
-    IndexedDB.saveWorkspace.mockRejectedValueOnce(new Error('Storage full'));
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ duration: 10000, displayAspectRatio: '16:9', urls })
-      })
-    );
-    const presenter = new VideoPresenter($parent);
-    try {
-      expect(await presenter.load()).toMatchObject({ duration: 10, urls });
-    } finally {
-      presenter.destroy();
-    }
-  });
-
   it('restores video metadata and falls back to the cached preview when the server is unavailable', async () => {
     const IndexedDB = (await import('../../../../services/offline/IndexedDB')).default;
     const urls = { file: '/video/file', offline: '/video/small' };
@@ -145,10 +128,10 @@ describe('VideoPresenter', () => {
 
     try {
       expect(await presenter.load()).toMatchObject({ duration: 10, urls });
-      $parent.querySelector('source').dispatchEvent(new Event('error'));
       await vi.waitFor(() => {
         expect($parent.querySelector('source').getAttribute('src')).toBe('/video/small');
       });
+      expect(fetch).not.toHaveBeenCalled();
       expect(caches.match).toHaveBeenCalledWith(
         new URL('/video/small', window.location.origin).href
       );

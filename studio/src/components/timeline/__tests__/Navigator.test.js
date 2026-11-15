@@ -43,9 +43,15 @@ vi.mock('../../../services/workspace', () => ({
 }));
 
 // Mock IndexedDB
+vi.mock('../../../services/offline/LocalMedia', () => ({
+  audioRecord: vi.fn(async () => ({ blob: new Blob(['audio']) })),
+  audioUrl: vi.fn(async id => `blob:local/${id}`)
+}));
+
 vi.mock('../../../services/offline/IndexedDB', () => ({
   default: {
     get: vi.fn().mockResolvedValue(null),
+    getWorkspace: vi.fn().mockResolvedValue(null),
     saveAudioBlob: vi.fn().mockResolvedValue(),
     getAudioBlob: vi.fn().mockResolvedValue(null)
   }

@@ -81,23 +81,20 @@ export function createProjectSelector($parent) {
       const offline = state.offline ?? false;
       const disabled = state.disabled ?? false;
       const isDefault = currentUuid === WORKSPACE.DEFAULT_UUID;
-      const isDisabled = offline || disabled;
+      const isDisabled = disabled;
 
       $select.disabled = disabled;
       $select.title = offline ? LABEL.SELECT_WORKSPACE_OFFLINE : '';
       for (const option of $select.options) {
-        option.disabled =
-          offline && !projects.find(project => project.uuid === option.value)?.hasLocalState;
+        option.disabled = !projects.find(project => project.uuid === option.value)?.hasLocalState;
       }
 
       $addBtn.disabled = isDisabled;
-      $addBtn.title = offline ? LABEL.ADD_WORKSPACE_OFFLINE : LABEL.ADD_WORKSPACE;
+      $addBtn.title = LABEL.ADD_WORKSPACE;
 
       $deleteBtn.disabled = isDisabled || isDefault;
 
-      if (offline) {
-        $deleteBtn.title = LABEL.DELETE_WORKSPACE_OFFLINE;
-      } else if (isDefault) {
+      if (isDefault) {
         $deleteBtn.title = LABEL.DELETE_WORKSPACE_DEFAULT;
       } else {
         $deleteBtn.title = LABEL.DELETE_WORKSPACE;

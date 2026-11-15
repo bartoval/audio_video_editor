@@ -1,6 +1,5 @@
-import { getAudioUploadUrl } from '../api';
+import { importAudio } from '../offline/LocalMedia';
 import { getUuid } from '../workspace';
-import ChunkedUploader from './ChunkedUploader';
 import { UPLOAD } from '../../config/ui';
 
 const ACCEPTED_AUDIO_TYPES = [
@@ -17,10 +16,6 @@ const ACCEPTED_AUDIO_TYPES = [
 export default class AudioUploader {
   constructor(callbacks = {}) {
     this.callbacks = callbacks;
-    this.uploader = new ChunkedUploader(getAudioUploadUrl(), {
-      chunkSize: 1024 * 1024,
-      parallelUploads: 1
-    });
     this.isUploading = false;
     this.aborted = false;
   }
@@ -66,7 +61,7 @@ export default class AudioUploader {
     return { validFiles, invalidFiles };
   }
 
-  async uploadFiles(fileList, options = {}) {
+  async uploadFiles(fileList) {
     const files = Array.from(fileList);
     const { validFiles } = this.filterValidFiles(files);
 
@@ -102,17 +97,9 @@ export default class AudioUploader {
       this.callbacks.onFileStart?.(file, i);
 
       try {
-        await this.uploader.upload(file, uuid, {
-          onProgress: percent => this.callbacks.onFileProgress?.(file, i, percent),
-          onComplete: result => {
-            // Propagate duplicate status so the view can show a warning
-            this.callbacks.onFileComplete?.(file, i, result);
-          },
-          onError: err => console.error(`Error uploading ${file.name}:`, err),
-          extraFields: options.extraFields
-        });
-
-        // onComplete already handled
+        const result = await importAudio(file, uuid);
+        this.callbacks.onFileProgress?.(file, i, 100);
+        this.callbacks.onFileComplete?.(file, i, result);
         successCount++;
       } catch (err) {
         this.callbacks.onFileError?.(file, i, err.message);

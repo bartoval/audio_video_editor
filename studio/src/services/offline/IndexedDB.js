@@ -8,13 +8,14 @@
  */
 
 const DB_NAME = 'audio-video-sync';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 // Store names
 const STORES = {
   WORKSPACES: 'workspaces',
   PENDING_SYNC: 'pendingSync',
-  AUDIO_BLOBS: 'audioBlobs'
+  AUDIO_BLOBS: 'audioBlobs',
+  LOCAL_MEDIA: 'localMedia'
 };
 
 // Audio blob storage limits
@@ -319,6 +320,12 @@ class IndexedDBService {
       request.onupgradeneeded = event => {
         const db = event.target.result;
 
+        // User-imported originals are documents, never evictable cache entries.
+        if (!db.objectStoreNames.contains(STORES.LOCAL_MEDIA)) {
+          const store = db.createObjectStore(STORES.LOCAL_MEDIA, { keyPath: 'key' });
+          store.createIndex('workspaceUuid', 'workspaceUuid', { unique: false });
+        }
+
         // Workspaces store
         if (!db.objectStoreNames.contains(STORES.WORKSPACES)) {
           db.createObjectStore(STORES.WORKSPACES, { keyPath: 'uuid' });
@@ -344,6 +351,22 @@ class IndexedDBService {
           audioStore.createIndex('isDerived', 'isDerived', { unique: false });
         }
       };
+    });
+  }
+
+  async markMediaSynced(key) {
+    await this.#ensureDb();
+    return new Promise((resolve, reject) => {
+      const transaction = this.#db.transaction(STORES.LOCAL_MEDIA, 'readwrite');
+      const store = transaction.objectStore(STORES.LOCAL_MEDIA);
+      const request = store.get(key);
+      request.onsuccess = () => {
+        if (request.result) store.put({ ...request.result, synced: true });
+      };
+      transaction.oncomplete = () => resolve();
+      transaction.onabort = () =>
+        reject(transaction.error || new Error('Sync acknowledgement failed'));
+      transaction.onerror = () => reject(transaction.error);
     });
   }
 
@@ -381,8 +404,9 @@ class IndexedDBService {
       const store = transaction.objectStore(storeName);
       const request = store.put(data);
 
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(transaction.error || new Error('Local write aborted'));
+      transaction.oncomplete = () => resolve(request.result);
     });
   }
 

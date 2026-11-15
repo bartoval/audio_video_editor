@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('../../../services/api', () => ({
+  getAudioList: vi.fn().mockResolvedValue({}),
   deleteAudioLibraryItem: vi.fn().mockResolvedValue({ status: 'deleted' })
 }));
 
@@ -19,6 +20,7 @@ describe('LibraryModel events', () => {
     const removeSpy = vi.spyOn(model, 'removeItem').mockImplementation(() => {});
     // Stub deleteAudioLibraryItem
     vi.mock('../../../services/api', () => ({
+      getAudioList: vi.fn().mockResolvedValue({}),
       deleteAudioLibraryItem: vi.fn().mockResolvedValue({ status: 'deleted' })
     }));
 

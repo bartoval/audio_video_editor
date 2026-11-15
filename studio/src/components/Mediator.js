@@ -10,10 +10,8 @@
  * - Event bus wiring for cross-component communication
  */
 import { EVENT, AUDIO_ONLY, WARNING } from '../config/constants';
-import { isOnline } from '../lib';
 import LayoutManager from '../services/LayoutManager';
 import PlaybackController from '../services/PlaybackController';
-import { OfflinePrefetch } from '../services/offline';
 import * as EventService from '../services/EventService';
 import { playbackStore, workspaceStore, uiStore, transcriptionStore } from '../store';
 
@@ -55,12 +53,6 @@ class Mediator {
           });
 
           await this.#initPlayback(config);
-
-          if (isOnline()) {
-            const stageData = this.#navigator?.getData() || {};
-            const videoData = this.#video?.getData() || {};
-            OfflinePrefetch.prefetch({ navigator: stageData, video: videoData });
-          }
 
           EventService.emitLocal(EVENT.VIDEO_LOADED, { video: config, duration: config.duration });
 

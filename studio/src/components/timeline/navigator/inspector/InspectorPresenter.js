@@ -1,6 +1,7 @@
 import { TRACK_ACTION } from '../../../../config/constants';
 import * as ToolMode from '../../../../services/ToolMode';
-import { getLibraryTrackUrl, getDerivedTrackUrl } from '../../../../services/workspace';
+import { audioUrl } from '../../../../services/offline/LocalMedia';
+import ErrorHandler from '../../../../services/ErrorHandler';
 import uiStore from '../../../../store/uiStore';
 import InspectorView from './InspectorView';
 
@@ -128,7 +129,7 @@ export default class InspectorPresenter {
     }
   }
 
-  #handlePlayClick() {
+  async #handlePlayClick() {
     if (!this.#selectedZone) {
       return;
     }
@@ -136,18 +137,23 @@ export default class InspectorPresenter {
     if (this.#isPlaying) {
       this.#view?.pauseWaveform();
     } else {
-      this.#refreshSourceIfNeeded();
-      this.#view?.playWaveform();
+      try {
+        if (await this.#refreshSourceIfNeeded()) this.#view?.playWaveform();
+      } catch (error) {
+        ErrorHandler.handle(error);
+      }
     }
   }
 
-  #refreshSourceIfNeeded() {
-    const blob = this.#selectedZone?.blob;
-    if (!blob) return;
+  async #refreshSourceIfNeeded() {
+    const selected = this.#selectedZone;
+    const blob = selected?.blob;
+    if (!blob) return false;
 
     const derivedId = blob.getDerivedId?.();
     const idTrack = blob.idTrack;
-    const newUrl = derivedId ? getDerivedTrackUrl(derivedId) : getLibraryTrackUrl(idTrack);
+    const newUrl = await audioUrl(derivedId || idTrack);
+    if (selected !== this.#selectedZone) return false;
 
     if (newUrl !== this.#currentUrl) {
       this.#currentUrl = newUrl;
@@ -155,6 +161,7 @@ export default class InspectorPresenter {
       this.#view?.setWaveformSource(newUrl, null, duration);
       this.#view?.seekWaveform(this.#zoneStart);
     }
+    return true;
   }
 
   #handleSeek(time) {
@@ -199,20 +206,6 @@ export default class InspectorPresenter {
       this.#zoneEnd = blob?.getEndTime?.() ?? 0;
       const duration = this.#zoneEnd - this.#zoneStart;
 
-      const url = derivedId ? getDerivedTrackUrl(derivedId) : getLibraryTrackUrl(idTrack);
-      this.#currentUrl = url;
-
-      let waveformData = null;
-
-      if (blob?.getWaveForm && duration > 0) {
-        const scale = duration / 240;
-        waveformData = await blob.getWaveForm(scale);
-        waveformData = waveformData?.path || null;
-      }
-
-      this.#view?.setWaveformSource(url, waveformData, duration);
-      this.#view?.seekWaveform(this.#zoneStart);
-
       this.#view?.setState({
         hasSelection: true,
         pitch,
@@ -226,6 +219,26 @@ export default class InspectorPresenter {
           end: this.#selectedZone.getEnd?.() ?? 0
         }
       });
+      try {
+        const selected = this.#selectedZone;
+        const url = await audioUrl(derivedId || idTrack);
+        if (selected !== this.#selectedZone) return;
+        this.#currentUrl = url;
+
+        let waveformData = null;
+
+        if (blob?.getWaveForm && duration > 0) {
+          const scale = duration / 240;
+          waveformData = await blob.getWaveForm(scale);
+          waveformData = waveformData?.path || null;
+        }
+
+        if (selected !== this.#selectedZone) return;
+        this.#view?.setWaveformSource(url, waveformData, duration);
+        this.#view?.seekWaveform(this.#zoneStart);
+      } catch (error) {
+        ErrorHandler.handle(error);
+      }
     } else {
       this.#zoneStart = 0;
       this.#zoneEnd = 0;
@@ -241,5 +254,4 @@ export default class InspectorPresenter {
       });
     }
   }
-
 }

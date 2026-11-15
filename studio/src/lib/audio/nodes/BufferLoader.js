@@ -1,7 +1,7 @@
 // @ts-check
 
 import { getTrackUrl, getDerivedTrackUrl, getUuid } from '../../../services/workspace';
-import { isOnline } from '../../utils/network';
+import * as LocalMedia from '../../../services/offline/LocalMedia';
 import IndexedDB from '../../../services/offline/IndexedDB';
 import { blobToAudioBuffer } from '../utils/AudioBufferSerializer';
 
@@ -23,7 +23,7 @@ export default class BufferLoader {
   /** @param {string} idTrack */
   async loadFromCache(idTrack) {
     const workspaceUuid = getUuid();
-    const record = await IndexedDB.getAudioBlob(workspaceUuid, idTrack);
+    const record = await LocalMedia.audioRecord(workspaceUuid, idTrack);
 
     if (!record?.blob) {
       return null;
@@ -34,7 +34,7 @@ export default class BufferLoader {
 
   /** @returns {boolean} */
   isNetworkAvailable() {
-    return isOnline();
+    return false;
   }
 
   /**

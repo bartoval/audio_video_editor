@@ -1,7 +1,8 @@
 import Mediator from '../../Mediator';
 import ConfirmModal from '../../core/ConfirmModal';
-import { getRouteUrl, getUuid } from '../../../services/workspace';
+import { getUuid } from '../../../services/workspace';
 import IndexedDB from '../../../services/offline/IndexedDB';
+import * as LocalMedia from '../../../services/offline/LocalMedia';
 import { MasterClock, isOnline } from '../../../lib';
 import { ERROR_CONTEXT, EVENT, LABEL } from '../../../config/constants';
 import ErrorHandler from '../../../services/ErrorHandler';
@@ -13,6 +14,7 @@ import VideoUpload from './VideoUpload';
 
 export default class VideoPresenter {
   #view = null;
+  #localUrl = null;
   #upload = null;
   #hasVideo = false;
   #urls = null;
@@ -26,8 +28,14 @@ export default class VideoPresenter {
 
     this.#upload.setView(this.#view);
     this.#upload.setCallbacks({
-      onVideoDeleted: () => Mediator.onVideoDeleted(),
-      onLoadVideo: () => Mediator.onLoadVideo()
+      getState: () => {
+        const current = Mediator.getData();
+        return { ...current.navigator, transcriptions: current.transcriptions };
+      },
+      onLoadVideo: async () => {
+        const saved = await apiService.load();
+        await Mediator.onLoadVideo(null, saved);
+      }
     });
 
     this.#view.render();
@@ -76,18 +84,9 @@ export default class VideoPresenter {
 
   async load() {
     try {
-      let response;
-      try {
-        const res = await window.fetch(getRouteUrl('video'), { signal: AbortSignal.timeout(3000) });
-        if (!res.ok) throw Error('no video found');
-        response = await res.json();
-        await IndexedDB.saveWorkspace(getUuid(), { videoInfo: response }).catch(error => {
-          console.warn('[Video] Could not cache metadata:', error);
-        });
-      } catch (error) {
-        response = (await IndexedDB.getWorkspace(getUuid()))?.videoInfo;
-        if (!response) throw error;
-      }
+      const response = (await IndexedDB.getWorkspace(getUuid()))?.videoInfo;
+      if (!response)
+        throw new Error('Video metadata is not on this device. Use Sync server first.');
 
       if (Object.keys(response).length === 0) {
         this.#hasVideo = false;
@@ -105,10 +104,21 @@ export default class VideoPresenter {
       this.#urls = response.urls;
       this.#usingOfflineVideo = false;
 
-      const videoSrc = isOnline()
-        ? this.#addCacheBuster(this.#urls.file)
-        : await this.#getOfflineVideoSrc();
-
+      if (this.#localUrl) URL.revokeObjectURL(this.#localUrl);
+      this.#localUrl = null;
+      const local = response.localMediaId
+        ? await LocalMedia.get(getUuid(), response.localMediaId)
+        : null;
+      let videoSrc;
+      if (local?.blob) {
+        this.#localUrl = URL.createObjectURL(local.blob);
+        videoSrc = this.#localUrl;
+      } else {
+        videoSrc = await this.#getOfflineVideoSrc();
+        if (!this.#usingOfflineVideo)
+          throw new Error('Video is not on this device. Use Sync server first.');
+      }
+      this.#view.getPlayerElement().volume = response.isMuteVideo ? 0 : 1;
       this.#view.setSrc(videoSrc);
       this.#view.resize();
 
@@ -161,6 +171,10 @@ export default class VideoPresenter {
 
   #handlePlaybackError = async () => {
     if (!this.#urls) return;
+    if (this.#localUrl) {
+      this.#view.showOfflineOverlay();
+      return;
+    }
 
     if (!this.#usingOfflineVideo) {
       const source = await this.#getOfflineVideoSrc();
@@ -172,10 +186,6 @@ export default class VideoPresenter {
 
     this.#view.showOfflineOverlay();
   };
-
-  #addCacheBuster(url) {
-    return `${url}?t=${Date.now()}`;
-  }
 
   async #handleSceneDetect() {
     try {
@@ -207,10 +217,21 @@ export default class VideoPresenter {
     if (!confirmed) return;
 
     try {
-      const res = await window.fetch(getRouteUrl('video'), { method: 'DELETE' });
-
-      if (!res.ok) throw new Error('Delete failed');
-
+      const previous = await IndexedDB.getWorkspace(getUuid());
+      const current = Mediator.getData();
+      const project = { ...current.navigator, transcriptions: current.transcriptions };
+      await IndexedDB.saveWorkspace(getUuid(), { videoInfo: null, isVideoLoaded: false });
+      await IndexedDB.saveWorkspaceBackup(getUuid(), {
+        video: null,
+        tracks: project?.tracks || [],
+        markers: project?.markers || [],
+        transcriptions: project?.transcriptions || {}
+      });
+      if (previous?.videoInfo?.localMediaId)
+        await LocalMedia.remove(getUuid(), previous.videoInfo.localMediaId);
+      if (this.#localUrl) URL.revokeObjectURL(this.#localUrl);
+      this.#localUrl = null;
+      this.#view.resetPlayer();
       this.#hasVideo = false;
       this.#urls = null;
       Mediator.onVideoDeleted();
@@ -282,6 +303,7 @@ export default class VideoPresenter {
   }
 
   destroy() {
+    if (this.#localUrl) URL.revokeObjectURL(this.#localUrl);
     this.#view.getPlayerElement().removeEventListener('error', this.#handlePlaybackError, true);
     this.#unsubscribeVideoLoaded?.();
     this.#unsubscribeVideoDeleted?.();

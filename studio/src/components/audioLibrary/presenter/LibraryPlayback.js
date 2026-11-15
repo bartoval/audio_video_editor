@@ -3,7 +3,7 @@
  */
 import LibraryPlaybackEngine from '../LibraryPlaybackEngine';
 import { Oscilloscope } from '../../../lib';
-import { getLibraryTrackUrl } from '../../../services/workspace';
+import { audioUrl } from '../../../services/offline/LocalMedia';
 
 export default class LibraryPlayback {
   #player = null;
@@ -64,7 +64,7 @@ export default class LibraryPlayback {
     this.#currentPlayingId = id;
 
     this.#player.play(id, {
-      onReady: duration => {
+      onReady: async duration => {
         requestAnimationFrame(() => {
           const $listCanvas = this.#view?.getOscilloscopeCanvas(id);
           const analyser = this.#player.getAnalyser();
@@ -80,7 +80,7 @@ export default class LibraryPlayback {
         this.#view?.showMiniPlayer(item?.name || 'Unknown');
         this.#view?.updateMiniPlayerState(true);
 
-        const url = getLibraryTrackUrl(id);
+        const url = await audioUrl(id);
         this.#view?.setMiniPlayerWaveform(url, duration);
       },
       onTimeUpdate: currentTime => {

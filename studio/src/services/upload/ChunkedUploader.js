@@ -56,7 +56,8 @@ export default class ChunkedUploader {
       try {
         const response = await fetch(this.url, {
           method: 'POST',
-          body: formData
+          body: formData,
+          signal: AbortSignal.timeout(120000)
         });
 
         if (response.ok) {
@@ -157,9 +158,8 @@ export default class ChunkedUploader {
       }
 
       // Only call onComplete when server confirms file assembly
-      if (isComplete) {
-        onComplete?.();
-      }
+      if (!isComplete) throw new Error('Server did not confirm the completed upload');
+      onComplete?.();
 
       return true;
     } catch (err) {

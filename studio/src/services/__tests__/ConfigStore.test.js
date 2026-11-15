@@ -19,106 +19,26 @@ describe('ConfigStore', () => {
   });
 
   describe('load', () => {
-    it('loads configuration from backend', async () => {
-      const mockConfig = {
-        thumbs: {
-          scales: [{ scale: '0.1' }, { scale: '0.2' }],
-          defaultScale: '0.1',
-          tiles: { cols: 10, rows: 1 },
-          extension: 'webp'
-        }
-      };
-
-      global.fetch = vi.fn(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockConfig)
-        })
-      );
-
+    it('starts with usable defaults without contacting the backend', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new Error('No server'));
       const config = await ConfigStore.load();
-
-      expect(config).toEqual(mockConfig.thumbs);
-      expect(ConfigStore.isReady()).toBe(true);
+      expect(config.defaultScale).toBe('0.1');
+      expect(config.scales.length).toBeGreaterThan(0);
+      expect(await ConfigStore.load()).toBe(config);
+      expect(global.fetch).not.toHaveBeenCalled();
     });
 
-    it('returns cached config on subsequent calls', async () => {
-      const mockConfig = {
-        thumbs: {
-          scales: [{ scale: '0.1' }],
-          defaultScale: '0.1'
-        }
-      };
-
-      global.fetch = vi.fn(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve(mockConfig)
-        })
-      );
-
-      const config1 = await ConfigStore.load();
-      const config2 = await ConfigStore.load();
-
-      expect(config1).toBe(config2);
-      expect(global.fetch).toHaveBeenCalledTimes(1);
-    });
-
-    it('throws error on failed fetch', async () => {
-      global.fetch = vi.fn(() =>
-        Promise.resolve({
-          ok: false,
-          status: 404
-        })
-      );
-
-      await expect(ConfigStore.load()).rejects.toThrow('Failed to load config');
-    });
-
-    it('shares load promise for concurrent calls', async () => {
-      const mockConfig = {
-        thumbs: {
-          scales: [{ scale: '0.1' }]
-        }
-      };
-
-      global.fetch = vi.fn(
-        () =>
-          new Promise(resolve => {
-            setTimeout(() => {
-              resolve({
-                ok: true,
-                json: () => Promise.resolve(mockConfig)
-              });
-            }, 10);
-          })
-      );
-
-      const [config1, config2] = await Promise.all([ConfigStore.load(), ConfigStore.load()]);
-
-      expect(config1).toBe(config2);
-      expect(global.fetch).toHaveBeenCalledTimes(1);
-    });
-
-    it('restores the saved configuration after a restart without the server', async () => {
-      const thumbs = { scales: [{ scale: '0.1' }], defaultScale: '0.1' };
-      global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ thumbs }) });
-      await ConfigStore.load();
-
-      vi.resetModules();
-      ConfigStore = await import('../ConfigStore');
-      global.fetch.mockRejectedValue(new TypeError('Failed to fetch'));
-
+    it('restores a saved configuration without making requests', async () => {
+      const thumbs = { scales: [{ scale: '0.2' }], defaultScale: '0.2' };
+      localStorage.setItem('studio-thumbnails-config-v1', JSON.stringify(thumbs));
+      global.fetch = vi.fn();
       expect(await ConfigStore.load()).toEqual(thumbs);
+      expect(global.fetch).not.toHaveBeenCalled();
     });
 
-    it('allows retry after a failed load with no cached configuration', async () => {
-      global.fetch = vi.fn().mockRejectedValueOnce(new TypeError('Failed to fetch'));
-      await expect(ConfigStore.load()).rejects.toThrow('Failed to fetch');
-
-      const thumbs = { scales: [] };
-      global.fetch.mockResolvedValue({ ok: true, json: async () => ({ thumbs }) });
-      expect(await ConfigStore.load()).toEqual(thumbs);
+    it('uses defaults when the saved configuration is malformed', async () => {
+      localStorage.setItem('studio-thumbnails-config-v1', '{invalid');
+      expect((await ConfigStore.load()).defaultScale).toBe('0.1');
     });
   });
 

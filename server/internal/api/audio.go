@@ -45,6 +45,26 @@ func (s *server) listAudio(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, tracks)
 }
 
+// syncAudio preserves client ids so timeline references survive retries and sync.
+func (s *server) syncAudio(w http.ResponseWriter, r *http.Request) {
+	kind := r.PathValue("kind")
+	if kind != "audio" && kind != "derived" {
+		http.NotFound(w, r)
+		return
+	}
+	res, ok := s.receiveChunk(w, r)
+	if !ok {
+		return
+	}
+	err := s.cfg.Library.Sync(r.Context(), r.PathValue("uuid"), r.PathValue("id"),
+		res.Path, r.FormValue("flowFilename"), kind == "derived")
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "complete"})
+}
+
 // uploadAudio receives one chunk of an audio file and, with the last one,
 // adds the file to the library.
 func (s *server) uploadAudio(w http.ResponseWriter, r *http.Request) {

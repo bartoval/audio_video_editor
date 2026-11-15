@@ -1,10 +1,11 @@
 // @ts-check
 
 /** API - HTTP calls with offline fallback */
-import { ROUTES, buildUrl } from '../config/routes';
+import { buildUrl } from '../config/routes';
 import { getUuid } from './workspace';
 import IndexedDB from './offline/IndexedDB';
-import SyncManager from './offline/SyncManager';
+import * as LocalMedia from './offline/LocalMedia';
+import * as EventService from './EventService';
 import { isOnline } from '../lib';
 import ErrorHandler from './ErrorHandler';
 
@@ -68,6 +69,11 @@ const workspaceState = record => {
     updatedAt: _updatedAt,
     localRevision: _revision,
     videoInfo: _videoInfo,
+    audioLibrary: _library,
+    serverSynced: _synced,
+    syncedVideoId: _syncedVideo,
+    deleted: _deleted,
+    serverDeleted: _serverDeleted,
     ...state
   } = record;
 
@@ -82,56 +88,42 @@ export const load = async () => {
   const pending = (await IndexedDB.getPendingSync())
     .filter(operation => operation.type === 'backup' && operation.uuid === uuid)
     .sort((a, b) => a.createdAt - b.createdAt);
-
-  if (pending.length > 0) return pending.at(-1).data;
-
-  try {
-    const response = await fetch(buildUrl('state', uuid), { signal: AbortSignal.timeout(3000) });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    const saved = await IndexedDB.saveWorkspace(
-      uuid,
-      { video: null, tracks: [], markers: [], ...data },
-      {
-        expectedRevision: cached?.localRevision || 0
-      }
-    );
-
-    return workspaceState(saved);
-  } catch {
-    const local = await IndexedDB.getWorkspace(uuid);
-    if (hasLocalState(local)) return workspaceState(local);
-
-    throw new Error('This project has no local save. Open it while connected first.');
-  }
+  if (pending.length) return pending.at(-1).data;
+  if (hasLocalState(cached)) return workspaceState(cached);
+  throw new Error('This project is not on this device. Use Sync server to download it.');
 };
 
 export const backup = async ({ video, navigator, transcriptions }) => {
-  const uuid = getUuid();
-  const data = {
-    video: video?.src ?? null,
-    markers: navigator?.markers ?? [],
-    tracks: navigator?.tracks ?? [],
-    transcriptions: transcriptions ?? {}
-  };
-
-  await IndexedDB.saveWorkspaceBackup(uuid, data);
-  await SyncManager.sync();
-  const pending = await IndexedDB.getPendingSync();
-
-  return {
-    success: true,
-    offline: pending.some(operation => operation.type === 'backup' && operation.uuid === uuid)
-  };
+  await IndexedDB.saveWorkspaceBackup(getUuid(), {
+    video: video?.src || null,
+    markers: navigator?.markers || [],
+    tracks: navigator?.tracks || [],
+    transcriptions: transcriptions || {}
+  });
+  return { success: true, offline: true };
 };
 
-export const publish = ({ video, navigator, duration, format }) =>
-  safeFetch(buildUrl('exports', getUuid()), {
+async function requireServerCopy(audioId) {
+  const uuid = getUuid();
+  const project = await IndexedDB.getWorkspace(uuid);
+  const media = audioId ? await LocalMedia.get(uuid, audioId) : null;
+  if (!project?.serverSynced || (media && (!media.synced || media.deleted))) {
+    throw new Error('Use Sync server first. Files are only sent when you synchronize.');
+  }
+  EventService.connect();
+}
+
+export const publish = async ({ video, navigator, duration, format }) => {
+  await requireServerCopy();
+  for (const track of navigator.tracks || []) {
+    await requireServerCopy(track.idTrack);
+    if (track.derivedId) await requireServerCopy(track.derivedId);
+  }
+  const project = await IndexedDB.getWorkspace(getUuid());
+  if (video.src && project.videoInfo?.localMediaId !== project.syncedVideoId) {
+    throw new Error('Sync this video first.');
+  }
+  return safeFetch(buildUrl('exports', getUuid()), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -141,6 +133,12 @@ export const publish = ({ video, navigator, duration, format }) =>
       format: format || 'mp3'
     })
   }).then(r => r.json());
+};
+
+export const getAudioDownloadUrl = async (id, format) => {
+  await requireServerCopy(id);
+  return buildUrl('audio', getUuid(), `/${encodeURIComponent(id)}/file?format=${format}`);
+};
 
 export const getVideoUploadUrl = () => buildUrl('videoFile', getUuid());
 
@@ -156,70 +154,47 @@ export const isVideoConverted = () =>
 
 export const getAudioUploadUrl = () => buildUrl('audio', getUuid());
 
-export const deleteAudioLibraryItem = id =>
-  safeFetch(buildUrl('audio', getUuid(), `/${id}`), { method: 'DELETE' }).then(r => r.json());
-
-export const getAudioList = async () => {
-  const response = await safeFetch(buildUrl('audio', getUuid()));
-
-  return response.json();
+export const deleteAudioLibraryItem = async id => {
+  await LocalMedia.remove(getUuid(), id);
+  return { status: 'deleted' };
 };
 
+export const getAudioList = () => LocalMedia.library();
+
 export const getProjects = async () => {
-  try {
-    const projects = await safeFetch(
-      ROUTES.workspaces,
-      { signal: AbortSignal.timeout(3000) },
-      true
-    ).then(r => r.json());
-
-    for (const project of projects) {
-      const local = await IndexedDB.saveWorkspace(project.uuid, {
-        title: project.title,
-        isVideoLoaded: project.isVideoLoaded
-      });
-      project.hasLocalState = hasLocalState(local);
-    }
-
-    return projects;
-  } catch {
-    // Store persistence records are not projects (including legacy global keys).
-    const workspaces = (await IndexedDB.getAllWorkspaces()).filter(record => !('data' in record));
-
-    if (workspaces.length > 0) {
-      return workspaces.map(record => ({
-        uuid: record.uuid,
-        title: record.title || 'Untitled',
-        isVideoLoaded: record.isVideoLoaded || false,
-        hasLocalState: hasLocalState(record)
-      }));
-    }
-
-    throw new Error('No cached projects');
-  }
+  const projects = (await IndexedDB.getAllWorkspaces()).filter(
+    record => !('data' in record) && !record.deleted
+  );
+  return projects.map(record => ({
+    uuid: record.uuid,
+    title: record.title || 'Untitled',
+    isVideoLoaded: record.isVideoLoaded || false,
+    hasLocalState: hasLocalState(record)
+  }));
 };
 
 export const createProject = async title => {
-  const response = await safeFetch(ROUTES.workspaces, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title })
-  }).then(r => r.json());
-
-  if (response.success) {
-    await IndexedDB.saveWorkspace(response.uuid, { title, isVideoLoaded: false });
-  }
-
-  return response;
+  const uuid = crypto.randomUUID();
+  await IndexedDB.saveWorkspace(uuid, { title, isVideoLoaded: false, serverSynced: false });
+  await IndexedDB.saveWorkspaceBackup(uuid, {
+    video: null,
+    tracks: [],
+    markers: [],
+    transcriptions: {}
+  });
+  return { success: true, uuid };
 };
 
 export const deleteProject = async uuid => {
-  await IndexedDB.deleteWorkspace(uuid);
-
-  return safeFetch(`${ROUTES.workspaces}/${uuid}`, { method: 'DELETE' }).then(r => r.json());
+  // Keep a tombstone until an explicit sync also deletes the server copy.
+  await IndexedDB.saveWorkspace(uuid, { deleted: true });
+  for (const record of await LocalMedia.list(uuid)) await LocalMedia.remove(uuid, record.id);
+  await IndexedDB.deleteAudioBlobsByWorkspace(uuid);
+  return { success: true };
 };
 
 export const startStemsSeparation = async audioId => {
+  await requireServerCopy(audioId);
   const response = await safeFetch(buildUrl('audio', getUuid(), `/${audioId}/stems`), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -234,6 +209,10 @@ export const getStemsDownloadUrl = (audioId, jobId) => {
 };
 
 export const startSceneDetection = async (options = {}) => {
+  await requireServerCopy();
+  const project = await IndexedDB.getWorkspace(getUuid());
+  if (project.videoInfo?.localMediaId !== project.syncedVideoId)
+    throw new Error('Sync this video first.');
   const response = await safeFetch(buildUrl('video', getUuid(), '/scene-detect'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

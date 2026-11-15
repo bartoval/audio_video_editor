@@ -36,9 +36,15 @@ vi.mock('../../../services/workspace', () => ({
   getThumbsManifestUrl: () => '/api/v1/workspaces/test-uuid/video/thumbnails/manifest.json'
 }));
 
+vi.mock('../../../services/offline/LocalMedia', () => ({
+  audioRecord: vi.fn(async () => ({ blob: new Blob(['audio']) })),
+  audioUrl: vi.fn(async id => `blob:local/${id}`)
+}));
+
 vi.mock('../../../services/offline/IndexedDB', () => ({
   default: {
     get: vi.fn().mockResolvedValue(null),
+    getWorkspace: vi.fn().mockResolvedValue(null),
     saveAudioBlob: vi.fn().mockResolvedValue(),
     getAudioBlob: vi.fn().mockResolvedValue(null)
   }

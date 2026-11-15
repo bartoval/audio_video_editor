@@ -43,6 +43,8 @@ func New(cfg Config) http.Handler {
 
 	mux.HandleFunc("GET /api/v1/workspaces", s.listWorkspaces)
 	mux.HandleFunc("POST /api/v1/workspaces", s.createWorkspace)
+	mux.HandleFunc("PUT /api/v1/workspaces/{uuid}", s.ensureWorkspace)
+	mux.HandleFunc("POST /api/v1/workspaces/{uuid}/sync/{kind}/{id}", s.syncAudio)
 	mux.HandleFunc("DELETE /api/v1/workspaces/{uuid}", s.deleteWorkspace)
 	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/state", s.loadState)
 	mux.HandleFunc("PUT /api/v1/workspaces/{uuid}/state", s.saveState)
@@ -51,6 +53,7 @@ func New(cfg Config) http.Handler {
 	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/video", s.getVideo)
 	mux.HandleFunc("DELETE /api/v1/workspaces/{uuid}/video", s.deleteVideo)
 	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/video/file", s.getVideoFile)
+	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/video/original", s.getOriginalVideo)
 	mux.HandleFunc("POST /api/v1/workspaces/{uuid}/video/file", s.uploadVideo)
 	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/video/small", s.getSmallVideo)
 	mux.HandleFunc("POST /api/v1/workspaces/{uuid}/video/convert", s.convertVideo)

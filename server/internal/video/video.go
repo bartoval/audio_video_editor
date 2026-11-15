@@ -1,6 +1,6 @@
 // Package video manages the video of a workspace:
 //
-//	<workspace>/originalWithAudio.mp4          upload, removed once thumbnails are done
+//	<workspace>/originalWithAudio.mp4          unmodified original, retained after conversion
 //	<workspace>/info.json                      metadata and conversion status
 //	<workspace>/video.mp4                      muted, browser-ready copy
 //	<workspace>/resources/videoTracks/small.mp4  low resolution copy for offline use
@@ -107,6 +107,32 @@ func (s *Service) Accept(uuid, src string) error {
 	return files.Move(src, filepath.Join(dir, originalFile))
 }
 
+// AcceptLocal keeps a browser-readable original without conversion or quality loss.
+func (s *Service) AcceptLocal(ctx context.Context, uuid, src, name string) error {
+	defer os.Remove(src)
+	info, err := media.ProbeVideo(ctx, src)
+	if err != nil {
+		return err
+	}
+	dir, err := s.ws.Dir(uuid)
+	if err != nil {
+		return err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	original := filepath.Join(dir, originalFile)
+	if err := files.Move(src, original); err != nil {
+		return err
+	}
+	// Both names refer to the same bytes, without a second copy on disk.
+	os.Remove(filepath.Join(dir, videoFile))
+	if err := os.Link(original, filepath.Join(dir, videoFile)); err != nil {
+		return err
+	}
+	return files.WriteJSON(filepath.Join(dir, infoFile), map[string]any{"metadata": Metadata{Status: "ready", ID: originalFile, Name: name,
+		Duration: info.Duration * 1000, DisplayAspectRatio: info.AspectRatio, IsMuteVideo: true}})
+}
+
 // Convert starts converting the uploaded video in the background. Thumbnails
 // for priorityScale are announced first.
 func (s *Service) Convert(uuid, priorityScale string) error {
@@ -207,9 +233,6 @@ func (s *Service) convert(uuid, dir, priorityScale string) error {
 	}
 	if err != nil && !copied {
 		return err // the video itself is missing
-	}
-	if err == nil {
-		os.Remove(original) // everything is made: the original (with its audio) is no longer needed
 	}
 	return nil
 }
@@ -317,6 +340,9 @@ func (s *Service) File(uuid string, small bool) (string, error) {
 	}
 	return s.existing(uuid, name)
 }
+
+// Original returns the unmodified uploaded video.
+func (s *Service) Original(uuid string) (string, error) { return s.existing(uuid, originalFile) }
 
 // Thumb returns a file under thumbs/: the master manifest, a legacy strip,
 // or, with a scale, one of its sheets or its manifest.

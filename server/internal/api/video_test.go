@@ -142,8 +142,8 @@ func testVideo(t *testing.T, name, codec string) {
 	if got := probe("/small"); got != "video,156" {
 		t.Errorf("small video streams %q", got)
 	}
-	if _, err := os.Stat(filepath.Join(root, ws.UUID, "originalWithAudio.mp4")); !os.IsNotExist(err) {
-		t.Errorf("original kept after conversion: %v", err)
+	if _, err := os.Stat(filepath.Join(root, ws.UUID, "originalWithAudio.mp4")); err != nil {
+		t.Errorf("original must be preserved after conversion: %v", err)
 	}
 
 	if status, _ := call(t, srv, "DELETE", base, ""); status != 200 {

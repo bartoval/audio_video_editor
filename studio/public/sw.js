@@ -7,15 +7,15 @@
  * - Media files (video, audio): Cache-first for performance
  */
 
-const CACHE_VERSION = 'v15';
+const CACHE_VERSION = 'v16';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
-const API_CACHE = `api-${CACHE_VERSION}`;
-const MEDIA_CACHE = `media-${CACHE_VERSION}`;
+// Retain previously downloaded media/catalogues when updating the app shell.
+const API_CACHE = 'api-v15';
+const MEDIA_CACHE = 'media-v15';
 
 // Max cache size in bytes (500MB)
 const MAX_MEDIA_CACHE_SIZE = 500 * 1024 * 1024;
 const AUDIO_DB_NAME = 'audio-video-sync';
-const AUDIO_DB_VERSION = 3;
 const AUDIO_STORE = 'audioBlobs';
 const AUDIO_CACHE_LIMIT = 500 * 1024 * 1024; // aligns with client IDB limit
 
@@ -26,7 +26,12 @@ const AUDIO_CACHE_LIMIT = 500 * 1024 * 1024; // aligns with client IDB limit
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
-  '/favicon.png'
+  '/favicon.png',
+  '/rubberband.wasm',
+  '/rubberband.umd.min.js',
+  '/rubberband-worker.js',
+  '/audio-processor-worker.js',
+  '/waveform-worker.js'
 ];
 
 // ============================================================================
@@ -162,6 +167,9 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+
+  // Explicit synchronization must reach the server, never accept cached success.
+  if (event.request.headers.has('X-Project-Sync')) return;
 
   // Skip non-GET requests (POST, DELETE, etc.)
   if (event.request.method !== 'GET') {
@@ -520,7 +528,7 @@ function buildAudioKeyFromUrl(url) {
 
 async function openAudioDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(AUDIO_DB_NAME, AUDIO_DB_VERSION);
+    const req = indexedDB.open(AUDIO_DB_NAME);
 
     req.onerror = () => reject(req.error);
     req.onsuccess = () => resolve(req.result);

@@ -93,6 +93,14 @@ func (s *Store) Create(title string) (Workspace, error) {
 	return s.create(title, newUUID())
 }
 
+// Ensure creates a locally chosen workspace id without resetting an existing library.
+func (s *Store) Ensure(title, uuid string) (Workspace, error) {
+	if title == "" || !validUUID.MatchString(uuid) {
+		return Workspace{}, ErrInvalid
+	}
+	return s.create(title, uuid)
+}
+
 // EnsureDefault creates the "Default" workspace (uuid "0") when there is none.
 func (s *Store) EnsureDefault() error {
 	list, err := s.List()
@@ -110,6 +118,11 @@ func (s *Store) create(title, uuid string) (Workspace, error) {
 	list, err := s.List()
 	if err != nil {
 		return Workspace{}, err
+	}
+	for _, existing := range list {
+		if existing.UUID == uuid {
+			return existing, nil
+		}
 	}
 	// Folders first: a listed workspace always has them.
 	if err := initFolders(filepath.Join(s.root, uuid)); err != nil {

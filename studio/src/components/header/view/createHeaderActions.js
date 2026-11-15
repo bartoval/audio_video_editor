@@ -4,6 +4,7 @@ import { LABEL } from '../../../config/constants';
 
 const ICON_LOAD = 'bi-download';
 const ICON_SAVE = 'bi-save';
+const ICON_SYNC = 'bi-cloud-upload';
 const ICON_PREVIEW = 'bi-play-circle';
 const ICON_SPINNER = 'bi-arrow-repeat spin';
 
@@ -13,6 +14,7 @@ export function createHeaderActions($parent) {
     offline: false,
     isLoading: false,
     isSaving: false,
+    isSyncing: false,
     isExporting: false,
     hasTracks: false,
     hasBackup: false
@@ -32,6 +34,11 @@ export function createHeaderActions($parent) {
         </button>
       </li>
       <li class="nav-item">
+        <button class="btn btn-outline-info d-flex align-items-center gap-1" data-action="sync" title="${LABEL.SYNC_SERVER}">
+          <i class="bi ${ICON_SYNC}"></i><span class="d-none d-md-inline">${LABEL.SYNC_SERVER}</span>
+        </button>
+      </li>
+      <li class="nav-item">
         <button class="btn btn-primary d-flex align-items-center gap-1" data-action="preview" title="${LABEL.PREVIEW}">
           <i class="bi ${ICON_PREVIEW}"></i><span class="d-none d-md-inline">${LABEL.PREVIEW}</span>
         </button>
@@ -42,6 +49,8 @@ export function createHeaderActions($parent) {
 
   const $loadBtn = $el.querySelector('[data-action="load"]');
   const $saveBtn = $el.querySelector('[data-action="save"]');
+  const $syncBtn = $el.querySelector('[data-action="sync"]');
+  const $syncIcon = $syncBtn.querySelector('i');
   const $previewBtn = $el.querySelector('[data-action="preview"]');
   const $loadIcon = $loadBtn.querySelector('i');
   const $saveIcon = $saveBtn.querySelector('i');
@@ -67,6 +76,8 @@ export function createHeaderActions($parent) {
       handlers.onLoad?.();
     } else if (action === 'save') {
       handlers.onSave?.();
+    } else if (action === 'sync') {
+      handlers.onSync?.();
     } else if (action === 'preview') {
       handlers.onPreview?.();
     }
@@ -84,8 +95,10 @@ export function createHeaderActions($parent) {
     setState(state) {
       currentState = { ...currentState, ...state };
 
-      const { offline, isLoading, isSaving, isExporting, hasTracks, hasBackup } = currentState;
-      const isBusy = isLoading || isSaving || isExporting;
+      const { offline, isLoading, isSaving, isSyncing, isExporting, hasTracks, hasBackup } =
+        currentState;
+      const isBusy = isLoading || isSaving || isSyncing || isExporting;
+      setButtonState($syncBtn, $syncIcon, isBusy, isSyncing, ICON_SYNC);
 
       // Saved projects can be loaded from this device while offline.
       setButtonState($loadBtn, $loadIcon, isBusy || !hasBackup, isLoading, ICON_LOAD);

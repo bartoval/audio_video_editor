@@ -2,16 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { fireEvent } from '@testing-library/dom';
 import { Inspector } from '../index.js';
 
-// Mock workspace service
-vi.mock('../../../../../services/workspace', () => ({
-  getUuid: vi.fn(() => 'test-uuid'),
-  getTrackUrl: vi.fn(id => `http://test.com/audio/${id}`),
-  getLibraryTrackUrl: vi.fn(id => `http://test.com/library/${id}`),
-  getDerivedTrackUrl: vi.fn(id => `http://test.com/derived/${id}`)
+vi.mock('../../../../../services/offline/LocalMedia', () => ({
+  audioUrl: vi.fn(async id => `blob:local/${id}`)
 }));
-
-// Import mocked functions for assertions
-import { getLibraryTrackUrl, getDerivedTrackUrl } from '../../../../../services/workspace';
+import { audioUrl } from '../../../../../services/offline/LocalMedia';
 
 // Mock Oscilloscope
 vi.mock('../../../../../lib', async () => {
@@ -471,7 +465,7 @@ describe('Inspector', () => {
 
       await mockAudioElement.onloadeddata?.();
 
-      expect(mockAudioElement.play).toHaveBeenCalled();
+      await vi.waitFor(() => expect(mockAudioElement.play).toHaveBeenCalled());
     });
 
     it('play button changes to pause icon when playing', async () => {
@@ -621,42 +615,40 @@ describe('Inspector', () => {
       expect(mockAudioElement.pause).toHaveBeenCalled();
     });
 
-    it('uses library URL for non-derived tracks', () => {
+    it('uses local audio for non-derived tracks', async () => {
       inspector = new Inspector($container);
       inspector.open();
 
-      getLibraryTrackUrl.mockClear();
-      getDerivedTrackUrl.mockClear();
+      audioUrl.mockClear();
 
       const mockZone = createMockZone();
       inspector.set({ getSelected: () => mockZone });
 
-      expect(getLibraryTrackUrl).toHaveBeenCalledWith('track-123');
-      expect(getDerivedTrackUrl).not.toHaveBeenCalled();
+      await vi.waitFor(() => expect(audioUrl).toHaveBeenCalledWith('track-123'));
 
       const $playBtn = document.querySelector('[data-ref="playBtn"]');
       fireEvent.click($playBtn);
 
-      expect(mockAudioElement.src).toBe('http://test.com/library/track-123');
+      await vi.waitFor(() => expect(mockAudioElement.src).toBe('blob:local/track-123'));
     });
 
-    it('uses derived URL for derived tracks', () => {
+    it('uses local audio for derived tracks', async () => {
       inspector = new Inspector($container);
       inspector.open();
 
-      getLibraryTrackUrl.mockClear();
-      getDerivedTrackUrl.mockClear();
+      audioUrl.mockClear();
 
       const mockZone = createMockZone({ derivedId: 'track-456-stretched.mp3' });
       inspector.set({ getSelected: () => mockZone });
 
-      expect(getDerivedTrackUrl).toHaveBeenCalledWith('track-456-stretched.mp3');
-      expect(getLibraryTrackUrl).not.toHaveBeenCalled();
+      await vi.waitFor(() => expect(audioUrl).toHaveBeenCalledWith('track-456-stretched.mp3'));
 
       const $playBtn = document.querySelector('[data-ref="playBtn"]');
       fireEvent.click($playBtn);
 
-      expect(mockAudioElement.src).toBe('http://test.com/derived/track-456-stretched.mp3');
+      await vi.waitFor(() =>
+        expect(mockAudioElement.src).toBe('blob:local/track-456-stretched.mp3')
+      );
     });
 
     it('reloads source when derivedId becomes available after initial load', async () => {
@@ -666,22 +658,21 @@ describe('Inspector', () => {
       const mockZone = createMockZone();
       inspector.set({ getSelected: () => mockZone });
 
-      getLibraryTrackUrl.mockClear();
-      getDerivedTrackUrl.mockClear();
+      audioUrl.mockClear();
 
       const $playBtn = document.querySelector('[data-ref="playBtn"]');
       fireEvent.click($playBtn);
       await mockAudioElement.onloadeddata?.();
 
-      expect(mockAudioElement.src).toBe('http://test.com/library/track-123');
+      await vi.waitFor(() => expect(mockAudioElement.src).toBe('blob:local/track-123'));
 
       mockAudioElement.dispatchEvent(new Event('pause'));
       mockZone.blob.getDerivedId.mockReturnValue('track-123-pitched.mp3');
 
       fireEvent.click($playBtn);
 
-      expect(getDerivedTrackUrl).toHaveBeenCalledWith('track-123-pitched.mp3');
-      expect(mockAudioElement.src).toBe('http://test.com/derived/track-123-pitched.mp3');
+      await vi.waitFor(() => expect(audioUrl).toHaveBeenCalledWith('track-123-pitched.mp3'));
+      await vi.waitFor(() => expect(mockAudioElement.src).toBe('blob:local/track-123-pitched.mp3'));
     });
   });
 });

@@ -1,5 +1,5 @@
 import AudioWorker from '../AudioWorker';
-import IndexedDB from '../../../services/offline/IndexedDB';
+import * as LocalMedia from '../../../services/offline/LocalMedia';
 import { getUuid as defaultGetUuid } from '../../../services/workspace';
 import { audioBufferToWavBlob as defaultSerialize } from '../utils/AudioBufferSerializer';
 
@@ -11,7 +11,7 @@ const generateDerivedId = (idTrack, stretchFactor, pitchValue) => {
   const stretchStr = stretchFactor.toFixed(1).replace('.', '_');
   const pitchStr = pitchValue >= 0 ? `p${pitchValue}` : `m${Math.abs(pitchValue)}`;
 
-  return `${idTrack}-s${stretchStr}-${pitchStr}-local`;
+  return `${idTrack}-s${stretchStr}-${pitchStr}-${crypto.randomUUID()}.wav`;
 };
 
 /**
@@ -21,7 +21,7 @@ const generateDerivedId = (idTrack, stretchFactor, pitchValue) => {
 export function createWasmProcessor({
   getUuid: injGetUuid,
   serializeBuffer: injSerialize,
-  saveAudioBlob = (uuid, id, blob, opts) => IndexedDB.saveAudioBlob(uuid, id, blob, opts)
+  saveAudioBlob = (uuid, id, blob) => LocalMedia.store(uuid, id, blob, { filename: id }, 'derived')
 } = {}) {
   /** Time-stretch via WASM */
   const stretch = async (sourceBuffer, idTrack, stretchFactor, pitchValue) => {
@@ -33,16 +33,8 @@ export function createWasmProcessor({
 
     // Save to IndexedDB for persistence
     const uuid = getUuid();
-    Promise.resolve(serializeBuffer(buffer))
-      .then(blob => {
-        saveAudioBlob(uuid, derivedId, blob, {
-          isDerived: true,
-          mimeType: 'audio/wav'
-        });
-      })
-      .catch(err => {
-        console.warn('[WasmProcessor] Failed to save derived to IDB:', err?.message || err);
-      });
+    const blob = await serializeBuffer(buffer);
+    await saveAudioBlob(uuid, derivedId, blob, { isDerived: true, mimeType: 'audio/wav' });
 
     return { buffer, duration: buffer.duration, derivedId };
   };

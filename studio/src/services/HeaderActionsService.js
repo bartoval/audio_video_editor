@@ -1,13 +1,15 @@
 /**
- * HeaderActionsService - API operations for header actions
+ * HeaderActionsService - Persistence and exports for header actions
  *
  * Handles workspace persistence and export:
- * - load: fetch workspace data from server
- * - save: backup current state to server
+ * - load: read workspace data on this device
+ * - save: persist current state on this device
+ * - sync: explicitly transfer projects and media to/from the server
  * - preview: export and generate preview video
  */
 import { EVENT } from '../config/constants';
 import * as api from './api';
+import SyncManager from './offline/SyncManager';
 import * as EventService from './EventService';
 
 class HeaderActionsService {
@@ -48,6 +50,18 @@ class HeaderActionsService {
     try {
       const data = await EventService.emitAsync(EVENT.WORKSPACE_GET_DATA);
       return await api.backup(data);
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  }
+
+  async sync() {
+    const saved = await this.save();
+    if (!saved.success) return saved;
+    try {
+      await SyncManager.sync();
+      EventService.connect();
+      return { success: true };
     } catch (error) {
       return { success: false, error: String(error) };
     }

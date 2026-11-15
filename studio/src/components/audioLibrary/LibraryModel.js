@@ -1,6 +1,5 @@
 import { getUuid } from '../../services/workspace';
-import { deleteAudioLibraryItem } from '../../services/api';
-import { isOnline } from '../../lib';
+import { deleteAudioLibraryItem, getAudioList } from '../../services/api';
 
 /**
  * LibraryModel - manages audio library data and selection state
@@ -196,15 +195,8 @@ export default class LibraryModel {
       return [];
     }
 
-    if (!isOnline()) {
-      this.#isOffline = true;
-
-      return this.#items;
-    }
-
     try {
-      const response = await window.fetch(this.#src);
-      const metaInfoList = await response.json();
+      const metaInfoList = await getAudioList();
 
       this.#items = Object.entries(metaInfoList).map(([id, data]) => ({ ...data, id }));
       this.#selectedIds.clear();

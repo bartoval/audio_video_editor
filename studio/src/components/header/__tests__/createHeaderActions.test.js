@@ -14,6 +14,7 @@ vi.mock('../../../config/constants', () => ({
   LABEL: {
     LOAD: 'Load',
     SAVE: 'Save',
+    SYNC_SERVER: 'Sync server',
     PREVIEW: 'Preview',
     LOAD_OFFLINE: 'Load (offline)',
     SAVE_OFFLINE: 'Save (offline)',
@@ -58,6 +59,20 @@ describe('createHeaderActions', () => {
       expect(saveBtn.disabled).toBe(true);
       expect(previewBtn.disabled).toBe(true);
     });
+  });
+
+  it('allows an explicit sync offline and blocks repeated clicks while syncing', () => {
+    headerActions = createHeaderActions(container);
+    const onSync = vi.fn();
+    headerActions.bind({ onSync });
+    headerActions.setState({ offline: true });
+    const button = container.querySelector('[data-action="sync"]');
+    button.click();
+    expect(onSync).toHaveBeenCalledTimes(1);
+    headerActions.setState({ isSyncing: true });
+    button.click();
+    expect(onSync).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('[data-action="save"]').disabled).toBe(true);
   });
 
   describe('hasTracks state', () => {

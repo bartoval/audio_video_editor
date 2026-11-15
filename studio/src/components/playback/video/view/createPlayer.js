@@ -10,7 +10,7 @@ export function createPlayer($parent) {
   });
 
   const $source = createElement('source', {
-    attributes: { id: 'my-video-src', src: '#', type: 'video/mp4' },
+    attributes: { id: 'my-video-src', src: '#' },
     parent: $video
   });
 

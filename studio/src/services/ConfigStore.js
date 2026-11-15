@@ -1,15 +1,13 @@
 // @ts-check
 
-/** ConfigStore - Centralized configuration from backend */
-import { ROUTES } from '../config/routes';
+/** ConfigStore - Local timeline configuration */
 
 let config = null;
-let loadPromise = null;
 const listeners = new Set();
 const STORAGE_KEY = 'studio-thumbnails-config-v1';
 
 /**
- * Load configuration from backend API
+ * Load saved configuration or built-in defaults
  * Returns cached config if already loaded
  */
 export const load = async () => {
@@ -17,45 +15,24 @@ export const load = async () => {
     return config;
   }
 
-  if (loadPromise) {
-    return loadPromise;
+  try {
+    config = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  } catch {
+    /* Use local defaults on a fresh device. */
   }
-
-  loadPromise = fetch(ROUTES.config, { signal: AbortSignal.timeout(3000) })
-    .then(res => {
-      if (!res.ok) {
-        throw new Error('Failed to load config');
-      }
-
-      return res.json();
-    })
-    .then(data => {
-      config = data.thumbs;
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-      } catch {
-        // Configuration can still be used when browser storage is unavailable.
-      }
-      notifyListeners();
-
-      return config;
-    })
-    .catch(error => {
-      try {
-        const cached = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        if (cached?.scales) {
-          config = cached;
-          notifyListeners();
-          return config;
-        }
-      } catch {
-        // A missing or invalid cache must not hide the original failure.
-      }
-      loadPromise = null;
-      throw error;
-    });
-
-  return loadPromise;
+  if (!config?.scales) {
+    config = {
+      scales: ['0.01', '0.02', '0.05', '0.1', '0.2', '0.5', '1', '2'].map(scale => ({
+        scale,
+        isPriority: scale === '0.1'
+      })),
+      defaultScale: '0.1',
+      tiles: { cols: 10, rows: 10 },
+      extension: '.webp'
+    };
+  }
+  notifyListeners();
+  return config;
 };
 
 /**

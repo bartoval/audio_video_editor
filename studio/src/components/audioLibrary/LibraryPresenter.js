@@ -20,7 +20,13 @@ import {
   formatSampleRate
 } from '../../lib';
 import ErrorHandler from '../../services/ErrorHandler';
-import { getTrackUrl } from '../../services/workspace';
+import { getUuid } from '../../services/workspace';
+import * as LocalMedia from '../../services/offline/LocalMedia';
+import {
+  blobToAudioBuffer,
+  audioBufferToWavBlob
+} from '../../lib/audio/utils/AudioBufferSerializer';
+import SyncManager from '../../services/offline/SyncManager';
 import * as EventService from '../../services/EventService';
 import * as JobTrackerService from '../../services/JobTrackerService';
 import * as apiService from '../../services/api';
@@ -39,6 +45,7 @@ export default class LibraryPresenter {
   #actions = null;
   #onEmpty = null;
   #onLoad = null;
+  #unsubscribeSync = null;
 
   constructor($parent, config = {}) {
     const { api, onEmpty, onLoad, onAddToTimeline } = config;
@@ -74,7 +81,13 @@ export default class LibraryPresenter {
     this.#view.render();
     this.#bindViewCallbacks();
     this.#initVirtualScroll();
-    this.#initOfflineHandler();
+    this.#unsubscribeSync = SyncManager.onSyncComplete(event => {
+      if (event.type === 'complete') this.reload();
+    });
+  }
+
+  destroy() {
+    this.#unsubscribeSync?.();
   }
 
   load() {
@@ -146,16 +159,6 @@ export default class LibraryPresenter {
     );
   }
 
-  #initOfflineHandler() {
-    EventService.on(EVENT.CONNECTION, ({ online }) => {
-      if (online) {
-        this.#view.hideOfflineOverlay();
-      } else {
-        this.#view.showOfflineOverlay();
-      }
-    });
-  }
-
   #onItemRendered(data) {
     const currentId = this.#playback.getCurrentPlayingId();
 
@@ -220,7 +223,7 @@ export default class LibraryPresenter {
     });
   }
 
-  #handleDownload(item, format = 'mp3') {
+  async #handleDownload(item, format = 'mp3') {
     if (!item?.id) {
       return;
     }
@@ -231,11 +234,29 @@ export default class LibraryPresenter {
       return;
     }
 
-    const url = getTrackUrl(item.id, format);
-    const extension = format === 'wav' ? 'wav' : 'mp3';
-    const filename = `${item.name || 'audio'}.${extension}`;
-
-    downloadFromUrl(url, filename);
+    try {
+      const record = await LocalMedia.audioRecord(getUuid(), item.id);
+      const originalFormat = record?.metadata?.format || item.format;
+      if (record?.blob && (format === 'original' || originalFormat === format)) {
+        await downloadFromUrl(
+          await LocalMedia.audioUrl(item.id),
+          record.metadata?.filename || `${item.name}.${originalFormat}`
+        );
+      } else if (record?.blob && format === 'wav') {
+        const blob = audioBufferToWavBlob(await blobToAudioBuffer(record.blob));
+        const url = URL.createObjectURL(blob);
+        try {
+          await downloadFromUrl(url, `${item.name || 'audio'}.wav`);
+        } finally {
+          URL.revokeObjectURL(url);
+        }
+      } else {
+        const url = await apiService.getAudioDownloadUrl(item.id, format);
+        await downloadFromUrl(url, `${item.name || 'audio'}.${format}`);
+      }
+    } catch (error) {
+      ErrorHandler.handle(error);
+    }
   }
 
   async #handleStemsDownload(item) {

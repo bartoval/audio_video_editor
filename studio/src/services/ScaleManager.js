@@ -55,7 +55,13 @@ class ScaleManager {
   #calculateLimits() {
     const svgLimitScale = this.#duration / this.#maxWidth;
     const readabilityScale = 0.01;
-    this.#minScale = Math.max(svgLimitScale, readabilityScale);
+    this.#minScale = Math.max(
+      svgLimitScale,
+      Math.min(
+        readabilityScale,
+        this.#viewportWidth > 0 ? this.#duration / this.#viewportWidth : readabilityScale
+      )
+    );
 
     if (this.#viewportWidth > 0) {
       this.#maxScale = this.#duration / this.#viewportWidth;
@@ -94,6 +100,9 @@ class ScaleManager {
       scaleList.push(scale);
     }
 
+    // Short local clips can be narrower than the viewport at every preset.
+    // Keep a fit-to-view scale instead of failing to initialize the editor.
+    if (!scaleList.length && reachedMax) scaleList.push(this.#maxScale);
     this.#filteredScaleList = scaleList;
   }
 
