@@ -6,7 +6,8 @@ A browser-based video/audio editor (DAW) with multi-track timeline, waveform vis
 
 ```
 studio/            Frontend — Vanilla JS, Vite, MVP pattern
-studio-api/        Backend  — Express.js, FFmpeg, 3-layer architecture
+server/            Backend  — Go, being migrated from studio-api (forwards unmigrated routes to it)
+studio-api/        Legacy backend — Express.js, FFmpeg, 3-layer architecture
 media-ml-worker/   ML Worker — Python, FastAPI, Celery, Whisper, Demucs
 deployment/        Docker Compose, Kubernetes (OKE)
 ```
@@ -27,6 +28,7 @@ deployment/        Docker Compose, Kubernetes (OKE)
 
 ### Requirements
 
+- Go 1.26+
 - Node.js 20+
 - FFmpeg, rubberband (optional)
 - Docker (for ML worker / RabbitMQ)
@@ -35,9 +37,13 @@ deployment/        Docker Compose, Kubernetes (OKE)
 ### Development (hot reload)
 
 ```bash
-# Terminal 1 — Backend (port 8080)
+# Terminal 1 — Go backend (port 8080)
 source setup-env.sh
-cd studio-api && npm install && npm run dev
+cd server && go run .
+
+# Terminal 1b — legacy Node backend (port 8090), serves the routes not yet in Go
+source setup-env.sh
+cd studio-api && npm install && PORT=8090 npm run dev
 
 # Terminal 2 — Frontend (port 8081)
 cd studio && npm install && npm run dev
