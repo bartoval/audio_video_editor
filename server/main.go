@@ -20,6 +20,7 @@ import (
 
 	"github.com/bartoval/audio_video_editor/server/internal/api"
 	"github.com/bartoval/audio_video_editor/server/internal/events"
+	"github.com/bartoval/audio_video_editor/server/internal/export"
 	"github.com/bartoval/audio_video_editor/server/internal/library"
 	"github.com/bartoval/audio_video_editor/server/internal/media"
 	"github.com/bartoval/audio_video_editor/server/internal/separation"
@@ -67,6 +68,7 @@ func run() error {
 		Uploads:    uploads,
 		Events:     hub,
 		LegacyAPI:  legacy,
+		Export:     export.New(workspaces, lib),
 		Video: video.New(ctx, workspaces, encoder,
 			func(uuid string, status map[string]any) { hub.PublishRetained(uuid, "thumbnails", status) }),
 	}

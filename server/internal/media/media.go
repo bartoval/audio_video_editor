@@ -115,7 +115,7 @@ func StretchToMP3(ctx context.Context, in, out string, s Stretch) error {
 	filter := fmt.Sprintf("rubberband=tempo=%s:pitch=%s",
 		formatFloat(1/s.Ratio), formatFloat(math.Pow(2, s.Semitones/12)))
 	args = append(args, "-i", in, "-af", filter, "-c:a", "libmp3lame", "-q:a", "3")
-	return encode(ctx, out, args)
+	return Encode(ctx, out, args)
 }
 
 // ConvertAudio converts in to "mp3" (320 kbit/s) or "wav" (16 bit, 44.1 kHz, stereo).
@@ -126,12 +126,12 @@ func ConvertAudio(ctx context.Context, in, out, format string) error {
 	} else {
 		args = append(args, "-c:a", "libmp3lame", "-b:a", "320k")
 	}
-	return encode(ctx, out, args)
+	return Encode(ctx, out, args)
 }
 
-// encode runs ffmpeg with args and publishes out only when it succeeds, so a
+// Encode runs ffmpeg with args and publishes out only when it succeeds, so a
 // reader never sees a half-written file.
-func encode(ctx context.Context, out string, args []string) error {
+func Encode(ctx context.Context, out string, args []string) error {
 	tmp, err := files.Temp(out)
 	if err != nil {
 		return err

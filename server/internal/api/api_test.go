@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/bartoval/audio_video_editor/server/internal/events"
+	"github.com/bartoval/audio_video_editor/server/internal/export"
 	"github.com/bartoval/audio_video_editor/server/internal/library"
 	"github.com/bartoval/audio_video_editor/server/internal/media"
 	"github.com/bartoval/audio_video_editor/server/internal/separation"
@@ -47,6 +48,7 @@ func newTestServerWith(t *testing.T, engine separation.Engine) (*httptest.Server
 	lib := library.New(store)
 	srv := httptest.NewServer(New(Config{
 		Workspaces: store, Library: lib, Uploads: uploads, Events: hub, LegacyAPI: target,
+		Export: export.New(store, lib),
 		Video: video.New(t.Context(), store, media.NewEncoder(t.Context(), "libx264"),
 			func(uuid string, status map[string]any) { hub.PublishRetained(uuid, "thumbnails", status) }),
 		Stems: separation.New(t.Context(), func() (separation.Engine, error) { return engine, nil },

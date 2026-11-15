@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/bartoval/audio_video_editor/server/internal/events"
+	"github.com/bartoval/audio_video_editor/server/internal/export"
 	"github.com/bartoval/audio_video_editor/server/internal/library"
 	"github.com/bartoval/audio_video_editor/server/internal/separation"
 	"github.com/bartoval/audio_video_editor/server/internal/upload"
@@ -25,6 +26,7 @@ type Config struct {
 	Uploads    *upload.Receiver
 	Events     *events.Hub
 	Video      *video.Service
+	Export     *export.Service
 	Stems      *separation.Service // nil when no model is configured
 	// LegacyAPI is the Node API that still serves the routes not migrated yet.
 	LegacyAPI *url.URL
@@ -70,6 +72,9 @@ func New(cfg Config) http.Handler {
 	mux.HandleFunc("POST /api/v1/workspaces/{uuid}/audio/{id}/stretch", s.stretchAudio)
 	mux.HandleFunc("POST /api/v1/workspaces/{uuid}/audio/{id}/stems", s.startStems)
 	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/audio/{id}/stems/{jobId}/download", s.downloadStems)
+
+	mux.HandleFunc("POST /api/v1/workspaces/{uuid}/exports", s.exportTimeline)
+	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/exports/{file}", s.getExport)
 
 	mux.HandleFunc("POST /api/v1/internal/jobs/callback", s.jobCallback)
 
@@ -119,7 +124,8 @@ func writeError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, workspace.ErrNotFound), errors.Is(err, library.ErrNotFound), errors.Is(err, video.ErrNotFound):
 		status, code = http.StatusNotFound, "NOT_FOUND"
-	case errors.Is(err, workspace.ErrInvalid), errors.Is(err, library.ErrInvalid), errors.Is(err, upload.ErrInvalid):
+	case errors.Is(err, workspace.ErrInvalid), errors.Is(err, library.ErrInvalid), errors.Is(err, upload.ErrInvalid),
+		errors.Is(err, export.ErrInvalid):
 		status, code = http.StatusBadRequest, "VALIDATION_ERROR"
 	case errors.Is(err, errFileType):
 		status, code = http.StatusBadRequest, "INVALID_FILE_TYPE"

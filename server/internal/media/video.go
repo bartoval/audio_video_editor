@@ -132,12 +132,12 @@ func CopyMuted(ctx context.Context, in, out string, info VideoInfo) error {
 	if !info.HasAudio && hasFaststart(in) {
 		return copyFile(in, out)
 	}
-	return encode(ctx, out, []string{"-i", in, "-an", "-c:v", "copy", "-movflags", "+faststart"})
+	return Encode(ctx, out, []string{"-i", in, "-an", "-c:v", "copy", "-movflags", "+faststart"})
 }
 
 // ExtractFrame writes the frame at t seconds as WebP, scaled to the given height.
 func ExtractFrame(ctx context.Context, video, out string, t float64, height int) error {
-	return encode(ctx, out, []string{"-ss", formatFloat(t), "-i", video,
+	return Encode(ctx, out, []string{"-ss", formatFloat(t), "-i", video,
 		"-frames:v", "1", "-vf", fmt.Sprintf("scale=-1:%d", height)})
 }
 
