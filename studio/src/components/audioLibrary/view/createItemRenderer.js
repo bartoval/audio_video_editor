@@ -4,17 +4,18 @@ import { CSS_CLASS } from '../../../config/ui';
 import { ContextMenu } from '../../common/ContextMenu';
 
 function buildMenuItems(hasTranscription) {
-  const transcriptItem = hasTranscription
-    ? { id: 'viewTranscript', label: LABEL.VIEW_TRANSCRIPT, icon: 'bi-chat-square-text' }
-    : { id: 'transcribe', label: LABEL.TRANSCRIBE, icon: 'bi-chat-square-text' };
-
-  return [
+  const items = [
     { id: 'mp3', label: LABEL.DOWNLOAD_MP3, icon: 'bi-file-earmark-music' },
     { id: 'wav', label: LABEL.DOWNLOAD_WAV, icon: 'bi-file-earmark-music' },
     { type: 'divider' },
-    { id: 'stems', label: LABEL.DOWNLOAD_STEMS, icon: 'bi-music-note-list' },
-    transcriptItem
+    { id: 'stems', label: LABEL.DOWNLOAD_STEMS, icon: 'bi-music-note-list' }
   ];
+
+  if (hasTranscription) {
+    items.push({ id: 'viewTranscript', label: LABEL.VIEW_TRANSCRIPT, icon: 'bi-chat-square-text' });
+  }
+
+  return items;
 }
 
 export function createItemRenderer(handlers) {

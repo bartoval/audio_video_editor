@@ -125,7 +125,6 @@ export const EVENT = {
   JOB_COMPLETED: 'job:completed',
   JOB_FAILED: 'job:failed',
   JOB_COUNT_CHANGED: 'job:countChanged',
-  TRANSCRIPTION_READY: 'transcription:ready',
   SCENE_DETECTION_READY: 'sceneDetection:ready'
 };
 
@@ -138,7 +137,6 @@ export const ERROR_CONTEXT = {
   DELETE_TRACK: 'Failed to delete track',
   UPLOAD_FILE: 'Failed to upload file',
   STEMS_SEPARATION: 'Failed to separate stems',
-  TRANSCRIPTION: 'Failed to start transcription',
   SCENE_DETECTION: 'Failed to start scene detection'
 };
 
@@ -225,11 +223,7 @@ export const LABEL = {
   STEMS_READY_DESC: 'Your stems have been separated and are downloading.',
   STEMS_FAILED: 'Stems Failed',
   STEMS_CLOSE_HINT: 'You can close this and continue working.',
-  TRANSCRIBE: 'Transcribe',
   VIEW_TRANSCRIPT: 'View Transcript',
-  TRANSCRIPTION_PROCESSING: 'Transcribing...',
-  TRANSCRIPTION_READY: 'Transcription Ready',
-  TRANSCRIPTION_FAILED: 'Transcription Failed',
   SCENE_DETECTION: 'Detect Scenes',
   SCENE_DETECTION_PROCESSING: 'Detecting scenes...',
   SCENE_DETECTION_READY: 'Scene Detection Ready',
@@ -243,7 +237,6 @@ export const LABEL = {
   JOB_DISMISS: 'Dismiss',
   JOB_NO_ETA: '\u2014',
   JOB_TYPE_STEMS: 'Stems',
-  JOB_TYPE_TRANSCRIBE: 'Transcribe',
   JOB_TYPE_SCENE_DETECT: 'Scene Detect',
   LIBRARY_DRAG: 'Drag to timeline',
   LIBRARY_SELECT_ALL: 'Select All',

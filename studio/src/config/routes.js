@@ -24,11 +24,9 @@ export const buildUrl = (route, uuid, suffix = '') => {
     videoFile: `${base}/${uuid}/video/file`,
     videoSmall: `${base}/${uuid}/video/small`,
     videoConvert: `${base}/${uuid}/video/convert`,
-    videoConvertStream: `${base}/${uuid}/video/convert/stream`,
     videoThumbnails: `${base}/${uuid}/video/thumbnails`,
     audio: `${base}/${uuid}/audio`,
     audioFile: `${base}/${uuid}/audio`,
-    timeline: `${base}/${uuid}/timeline`,
     exports: `${base}/${uuid}/exports`
   };
 

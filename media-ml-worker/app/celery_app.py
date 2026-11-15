@@ -6,7 +6,7 @@ celery_app = Celery(
     "media_ml_worker",
     broker=settings.rabbitmq_url,
     backend="rpc://",
-    include=["app.tasks.transcribe_task", "app.tasks.stems_task", "app.tasks.scene_detect_task"],
+    include=["app.tasks.transcribe_task", "app.tasks.stems_task"],
 )
 
 celery_app.conf.update(

@@ -156,17 +156,42 @@ func testVideo(t *testing.T, name, codec string) {
 	}
 }
 
-func TestJobCallback(t *testing.T) {
-	srv, _ := newTestServer(t)
-	events := eventStream(t, srv.URL+"/api/v1/workspaces/0/events")
+func TestSceneDetect(t *testing.T) {
+	if _, err := exec.LookPath("ffmpeg"); err != nil {
+		t.Skip("ffmpeg not installed")
+	}
+	srv, root := newTestServer(t)
+	_, body := call(t, srv, "POST", "/api/v1/workspaces", `{"title":"Cuts"}`)
+	var ws struct{ UUID string }
+	json.Unmarshal([]byte(body), &ws)
+	base := "/api/v1/workspaces/" + ws.UUID
+
+	if status, _ := call(t, srv, "POST", base+"/video/scene-detect", `{}`); status != 404 {
+		t.Errorf("without a video: status %d, want 404", status)
+	}
+	// Red, green, blue: cuts at 2 s and 4 s.
+	err := exec.Command("ffmpeg", "-v", "error", "-f", "lavfi", "-i", "color=red:s=640x360:r=25:d=2",
+		"-f", "lavfi", "-i", "color=green:s=640x360:r=25:d=2", "-f", "lavfi", "-i", "color=blue:s=640x360:r=25:d=2",
+		"-filter_complex", "[0][1][2]concat=n=3", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+		filepath.Join(root, ws.UUID, "video.mp4")).Run()
+	if err != nil {
+		t.Fatal(err)
+	}
+	events := eventStream(t, srv.URL+base+"/events")
 	waitEvent(t, events, "connected")
-	status, _ := call(t, srv, "POST", "/api/v1/internal/jobs/callback?uuid=0&audioId=a.mp3&type=transcribe",
-		`{"job_id":"j1","status":"completed","text":"hello","segments":[{"start":0}],"language":"en","duration":3.5,"scenes":[1]}`)
-	if status != 200 {
-		t.Fatalf("callback: status %d", status)
+	status, body := call(t, srv, "POST", base+"/video/scene-detect", `{}`)
+	var started struct{ JobID string }
+	json.Unmarshal([]byte(body), &started)
+	if status != 200 || started.JobID == "" {
+		t.Fatalf("start: %d %s", status, body)
 	}
 	p := waitEvent(t, events, "job:completed")
-	if p["jobId"] != "j1" || p["audioId"] != "a.mp3" || p["text"] != "hello" || p["language"] != "en" || p["scenes"] != nil {
-		t.Errorf("event payload: %v", p)
+	got, _ := json.Marshal(p["scenes"])
+	want := `[{"score":27,"time":2,"type":"cut"},{"score":27,"time":4,"type":"cut"}]`
+	if p["jobId"] != started.JobID || p["type"] != "scene-detect" || p["status"] != "completed" || string(got) != want {
+		t.Errorf("event: %v, scenes %s, want %s", p, got, want)
+	}
+	if status, _ := call(t, srv, "POST", base+"/video/scene-detect", `{"threshold":-1}`); status != 400 {
+		t.Errorf("negative threshold: status %d, want 400", status)
 	}
 }

@@ -9,7 +9,6 @@ import * as EventService from '../services/EventService';
 import * as Workspace from '../services/workspace';
 
 import timelineStore from './timelineStore';
-import transcriptionStore from './transcriptionStore';
 import uiStore from './uiStore';
 import workspaceStore from './workspaceStore';
 
@@ -21,7 +20,6 @@ export function initStoreConnectors() {
     connectConnectionEvents(),
     connectToolModeEffect(),
     connectVideoClassEffect(),
-    connectTranscriptionEvents(),
     connectSceneDetectionEvents()
   ];
 }
@@ -101,12 +99,6 @@ function connectToolModeEffect() {
     }
 
     previousMode = toolMode;
-  });
-}
-
-function connectTranscriptionEvents() {
-  return EventService.on(EVENT.TRANSCRIPTION_READY, ({ audioId, result }) => {
-    transcriptionStore.actions.setTranscription({ audioId, data: result });
   });
 }
 

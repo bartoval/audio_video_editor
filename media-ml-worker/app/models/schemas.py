@@ -64,31 +64,3 @@ class StemsResult(BaseModel):
     model: Optional[str] = None
     duration: Optional[float] = None
     error: Optional[str] = None
-
-
-class SceneDetectRequest(BaseModel):
-    file_path: str = Field(..., description="Path to video file")
-    threshold: Optional[float] = Field(27.0, description="Content detector threshold (lower = more sensitive)")
-    min_scene_len: Optional[float] = Field(0.6, description="Minimum scene length in seconds")
-    callback_url: Optional[str] = Field(None, description="URL to POST when job completes")
-
-
-class SceneDetectResponse(BaseModel):
-    job_id: str
-    status: JobStatus
-    message: str
-
-
-class Scene(BaseModel):
-    time: float = Field(..., description="Scene boundary timestamp in seconds")
-    type: str = Field(..., description="Transition type: cut or fade")
-    score: float = Field(..., description="Detection confidence score")
-
-
-class SceneDetectResult(BaseModel):
-    job_id: str
-    status: JobStatus
-    scenes: Optional[list[Scene]] = None
-    fps: Optional[float] = None
-    duration: Optional[float] = None
-    error: Optional[str] = None

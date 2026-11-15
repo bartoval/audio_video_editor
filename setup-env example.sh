@@ -10,13 +10,10 @@ export PORT=8080
 export STORAGE_PROVIDER=local
 export HW_ENCODER=
 
-# Go server - Stem separation (steammeros). Leave STEMS_MODEL empty to turn it off.
-# Get the runtime once from a steammeros checkout ($STEAMMEROS):
-#   tools/fetch_ort.sh gpu && tools/fetch_model.sh cuda    (or: cpu / no argument)
-export STEMS_MODEL=                # $STEAMMEROS/models/scnet-large/scnet-large-cuda.onnx (GPU) or scnet-large.onnx (CPU)
-export STEMS_ORT_LIBRARY=          # libonnxruntime.so printed by fetch_ort.sh
-export STEMS_CUDA_DEVICE=          # GPU index, e.g. 0; empty = CPU
-export STEMS_CUDA_OPS=             # $STEAMMEROS/models/scnet-large/libstems_cuda_ops.so (GPU model only)
+# Go server - Stem separation: model and runtimes are installed automatically.
+export STEMS_DEVICE=auto           # auto (NVIDIA GPU or CPU), cpu, cuda, cuda-fast (mixed), off
+# Optional: STEMS_CUDA_DEVICE=0, STEMS_CACHE_DIR=/path/to/cache, STEMS_OFFLINE=true
+# Existing installations can still set STEMS_MODEL, STEMS_ORT_LIBRARY and STEMS_CUDA_OPS.
 
 # Studio API - Temp cleanup
 export TMP_TTL_MINUTES=30

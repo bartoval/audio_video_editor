@@ -128,7 +128,7 @@ func (s *server) getAudio(w http.ResponseWriter, r *http.Request) {
 }
 
 // getAudioPair serves the two-segment audio routes, which share a pattern:
-// derived/{id} and {id}/file. Anything else is not migrated yet.
+// derived/{id} and {id}/file.
 func (s *server) getAudioPair(w http.ResponseWriter, r *http.Request) {
 	a, b := r.PathValue("a"), r.PathValue("b")
 	switch {
@@ -137,7 +137,7 @@ func (s *server) getAudioPair(w http.ResponseWriter, r *http.Request) {
 	case b == "file":
 		s.downloadAudio(w, r, a)
 	default:
-		s.legacy.ServeHTTP(w, r)
+		http.NotFound(w, r)
 	}
 }
 

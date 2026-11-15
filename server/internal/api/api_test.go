@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,16 +24,8 @@ func newTestServer(t *testing.T) (*httptest.Server, string) {
 	return newTestServerWith(t, fakeEngine{})
 }
 
-// newTestServerWith starts the API in front of a fake Node API, which
-// answers "legacy <method> <path>".
 func newTestServerWith(t *testing.T, engine separation.Engine) (*httptest.Server, string) {
 	t.Helper()
-	legacy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		io.WriteString(w, "legacy "+r.Method+" "+r.URL.Path)
-	}))
-	t.Cleanup(legacy.Close)
-	target, _ := url.Parse(legacy.URL)
-
 	root := t.TempDir()
 	store, err := workspace.New(root)
 	if err != nil {
@@ -47,7 +38,7 @@ func newTestServerWith(t *testing.T, engine separation.Engine) (*httptest.Server
 	hub := events.NewHub()
 	lib := library.New(store)
 	srv := httptest.NewServer(New(Config{
-		Workspaces: store, Library: lib, Uploads: uploads, Events: hub, LegacyAPI: target,
+		Workspaces: store, Library: lib, Uploads: uploads, Events: hub,
 		Export: export.New(store, lib),
 		Video: video.New(t.Context(), store, media.NewEncoder(t.Context(), "libx264"),
 			func(uuid string, status map[string]any) { hub.PublishRetained(uuid, "thumbnails", status) }),
@@ -72,14 +63,19 @@ func call(t *testing.T, srv *httptest.Server, method, path, body string) (int, s
 
 func TestRouting(t *testing.T) {
 	srv, _ := newTestServer(t)
-	for _, tc := range []struct{ method, path, want string }{
-		{"POST", "/api/v1/workspaces/x/video/scene-detect", "legacy POST /api/v1/workspaces/x/video/scene-detect"},
-		{"GET", "/api/v1/workspaces/x/audio/a/stretch", "legacy GET /api/v1/workspaces/x/audio/a/stretch"},
-		{"GET", "/api/v1/workspaces/x", "legacy GET /api/v1/workspaces/x"},
-		{"POST", "/api/v1/health", "legacy POST /api/v1/health"},
+	for _, tc := range []struct {
+		method, path string
+		want         int
+	}{
+		{"POST", "/api/v1/workspaces/x/audio/a/transcribe", http.StatusMethodNotAllowed},
+		{"GET", "/api/v1/workspaces/x/audio/a/stretch", http.StatusNotFound},
+		{"GET", "/api/v1/workspaces/x", http.StatusMethodNotAllowed},
+		{"POST", "/api/v1/health", http.StatusMethodNotAllowed},
+		{"POST", "/api/v1/internal/jobs/callback", http.StatusNotFound},
+		{"GET", "/api/v1/workspaces/x/timeline", http.StatusNotFound},
 	} {
-		if _, got := call(t, srv, tc.method, tc.path, ""); got != tc.want {
-			t.Errorf("%s %s: got %q, want %q", tc.method, tc.path, got, tc.want)
+		if got, _ := call(t, srv, tc.method, tc.path, ""); got != tc.want {
+			t.Errorf("%s %s: status %d, want %d", tc.method, tc.path, got, tc.want)
 		}
 	}
 	if status, _ := call(t, srv, "GET", "/api/v1/health", ""); status != http.StatusOK {

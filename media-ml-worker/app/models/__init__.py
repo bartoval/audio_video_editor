@@ -1,10 +1,6 @@
 from app.models.schemas import (
     HealthResponse,
     JobStatus,
-    Scene,
-    SceneDetectRequest,
-    SceneDetectResponse,
-    SceneDetectResult,
     StemFile,
     StemsRequest,
     StemsResponse,
@@ -24,8 +20,4 @@ __all__ = [
     "StemsResponse",
     "StemsResult",
     "StemFile",
-    "SceneDetectRequest",
-    "SceneDetectResponse",
-    "SceneDetectResult",
-    "Scene",
 ]

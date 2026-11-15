@@ -72,9 +72,6 @@ export function createServerProcessor({
       })
       .catch(() => {});
 
-    // Check stretch status (fire and forget)
-    window.fetch(buildUrl('audio', uuid, `/${newTrackId}/stretch`));
-
     return { buffer: newBuffer, duration: newBuffer.duration, derivedId: newTrackId };
   };
 

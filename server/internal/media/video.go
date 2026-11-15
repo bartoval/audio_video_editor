@@ -10,6 +10,8 @@ import (
 	"math"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -19,6 +21,7 @@ import (
 // VideoInfo describes a video file.
 type VideoInfo struct {
 	Duration    float64 // seconds
+	FPS         float64 // average frame rate
 	Width       int
 	Height      int
 	Codec       string
@@ -42,6 +45,7 @@ func ProbeVideo(ctx context.Context, path string) (VideoInfo, error) {
 			CodecType          string `json:"codec_type"`
 			CodecName          string `json:"codec_name"`
 			Width              int    `json:"width"`
+			AvgFrameRate       string `json:"avg_frame_rate"`
 			Height             int    `json:"height"`
 			DisplayAspectRatio string `json:"display_aspect_ratio"`
 		} `json:"streams"`
@@ -59,6 +63,7 @@ func ProbeVideo(ctx context.Context, path string) (VideoInfo, error) {
 		case s.CodecType == "video" && !video:
 			video = true
 			info.Codec, info.AspectRatio = s.CodecName, s.DisplayAspectRatio
+			info.FPS = parseRate(s.AvgFrameRate)
 			if s.Width > 0 && s.Height > 0 {
 				info.Width, info.Height = s.Width, s.Height
 			}
@@ -71,6 +76,83 @@ func ProbeVideo(ctx context.Context, path string) (VideoInfo, error) {
 		return VideoInfo{}, fmt.Errorf("no video stream in %s", path)
 	}
 	return info, nil
+}
+
+// parseRate reads a frame rate such as "30000/1001".
+func parseRate(rate string) float64 {
+	num, den, ok := strings.Cut(rate, "/")
+	n, err1 := strconv.ParseFloat(num, 64)
+	if !ok {
+		return n
+	}
+	d, err2 := strconv.ParseFloat(den, 64)
+	if err1 != nil || err2 != nil || d == 0 {
+		return 0
+	}
+	return n / d
+}
+
+// RGBSamples decodes every frame of the video as RGB24 (unrotated) and
+// passes the pixels at the given columns and rows: a len(xs) x len(ys) image.
+// Only those pixels cross the pipe, a small part of a full frame. The
+// buffer is reused between calls.
+func RGBSamples(ctx context.Context, video string, xs, ys []int, each func(rgb []byte)) error {
+	dir, err := os.MkdirTemp("", "samples-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(dir)
+	if !safePath.MatchString(dir) {
+		return fmt.Errorf("temporary directory %q cannot be named in a filter graph", dir)
+	}
+	// remap reads, for each output pixel, the source column from xmap and the row from ymap.
+	xmap, ymap := make([]int, 0, len(xs)*len(ys)), make([]int, 0, len(xs)*len(ys))
+	for _, y := range ys {
+		for _, x := range xs {
+			xmap, ymap = append(xmap, x), append(ymap, y)
+		}
+	}
+	for name, m := range map[string][]int{"x.pgm": xmap, "y.pgm": ymap} {
+		if err := writePGM16(filepath.Join(dir, name), len(xs), len(ys), m); err != nil {
+			return err
+		}
+	}
+	graph := fmt.Sprintf("movie=%[1]s/x.pgm,format=gray16,loop=-1:1[x];movie=%[1]s/y.pgm,format=gray16,loop=-1:1[y];"+
+		"[0:v]format=rgb24[v];[v][x][y]remap=format=color", dir)
+	cmd := exec.CommandContext(ctx, "ffmpeg", "-nostdin", "-v", "error", "-noautorotate", "-i", video,
+		"-filter_complex", graph, "-an", "-fps_mode", "passthrough", "-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1")
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	in := bufio.NewReaderSize(stdout, 1<<20)
+	frame := make([]byte, len(xs)*len(ys)*3)
+	for {
+		if _, err := io.ReadFull(in, frame); err != nil {
+			break // end of the stream; ffmpeg's exit status tells whether it failed
+		}
+		each(frame)
+	}
+	if err := cmd.Wait(); err != nil {
+		return fmt.Errorf("ffmpeg: %w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	return nil
+}
+
+var safePath = regexp.MustCompile(`^[A-Za-z0-9/_.-]+$`)
+
+// writePGM16 writes a 16-bit grayscale PGM image.
+func writePGM16(path string, w, h int, pixels []int) error {
+	data := fmt.Appendf(nil, "P5 %d %d 65535\n", w, h)
+	for _, p := range pixels {
+		data = append(data, byte(p>>8), byte(p))
+	}
+	return os.WriteFile(path, data, 0o600)
 }
 
 // aspectRatio names the common ratios and falls back to "w:h".

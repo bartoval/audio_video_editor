@@ -13,9 +13,6 @@ demucs>=4.0.1
 torch>=2.1.2
 torchaudio>=2.1.2
 
-# ML / Scene Detection
-scenedetect[opencv]>=0.6
-
 # Utilities
 pydantic==2.5.3
 pydantic-settings==2.1.0

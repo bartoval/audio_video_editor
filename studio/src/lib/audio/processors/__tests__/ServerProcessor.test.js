@@ -211,6 +211,11 @@ describe('ServerProcessor', () => {
       const result = await ServerProcessor.stretch(mockSourceBuffer, 'track', 1.0, 0, context);
 
       expect(result.derivedId).toBe('server-derived-id');
+      expect(mockFetchAudio).toHaveBeenCalledWith(
+        '/api/v1/workspaces/test-uuid/audio/derived/server-derived-id',
+        { retry: true }
+      );
+      expect(window.fetch).not.toHaveBeenCalled();
     });
 
     it('returns buffer duration from fetched audio', async () => {

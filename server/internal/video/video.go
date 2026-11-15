@@ -11,6 +11,8 @@ package video
 import (
 	"cmp"
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -25,6 +27,7 @@ import (
 
 	"github.com/bartoval/audio_video_editor/server/internal/files"
 	"github.com/bartoval/audio_video_editor/server/internal/media"
+	"github.com/bartoval/audio_video_editor/server/internal/scenes"
 	"github.com/bartoval/audio_video_editor/server/internal/workspace"
 )
 
@@ -324,6 +327,26 @@ func (s *Service) Thumb(uuid, scale, name string) (string, error) {
 		}
 	}
 	return s.existing(uuid, filepath.Join(thumbsDir, scale, name))
+}
+
+// DetectScenes finds the cuts of the workspace video in the background and
+// passes them to done with the job id it returns.
+func (s *Service) DetectScenes(uuid string, threshold, minSceneLen float64, done func(jobID string, res scenes.Result, err error)) (string, error) {
+	video, err := s.File(uuid, false)
+	if err != nil {
+		return "", err
+	}
+	id := make([]byte, 16)
+	rand.Read(id)
+	jobID := hex.EncodeToString(id)
+	go func() {
+		res, err := scenes.Detect(s.ctx, video, threshold, minSceneLen)
+		if err != nil {
+			slog.Error("scene detection failed", "workspace", uuid, "err", err)
+		}
+		done(jobID, res, err)
+	}()
+	return jobID, nil
 }
 
 // Frame returns the frame at t seconds, extracting and caching it on first use.

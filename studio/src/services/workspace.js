@@ -33,12 +33,6 @@ export const getDerivedTrackUrl = id => {
 
 export const getLibraryTrackUrl = id => buildUrl('audio', uuid, `/${id}`);
 
-export const getThumbsUrl = id => {
-  const base = buildUrl('videoThumbnails', uuid);
-
-  return id ? `${base}/${id}?v=${cacheBuster}` : `${base}/`;
-};
-
 export const getThumbAtTime = time => {
   if (!isOnline()) {
     return null;

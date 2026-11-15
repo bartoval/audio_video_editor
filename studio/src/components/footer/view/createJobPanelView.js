@@ -3,12 +3,10 @@ import { LABEL } from '../../../config/constants';
 import { JOB_TRACKER } from '../../../config/ui';
 
 const TYPE_ICONS = {
-  transcribe: 'bi-chat-square-text',
   stems: 'bi-music-note-list'
 };
 
 const TYPE_LABELS = {
-  transcribe: LABEL.JOB_TYPE_TRANSCRIBE,
   stems: LABEL.JOB_TYPE_STEMS
 };
 

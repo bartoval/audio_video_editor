@@ -53,7 +53,11 @@ export default class LibraryPresenter {
     this.#upload = new LibraryUpload();
     this.#actions = new LibraryActions();
     this.#infoModal = new Modal({ showFooter: false });
-    this.#transcriptModal = new Modal({ showFooter: false, size: 'lg', className: 'transcript-modal' });
+    this.#transcriptModal = new Modal({
+      showFooter: false,
+      size: 'lg',
+      className: 'transcript-modal'
+    });
 
     this.#playback.setView(this.#view);
 
@@ -184,7 +188,10 @@ export default class LibraryPresenter {
       [LABEL.TRACK_FORMAT, escapeHtml(item.format?.toUpperCase()) || '—'],
       [LABEL.TRACK_CODEC, escapeHtml(item.codec?.toUpperCase()) || '—'],
       [LABEL.TRACK_BIT_DEPTH, item.bitDepth ? `${item.bitDepth}-bit` : '—'],
-      [LABEL.TRACK_CHANNELS, escapeHtml(item.channelLayout) || (item.channels ? `${item.channels}ch` : '—')],
+      [
+        LABEL.TRACK_CHANNELS,
+        escapeHtml(item.channelLayout) || (item.channels ? `${item.channels}ch` : '—')
+      ],
       [LABEL.TRACK_SAMPLE_RATE, item.sampleRate ? formatSampleRate(item.sampleRate) : '—'],
       [LABEL.TRACK_BITRATE, item.bitrate ? formatBitrate(item.bitrate) : '—'],
       [LABEL.TRACK_DURATION, item.duration ? formatDuration(item.duration / 1000) : '—'],
@@ -224,12 +231,6 @@ export default class LibraryPresenter {
       return;
     }
 
-    if (format === 'transcribe') {
-      this.#handleTranscribe(item);
-
-      return;
-    }
-
     const url = getTrackUrl(item.id, format);
     const extension = format === 'wav' ? 'wav' : 'mp3';
     const filename = `${item.name || 'audio'}.${extension}`;
@@ -255,27 +256,6 @@ export default class LibraryPresenter {
       });
     } catch (error) {
       ErrorHandler.handle(error, ERROR_CONTEXT.STEMS_SEPARATION);
-    }
-  }
-
-  async #handleTranscribe(item) {
-    try {
-      const { jobId } = await apiService.startTranscription(item.id);
-
-      if (!jobId) {
-        throw new Error('Failed to start transcription');
-      }
-
-      const filename = item.name || 'audio';
-
-      JobTrackerService.track(jobId, {
-        type: 'transcribe',
-        audioId: item.id,
-        filename,
-        audioDurationMs: item.duration || 0
-      });
-    } catch (error) {
-      ErrorHandler.handle(error, ERROR_CONTEXT.TRANSCRIPTION);
     }
   }
 

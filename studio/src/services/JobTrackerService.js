@@ -3,7 +3,7 @@
 /**
  * @typedef {Object} TrackedJob
  * @property {string} jobId
- * @property {string} type - Job type: 'stems', 'transcribe', 'scene-detect'
+ * @property {string} type - Job type: 'stems', 'scene-detect'
  * @property {string} audioId - Library audio ID
  * @property {string} filename - Original filename for download
  * @property {number} audioDurationMs - Audio duration in ms (for ETA)
@@ -31,7 +31,9 @@ const loadFromStorage = () => {
 
     if (stored) {
       const parsed = JSON.parse(stored);
-      parsed.forEach(job => jobs.set(job.jobId, job));
+      parsed
+        .filter(job => job.type === 'stems' || job.type === 'scene-detect')
+        .forEach(job => jobs.set(job.jobId, job));
     }
   } catch {
     // Storage not available or corrupted
@@ -82,29 +84,6 @@ const handleStemsCompleted = job => {
 
 /**
  * @param {TrackedJob} job
- * @param {Object} data - SSE payload with transcription result
- */
-const handleTranscriptionCompleted = (job, data) => {
-  uiStore.actions.pushToast({
-    type: 'success',
-    msg: `${LABEL.TRANSCRIPTION_READY}: ${job.filename}`,
-    timeHide: TOAST_DURATION.long
-  });
-
-  EventService.emitLocal(EVENT.TRANSCRIPTION_READY, {
-    audioId: job.audioId,
-    jobId: job.jobId,
-    result: {
-      text: data.text,
-      segments: data.segments,
-      language: data.language,
-      duration: data.duration
-    }
-  });
-};
-
-/**
- * @param {TrackedJob} job
  * @param {Object} data - SSE payload with scene detection result
  */
 const handleSceneDetectionCompleted = (job, data) => {
@@ -126,7 +105,6 @@ const handleSceneDetectionCompleted = (job, data) => {
  */
 const handleJobFailed = (job, error) => {
   const failLabels = {
-    transcribe: LABEL.TRANSCRIPTION_FAILED,
     'scene-detect': LABEL.SCENE_DETECTION_FAILED,
     stems: LABEL.STEMS_FAILED
   };
@@ -160,9 +138,7 @@ const handleSseJobCompleted = data => {
   }
 
   if (status === 'completed') {
-    if (job.type === 'transcribe') {
-      handleTranscriptionCompleted(job, data);
-    } else if (job.type === 'scene-detect') {
+    if (job.type === 'scene-detect') {
       handleSceneDetectionCompleted(job, data);
     } else {
       handleStemsCompleted(job);

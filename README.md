@@ -17,6 +17,7 @@ deployment/        Docker Compose, Kubernetes, Oracle VM
 ## Requirements
 
 - [Go](https://go.dev/dl/) 1.26+
+- A C++20 compiler (for steammeros via cgo)
 - [Node.js](https://nodejs.org/en/download) 20+
 - [FFmpeg](https://ffmpeg.org/download.html) built with [librubberband](https://breakfastquay.com/rubberband/) (check: `ffmpeg -filters | grep rubberband`)
 - [Docker](https://docs.docker.com/get-started/get-docker/), for the ML worker
@@ -35,6 +36,18 @@ docker compose -f docker-compose.local.yml up --build       # ML worker   :8001 
 
 Open <http://localhost:8081>. Run each command in its own terminal.
 
+The Go server prepares the stem model and runtimes on first start and reuses them
+offline afterward. It uses NVIDIA on Linux x86-64 when detected, otherwise CPU;
+GPU inference needs a driver supporting CUDA 13. For fast GPU mode (mixed precision),
+start the Go server with:
+
+```bash
+cd server
+STEMS_DEVICE=cuda-fast go run .
+```
+
+Set `STEMS_DEVICE=off` to skip stems. No separate steammeros checkout is needed.
+
 ## Tests
 
 ```bash
@@ -50,8 +63,8 @@ cd studio && npm test && npm run typecheck
 | `PORT` | server, studio-api | `8080` | Use `8090` for studio-api when running with the Go server |
 | `LEGACY_API_URL` | server | `http://localhost:8090` | Where unmigrated routes are forwarded |
 | `ROOT_PATH` / `DATA_DIR` | server | `../studio-api` / `projects` | Workspace storage, shared with studio-api |
-| `STEMS_MODEL` | server | none | [steammeros](https://github.com/bartoval/steammeros) model; empty turns stem separation off. GPU: also `STEMS_CUDA_DEVICE`, `STEMS_CUDA_OPS` |
-| `STEMS_ORT_LIBRARY` | server | system | ONNX Runtime shared library |
+| `STEMS_DEVICE` | server | `auto` | `auto`, `cpu`, `cuda`, `cuda-fast` (mixed precision), `off` |
+| `STEMS_CACHE_DIR` / `STEMS_OFFLINE` | server | user cache / `false` | Optional cache location; `true` forbids downloads and requires prepared assets |
 | `HW_ENCODER` | server | auto | `h264_nvenc` or `libx264`; by default NVENC when the GPU supports it |
 | `WHISPER_MODEL` | ml-worker | `base` | `tiny` … `large` |
 | `INTERNAL_API_URL` | studio-api | `http://localhost:8080` | Callback URL for the ML worker |

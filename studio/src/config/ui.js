@@ -67,7 +67,7 @@ export const SSE = {
 
 export const JOB_TRACKER = {
   STORAGE_KEY: 'studio_pending_jobs',
-  ESTIMATION_RATIO: { transcribe: 0.33, stems: 1.5 },
+  ESTIMATION_RATIO: { stems: 1.5 },
   ELAPSED_TICK_MS: 1000
 };
 

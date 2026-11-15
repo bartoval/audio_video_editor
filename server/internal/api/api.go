@@ -6,8 +6,6 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"time"
 
 	"github.com/bartoval/audio_video_editor/server/internal/events"
@@ -28,20 +26,16 @@ type Config struct {
 	Video      *video.Service
 	Export     *export.Service
 	Stems      *separation.Service // nil when no model is configured
-	// LegacyAPI is the Node API that still serves the routes not migrated yet.
-	LegacyAPI *url.URL
 }
 
 type server struct {
 	cfg     Config
-	legacy  http.Handler
 	started time.Time
 }
 
-// New returns the API handler. Migrated routes are served here, every other
-// /api request is forwarded to the legacy API.
+// New returns the API handler.
 func New(cfg Config) http.Handler {
-	s := &server{cfg: cfg, legacy: legacyProxy(cfg.LegacyAPI), started: time.Now()}
+	s := &server{cfg: cfg, started: time.Now()}
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /api/v1/health", s.health)
@@ -61,6 +55,7 @@ func New(cfg Config) http.Handler {
 	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/video/small", s.getSmallVideo)
 	mux.HandleFunc("POST /api/v1/workspaces/{uuid}/video/convert", s.convertVideo)
 	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/video/convert", s.conversionStatus)
+	mux.HandleFunc("POST /api/v1/workspaces/{uuid}/video/scene-detect", s.detectScenes)
 	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/video/thumbnails/{id}", s.getThumb)
 	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/video/thumbnails/{scale}/{file}", s.getThumbTile)
 
@@ -76,26 +71,7 @@ func New(cfg Config) http.Handler {
 	mux.HandleFunc("POST /api/v1/workspaces/{uuid}/exports", s.exportTimeline)
 	mux.HandleFunc("GET /api/v1/workspaces/{uuid}/exports/{file}", s.getExport)
 
-	mux.HandleFunc("POST /api/v1/internal/jobs/callback", s.jobCallback)
-
-	mux.Handle("/api/", s.legacy)
 	return mux
-}
-
-// legacyProxy forwards a request unchanged to the Node API. SSE responses
-// are flushed as they arrive.
-func legacyProxy(target *url.URL) http.Handler {
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	// The frontend loads thumbnails and audio in bursts: keep the connections
-	// open instead of the default 2 per host.
-	transport.MaxIdleConnsPerHost = 64
-	return &httputil.ReverseProxy{
-		Rewrite: func(r *httputil.ProxyRequest) {
-			r.SetURL(target)
-			r.SetXForwarded()
-		},
-		Transport: transport,
-	}
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
@@ -116,8 +92,7 @@ func writeRawJSON(w http.ResponseWriter, status int, data []byte) {
 	}
 }
 
-// writeError maps an error to the {"error": {"code", "message"}} body of the
-// Node API.
+// writeError maps an error to the {"error": {"code", "message"}} response body.
 func writeError(w http.ResponseWriter, err error) {
 	status, code := http.StatusInternalServerError, "INTERNAL_ERROR"
 	var tooLarge *http.MaxBytesError

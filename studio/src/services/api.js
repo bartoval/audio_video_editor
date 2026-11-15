@@ -208,34 +208,8 @@ export const startStemsSeparation = async audioId => {
   return response.json();
 };
 
-export const getStemsStatus = async (audioId, jobId) => {
-  const response = await safeFetch(buildUrl('audio', getUuid(), `/${audioId}/stems/${jobId}`));
-
-  return response.json();
-};
-
 export const getStemsDownloadUrl = (audioId, jobId) => {
   return buildUrl('audio', getUuid(), `/${audioId}/stems/${jobId}/download`);
-};
-
-export const startTranscription = async (audioId, language) => {
-  const body = {};
-
-  if (language) body.language = language;
-
-  const response = await safeFetch(buildUrl('audio', getUuid(), `/${audioId}/transcribe`), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-
-  return response.json();
-};
-
-export const getTranscriptionStatus = async (audioId, jobId) => {
-  const response = await safeFetch(buildUrl('audio', getUuid(), `/${audioId}/transcribe/${jobId}`));
-
-  return response.json();
 };
 
 export const startSceneDetection = async (options = {}) => {

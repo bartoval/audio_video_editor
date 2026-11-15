@@ -1,8 +1,6 @@
 package api
 
 import (
-	"encoding/json"
-	"log/slog"
 	"net/http"
 	"time"
 
@@ -52,43 +50,4 @@ func (s *server) subscribeEvents(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-}
-
-// jobCallback receives the end of an ML worker job (transcription, scene
-// detection) and announces it to the workspace as "job:completed".
-func (s *server) jobCallback(w http.ResponseWriter, r *http.Request) {
-	q := r.URL.Query()
-	var body map[string]any
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxStateSize)).Decode(&body); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid body"})
-		return
-	}
-	uuid, jobID := q.Get("uuid"), body["job_id"]
-	if uuid == "" || jobID == nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "Missing uuid or job_id"})
-		return
-	}
-	jobType := q.Get("type")
-	if jobType == "" {
-		jobType = "stems"
-	}
-	payload := map[string]any{
-		"type": jobType, "jobId": jobID, "audioId": q.Get("audioId"),
-		"status": body["status"], "error": body["error"],
-	}
-	var fields []string
-	switch jobType {
-	case "stems":
-		fields = []string{"stems"}
-	case "transcribe":
-		fields = []string{"text", "segments", "language", "duration"}
-	case "scene-detect":
-		fields = []string{"scenes", "fps", "duration"}
-	}
-	for _, f := range fields {
-		payload[f] = body[f]
-	}
-	slog.Info("job callback", "workspace", uuid, "job", jobID, "type", jobType, "status", body["status"])
-	s.cfg.Events.Publish(uuid, "job:completed", payload)
-	writeJSON(w, http.StatusOK, map[string]bool{"received": true})
 }

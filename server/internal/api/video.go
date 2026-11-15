@@ -4,9 +4,11 @@ import (
 	"cmp"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"strings"
 
+	"github.com/bartoval/audio_video_editor/server/internal/scenes"
 	"github.com/bartoval/audio_video_editor/server/internal/video"
 )
 
@@ -141,4 +143,39 @@ func (s *server) getThumbTile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	serveFile(w, r, path, "image/webp", "", immutable)
+}
+
+// detectScenes starts finding the cuts of the video; the frontend gets them
+// from a "job:completed" event, as markers.
+func (s *server) detectScenes(w http.ResponseWriter, r *http.Request) {
+	body := struct {
+		Threshold   float64 `json:"threshold"`
+		MinSceneLen float64 `json:"minSceneLen"` // seconds
+	}{Threshold: 27, MinSceneLen: 0.6}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxTitleBody)).Decode(&body); err != nil && !errors.Is(err, io.EOF) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid body"})
+		return
+	}
+	if !(body.Threshold > 0) || !(body.MinSceneLen >= 0) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "threshold must be positive, minSceneLen not negative"})
+		return
+	}
+	uuid := r.PathValue("uuid")
+	jobID, err := s.cfg.Video.DetectScenes(uuid, body.Threshold, body.MinSceneLen,
+		func(jobID string, res scenes.Result, err error) {
+			payload := map[string]any{
+				"type": "scene-detect", "jobId": jobID, "audioId": "video", "status": "completed", "error": nil,
+				"scenes": res.Scenes, "fps": res.FPS, "duration": res.Duration,
+			}
+			if err != nil {
+				payload["status"], payload["error"] = "failed", "Scene detection failed: "+err.Error()
+				payload["scenes"], payload["fps"], payload["duration"] = nil, nil, nil
+			}
+			s.cfg.Events.Publish(uuid, "job:completed", payload)
+		})
+	if err != nil {
+		writeError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"jobId": jobID, "status": "pending"})
 }

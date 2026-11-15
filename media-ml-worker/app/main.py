@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.models import HealthResponse
-from app.routes import scene_detect_router, stems_router, transcribe_router
+from app.routes import stems_router, transcribe_router
 
 app = FastAPI(
     title="Media ML Worker",
@@ -20,7 +20,6 @@ app.add_middleware(
 
 app.include_router(transcribe_router)
 app.include_router(stems_router)
-app.include_router(scene_detect_router)
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -37,7 +36,6 @@ async def root():
             "/health",
             "/transcribe",
             "/stems",
-            "/scene-detect",
             "/docs",
         ],
     }

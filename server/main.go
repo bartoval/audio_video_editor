@@ -1,22 +1,17 @@
-// Command server is the Go backend of the studio. Routes not yet migrated
-// are forwarded to the legacy Node API.
+// Command server is the Go backend of the studio.
 package main
 
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strconv"
 	"syscall"
 	"time"
-
-	"github.com/bartoval/steammeros/stems"
 
 	"github.com/bartoval/audio_video_editor/server/internal/api"
 	"github.com/bartoval/audio_video_editor/server/internal/events"
@@ -37,12 +32,7 @@ func main() {
 }
 
 func run() error {
-	legacy, err := url.Parse(env("LEGACY_API_URL", "http://localhost:8090"))
-	if err != nil {
-		return err
-	}
-
-	// Same layout as the Node API: <ROOT_PATH>/<DATA_DIR>/0/<uuid>.
+	// Keep the existing project layout: <ROOT_PATH>/<DATA_DIR>/0/<uuid>.
 	root := env("ROOT_PATH", "../studio-api")
 	workspaces, err := workspace.New(filepath.Join(root, env("DATA_DIR", "projects"), "0"))
 	if err != nil {
@@ -67,12 +57,11 @@ func run() error {
 		Library:    lib,
 		Uploads:    uploads,
 		Events:     hub,
-		LegacyAPI:  legacy,
 		Export:     export.New(workspaces, lib),
 		Video: video.New(ctx, workspaces, encoder,
 			func(uuid string, status map[string]any) { hub.PublishRetained(uuid, "thumbnails", status) }),
 	}
-	openStems, err := stemsModel()
+	openStems, err := stemsModel(ctx)
 	if err != nil {
 		return err
 	}
@@ -92,7 +81,7 @@ func run() error {
 
 	errc := make(chan error, 1)
 	go func() {
-		slog.Info("listening", "addr", srv.Addr, "legacy", legacy.String())
+		slog.Info("listening", "addr", srv.Addr)
 		errc <- srv.ListenAndServe()
 	}()
 
@@ -109,41 +98,6 @@ func run() error {
 		return err
 	}
 	return srv.Close()
-}
-
-// stemsModel returns how to load the stem separation model named by
-// STEMS_MODEL, on the GPU when STEMS_CUDA_DEVICE is set, after checking once
-// that it loads. Without STEMS_MODEL it returns nil and stem separation is off.
-func stemsModel() (separation.OpenEngine, error) {
-	opts := stems.Options{
-		ModelPath:      os.Getenv("STEMS_MODEL"),
-		CUDAOpsLibrary: os.Getenv("STEMS_CUDA_OPS"),
-	}
-	if opts.ModelPath == "" {
-		slog.Info("stem separation off: STEMS_MODEL not set")
-		return nil, nil
-	}
-	if device := os.Getenv("STEMS_CUDA_DEVICE"); device != "" {
-		n, err := strconv.Atoi(device)
-		if err != nil {
-			return nil, fmt.Errorf("STEMS_CUDA_DEVICE: %w", err)
-		}
-		opts.CUDA, opts.CUDADevice = true, n
-	}
-	open := func() (separation.Engine, error) {
-		engine, err := stems.NewEngine(opts)
-		if err != nil {
-			return nil, err
-		}
-		return engine, nil
-	}
-	engine, err := open()
-	if err != nil {
-		return nil, fmt.Errorf("load stems model: %w", err)
-	}
-	engine.Close()
-	slog.Info("stem separation on", "model", opts.ModelPath, "cuda", opts.CUDA)
-	return open, nil
 }
 
 // maxUpload bounds a single uploaded file.
