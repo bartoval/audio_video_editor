@@ -1,152 +1,11 @@
 /* ============================================================================
- * Circular Buttons - Player Controls (glass style)
- * ============================================================================ */
-.btn-circle {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* Glass effect */
-  background:
-    radial-gradient(
-      circle at 30% 30%,
-      rgba(255, 255, 255, 0.2) 0%,
-      rgba(255, 255, 255, 0.05) 50%,
-      transparent 70%
-    ),
-    rgba(240, 91, 181, 0.1);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: var(--icon-color);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 4px 12px rgba(0, 0, 0, 0.25);
-  transition: all 0.2s ease;
-}
-
-.btn-circle:hover {
-  background:
-    radial-gradient(
-      circle at 30% 30%,
-      rgba(255, 255, 255, 0.25) 0%,
-      rgba(255, 255, 255, 0.08) 50%,
-      transparent 70%
-    ),
-    rgba(240, 91, 181, 0.2);
-  border-color: rgba(255, 255, 255, 0.25);
-  color: var(--icon-hover);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.25),
-    0 6px 16px rgba(0, 0, 0, 0.3),
-    0 0 16px var(--accent-glow);
-}
-
-/* Play button - accent magenta with glow */
-.btn-circle.btn-play,
-.btn-circle.playing {
-  width: 56px;
-  height: 56px;
-  background:
-    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
-    linear-gradient(135deg, var(--accent-light) 0%, var(--accent) 100%);
-  border: 1px solid var(--accent);
-  color: white;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 0 24px var(--accent-glow),
-    0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.btn-circle.btn-play:hover,
-.btn-circle.playing:hover {
-  background:
-    radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 50%),
-    linear-gradient(135deg, #ff88d4 0%, var(--accent-light) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.4),
-    0 0 32px var(--accent-glow),
-    0 6px 20px rgba(0, 0, 0, 0.35);
-}
-
-.btn-circle i {
-  font-size: 1.125rem;
-}
-
-.btn-circle.btn-play i {
-  font-size: 1.5rem;
-}
-
-/* Glow pulse effect for play button */
-.btn-circle.btn-play::before,
-.btn-circle.playing::before {
-  content: '';
-  position: absolute;
-  inset: -8px;
-  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
-  border-radius: 50%;
-  z-index: -1;
-  opacity: 0.5;
-  animation: pulseGlow 2s ease-in-out infinite;
-}
-
-@keyframes pulseGlow {
-  0%,
-  100% {
-    opacity: 0.3;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.6;
-    transform: scale(1.08);
-  }
-}
-
-/* ============================================================================
- * Common Button States (global)
- * ============================================================================ */
-/* Icon hover with glow */
-.btn:hover i,
-.nav-link:hover i,
-[role='button']:hover i {
-  text-shadow: 0 0 8px var(--accent-glow);
-}
-
-/* Active/pressed state */
-.btn:active:not(:disabled),
-.btn-circle:active:not(:disabled) {
-  transform: scale(0.97);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* Disabled state */
-.btn:disabled,
-.btn-circle:disabled,
-.btn.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
-  filter: grayscale(0.3);
-}
-
-/* Focus visible ring */
-.btn:focus-visible,
-.btn-circle:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* ============================================================================
  * Toggle Switch - Pill style with clear on/off states
  * ============================================================================ */
 .studio .form-check-input[type='checkbox'] {
   width: 48px;
   height: 26px;
-  background-color: rgba(0, 0, 0, 0.4);
-  border: 2px solid var(--border-medium);
+  background-color: var(--surface-inset);
+  border: 2px solid var(--border-strong);
   border-radius: var(--radius-pill);
   cursor: pointer;
   appearance: none;
@@ -170,29 +29,27 @@
   transition:
     transform 0.2s ease,
     background-color 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--elevation-1);
 }
 
 .studio .form-check-input[type='checkbox']:checked {
-  background-color: var(--accent-secondary);
-  border-color: var(--accent-secondary);
-  box-shadow: 0 0 12px var(--accent-secondary-glow);
+  background-color: var(--accent-default);
+  border-color: var(--accent-default);
+  box-shadow: none;
 }
 
 .studio .form-check-input[type='checkbox']:checked::before {
   transform: translateX(22px);
-  background: white;
-  box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.3),
-    0 0 8px var(--accent-secondary-glow);
+  background: var(--gray-0);
+  box-shadow: var(--elevation-1);
 }
 
 .studio .form-check-input[type='checkbox']:hover {
-  border-color: var(--border-light);
+  border-color: var(--text-faint);
 }
 
 .studio .form-check-input[type='checkbox']:focus-visible {
-  box-shadow: 0 0 0 3px var(--accent-secondary-dim);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 /* ============================================================================
@@ -204,7 +61,7 @@
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  color: var(--text-subtle);
 }
 
 .studio .badge {

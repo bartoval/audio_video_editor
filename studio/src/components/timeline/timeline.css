@@ -13,52 +13,6 @@
 }
 
 /* ============================================================================
- * Navigator Toolbar - Dock style with underline accent
- * ============================================================================ */
-.navigator-toolbar {
-  background: transparent;
-  padding: 2px 16px;
-  border-bottom: 1px solid var(--border-soft);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Pill button group for toolbar - dock style */
-.navigator-toolbar .btn-group {
-  background: transparent;
-  border-radius: var(--radius-lg);
-  padding: 4px;
-  border: none;
-}
-
-.navigator-toolbar .btn-group .btn {
-  border-radius: 0;
-  padding: 6px 12px;
-}
-
-.navigator-toolbar .btn-group .btn:first-child {
-  border-top-left-radius: var(--radius-pill);
-  border-bottom-left-radius: var(--radius-pill);
-}
-
-.navigator-toolbar .btn-group .btn:last-child {
-  border-top-right-radius: var(--radius-pill);
-  border-bottom-right-radius: var(--radius-pill);
-}
-
-/* Single pill buttons */
-.navigator-toolbar .btn-pill {
-  border-radius: var(--radius-pill);
-  padding: 6px 14px;
-  color: inherit;
-  font-size: 0.7rem;
-  font-weight: 500;
-  letter-spacing: 0.3px;
-  transition: inherit;
-}
-
-/* ============================================================================
  * Timeline Navigator
  * ============================================================================ */
 .navigator {
