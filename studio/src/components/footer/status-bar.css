@@ -1,52 +1,59 @@
 /* ============================================================================
- * Studio Footer / Status Bar
+ * Status bar: a quiet line on the app background, no box
  * ============================================================================ */
 .studio-statusbar {
   display: flex;
   align-items: center;
-  padding: 8px 20px;
-  border-radius: var(--radius-lg);
-  border: none;
-  border-top: 1px solid var(--border-soft);
+  gap: var(--space-4);
+  min-height: 28px;
+  padding: 0 var(--space-2);
+  color: var(--text-faint);
+  font-size: var(--font-size-1);
 }
 
-.statusbar-left {
+.statusbar-left,
+.statusbar-right {
+  display: flex;
   flex: 1;
+  align-items: center;
+  gap: var(--space-4);
   min-width: 0;
 }
 
 .statusbar-right {
-  flex: 1;
-  min-width: 0;
+  justify-content: flex-end;
 }
 
 .status-indicator {
-  transition: color 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-subtle);
 }
 
-.status-indicator.status-online {
-  color: var(--color-online);
-}
-
-.status-indicator.status-offline {
-  color: var(--color-offline);
+.status-indicator i {
+  font-size: var(--font-size-3);
 }
 
 .status-dot {
-  width: 10px;
-  height: 10px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  animation: status-pulse 2s ease-in-out infinite;
+  background: var(--text-faint);
 }
 
 .status-indicator.status-online .status-dot {
-  background: var(--color-online);
-  box-shadow: 0 0 8px var(--color-online);
+  background: var(--success-default);
 }
 
+/* Offline is the state worth noticing: only it pulses */
 .status-indicator.status-offline .status-dot {
-  background: var(--color-offline);
-  box-shadow: 0 0 8px var(--color-offline);
+  background: var(--danger-default);
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+.status-indicator.status-offline {
+  color: var(--danger-default);
 }
 
 @keyframes status-pulse {
@@ -59,15 +66,31 @@
   }
 }
 
-.status-indicator i {
-  font-size: 1rem;
+.status-label {
+  font-weight: 500;
 }
 
-.status-label {
-  font-weight: 600;
-  font-size: 0.8125rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+.statusbar-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+
+.task-status,
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pending-ops {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px var(--space-2);
 }
 
 /* ============================================================================
@@ -75,16 +98,17 @@
  * ============================================================================ */
 .pending-ops.is-clickable {
   cursor: pointer;
-  border-radius: var(--radius-sm, 4px);
-  transition: background 0.15s ease;
+  border-radius: var(--radius-full);
+  transition: background-color 0.15s ease;
 }
 
 .pending-ops.is-clickable:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-hover);
+  color: var(--text-default);
 }
 
 .pending-ops.is-clickable:focus-visible {
-  outline: 2px solid var(--accent, #0dcaf0);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -93,12 +117,10 @@
   z-index: 10000;
   min-width: 300px;
   max-width: 380px;
-  background: #282828;
-  border: 1px solid var(--border-soft, rgba(255, 255, 255, 0.1));
-  border-radius: 8px;
-  box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.5),
-    0 2px 8px rgba(0, 0, 0, 0.3);
+  background: var(--surface-menu);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-3);
+  box-shadow: var(--elevation-3);
   opacity: 0;
   transform: translateY(4px);
   pointer-events: none;
@@ -122,8 +144,8 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: rgba(255, 255, 255, 0.5);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-faint);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .job-panel-close {
@@ -132,19 +154,19 @@
   justify-content: center;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-faint);
   cursor: pointer;
   padding: 2px;
   font-size: 0.75rem;
-  border-radius: 4px;
+  border-radius: var(--radius-full);
   transition:
     background 0.15s ease,
     color 0.15s ease;
 }
 
 .job-panel-close:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.7);
+  background: var(--surface-hover);
+  color: var(--text-default);
 }
 
 .job-panel-list {
@@ -162,7 +184,7 @@
 }
 
 .job-panel-item + .job-panel-item {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .job-panel-item-info {
@@ -175,7 +197,7 @@
 
 .job-panel-item-info > i {
   font-size: 1rem;
-  color: var(--accent, #0dcaf0);
+  color: var(--accent-text);
   flex-shrink: 0;
 }
 
@@ -188,7 +210,7 @@
 
 .job-panel-filename {
   font-size: 0.8125rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--text-default);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -196,7 +218,7 @@
 
 .job-panel-times {
   font-size: 0.6875rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-faint);
 }
 
 .job-panel-dismiss {
@@ -207,9 +229,9 @@
   height: 28px;
   padding: 0;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-full);
   background: transparent;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--text-faint);
   cursor: pointer;
   flex-shrink: 0;
   transition:
@@ -218,6 +240,6 @@
 }
 
 .job-panel-dismiss:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.7);
+  background: var(--surface-hover);
+  color: var(--text-default);
 }
