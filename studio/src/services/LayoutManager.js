@@ -9,7 +9,10 @@
  * - init: setup window resize listener
  */
 import { EVENT } from '../config/constants';
+import { RESIZE_BOUNDS, CSS_CLASS } from '../config/ui';
 import * as EventService from './EventService';
+
+const DEFAULT_MIN_TIMELINE_HEIGHT = 320;
 
 const SELECTORS = {
   root: '.studio',
@@ -17,7 +20,8 @@ const SELECTORS = {
   workspace: '.studio-workspace',
   library: '.studio-library',
   preview: '.studio-preview',
-  timeline: '.studio-timeline'
+  timeline: '.studio-timeline',
+  footer: '.studio-footer'
 };
 
 class LayoutManager {
@@ -34,6 +38,9 @@ class LayoutManager {
   #unsubscribeVideoResized = null;
   #videoDimensions = { width: 0, height: 0 };
   #boundOnWindowResize = null;
+  #isShrinking = false;
+  /** Height the video wants (default or user-chosen); it may be shrunk below it. */
+  #preferredVideoHeight = 0;
 
   registerVideo(videoInstance) {
     this.#video = videoInstance;
@@ -70,8 +77,26 @@ class LayoutManager {
     }
 
     const workspaceHeight = $workspace.offsetHeight;
-    const availableTimelineHeight = totalHeight - headerHeight - workspaceHeight;
-    const minTimelineHeight = 200;
+    const rootStyle = getComputedStyle($root);
+    const rootPadding =
+      (parseFloat(rootStyle.paddingTop) || 0) + (parseFloat(rootStyle.paddingBottom) || 0);
+    const footerHeight =
+      /** @type {HTMLElement | null} */ (document.querySelector(SELECTORS.footer))?.offsetHeight ||
+      0;
+    const availableTimelineHeight =
+      totalHeight - rootPadding - headerHeight - workspaceHeight - footerHeight;
+    const minTimelineHeight = this.#getMinTimelineHeight($root);
+
+    // The timeline must never be squeezed below its minimum: shrink the video instead.
+    // Only once the video is mounted: before that the panels have placeholder sizes.
+    if (
+      $root.classList.contains(CSS_CLASS.HAS_VIDEO) &&
+      availableTimelineHeight < minTimelineHeight &&
+      this.#shrinkVideoBy(minTimelineHeight - availableTimelineHeight)
+    ) {
+      return;
+    }
+
     $timeline.style.height = Math.max(minTimelineHeight, availableTimelineHeight) + 'px';
 
     if (this.#player) {
@@ -81,6 +106,48 @@ class LayoutManager {
     if (this.#navigator) {
       this.#navigator.resize();
     }
+  }
+
+  /**
+   * Minimum timeline height, read from the --timeline-min-height token.
+   * @param {HTMLElement} $root
+   * @returns {number}
+   */
+  #getMinTimelineHeight($root) {
+    const value = parseFloat(getComputedStyle($root).getPropertyValue('--timeline-min-height'));
+
+    return Number.isFinite(value) && value > 0 ? value : DEFAULT_MIN_TIMELINE_HEIGHT;
+  }
+
+  /**
+   * Shrink the video so the timeline gains `deficit` pixels.
+   * The resulting VIDEO_RESIZED event re-runs resize() with the new layout.
+   * @param {number} deficit
+   * @returns {boolean} true when the video actually changed size
+   */
+  #shrinkVideoBy(deficit) {
+    if (!this.#video || this.#isShrinking) {
+      return false;
+    }
+
+    const previousHeight = this.#videoDimensions.height;
+    // VideoView refuses heights below this bound: shrink as far as it allows.
+    const minVideoHeight = Math.ceil(window.innerHeight * RESIZE_BOUNDS.minHeightPercent);
+    const targetHeight = Math.max(previousHeight - deficit, minVideoHeight);
+
+    if (targetHeight >= previousHeight) {
+      return false;
+    }
+
+    this.#isShrinking = true;
+
+    try {
+      this.#video.resize(targetHeight);
+    } finally {
+      this.#isShrinking = false;
+    }
+
+    return this.#videoDimensions.height !== previousHeight;
   }
 
   resizeFromVideo(height) {
@@ -103,11 +170,12 @@ class LayoutManager {
       return;
     }
 
-    this.#video.resize(this.#videoDimensions.height);
+    this.#video.resize(this.#preferredVideoHeight || this.#videoDimensions.height);
   }
 
   reset() {
     this.#videoDimensions = { width: 0, height: 0 };
+    this.#preferredVideoHeight = 0;
 
     const $library = this.#$library || document.querySelector(SELECTORS.library);
     const $preview = this.#$preview || document.querySelector(SELECTORS.preview);
@@ -140,6 +208,11 @@ class LayoutManager {
 
     this.#unsubscribeVideoResized = EventService.on(EVENT.VIDEO_RESIZED, ({ width, height }) => {
       this.#videoDimensions = { width, height };
+
+      if (!this.#isShrinking) {
+        this.#preferredVideoHeight = height;
+      }
+
       this.resize();
     });
   }

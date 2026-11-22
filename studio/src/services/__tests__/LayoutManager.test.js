@@ -440,7 +440,7 @@ describe('LayoutManager', () => {
   });
 
   describe('resize timeline min height', () => {
-    it('applies minimum height of 200 when calculated height is smaller', () => {
+    it('applies minimum height of 320 when calculated height is smaller and the video cannot shrink', () => {
       Object.defineProperty($root, 'offsetHeight', { value: 500, configurable: true });
       Object.defineProperty($header, 'offsetHeight', { value: 60, configurable: true });
       Object.defineProperty($workspace, 'offsetHeight', { value: 400, configurable: true });
@@ -448,7 +448,95 @@ describe('LayoutManager', () => {
       LayoutManager.init();
       emitVideoResized();
 
-      expect($timeline.style.height).toBe('200px');
+      expect($timeline.style.height).toBe('320px');
+    });
+
+    it('reads the minimum from the --timeline-min-height token', () => {
+      Object.defineProperty($root, 'offsetHeight', { value: 500, configurable: true });
+      $root.style.setProperty('--timeline-min-height', '250px');
+
+      LayoutManager.init();
+      emitVideoResized();
+
+      expect($timeline.style.height).toBe('250px');
+    });
+
+    it('shrinks the video instead of squeezing the timeline', () => {
+      // 720p laptop: 720 - 60 (header) - 500 (workspace) = 160px left for the timeline
+      Object.defineProperty($root, 'offsetHeight', { value: 720, configurable: true });
+      Object.defineProperty($workspace, 'offsetHeight', {
+        value: 500,
+        configurable: true,
+        writable: true
+      });
+
+      mockVideo.resize = vi.fn(height => {
+        // The real VideoView shrinks, the workspace follows, then VIDEO_RESIZED fires.
+        Object.defineProperty($workspace, 'offsetHeight', {
+          value: 500 - (400 - height),
+          configurable: true
+        });
+        emitVideoResized((height * 16) / 9, height);
+      });
+
+      $root.classList.add('has-video');
+      LayoutManager.init();
+      LayoutManager.registerVideo(mockVideo);
+      emitVideoResized(711, 400);
+
+      // deficit = 320 - 160 = 160 → video 400 → 240
+      expect(mockVideo.resize).toHaveBeenCalledTimes(1);
+      expect(mockVideo.resize).toHaveBeenCalledWith(240);
+      expect($timeline.style.height).toBe('320px');
+    });
+
+    it('does not shrink the video before it is mounted (placeholder layout)', () => {
+      Object.defineProperty($root, 'offsetHeight', { value: 720, configurable: true });
+      Object.defineProperty($workspace, 'offsetHeight', { value: 500, configurable: true });
+
+      LayoutManager.init();
+      LayoutManager.registerVideo(mockVideo);
+      emitVideoResized(711, 400);
+
+      expect(mockVideo.resize).not.toHaveBeenCalled();
+    });
+
+    it('never shrinks the video below the VideoView minimum', () => {
+      Object.defineProperty($root, 'offsetHeight', { value: 720, configurable: true });
+      Object.defineProperty($workspace, 'offsetHeight', { value: 700, configurable: true });
+      const minVideoHeight = Math.ceil(window.innerHeight * 0.25);
+
+      $root.classList.add('has-video');
+      LayoutManager.init();
+      LayoutManager.registerVideo(mockVideo);
+      emitVideoResized(711, 400);
+
+      expect(mockVideo.resize).toHaveBeenCalledWith(minVideoHeight);
+    });
+
+    it('restores the preferred video height on window resize after a shrink', () => {
+      Object.defineProperty($root, 'offsetHeight', { value: 720, configurable: true });
+      Object.defineProperty($workspace, 'offsetHeight', { value: 500, configurable: true });
+
+      mockVideo.resize = vi.fn(height => {
+        Object.defineProperty($workspace, 'offsetHeight', {
+          value: 500 - (400 - height),
+          configurable: true
+        });
+        emitVideoResized((height * 16) / 9, height);
+      });
+
+      $root.classList.add('has-video');
+      LayoutManager.init();
+      LayoutManager.registerVideo(mockVideo);
+      emitVideoResized(711, 400);
+      expect(mockVideo.resize).toHaveBeenLastCalledWith(240);
+
+      // Window grows back: the video asks again for its preferred 400px, not the shrunk 240px
+      Object.defineProperty($root, 'offsetHeight', { value: 1000, configurable: true });
+      LayoutManager.onWindowResize();
+
+      expect(mockVideo.resize).toHaveBeenLastCalledWith(400);
     });
 
     it('uses calculated height when greater than minimum', () => {
