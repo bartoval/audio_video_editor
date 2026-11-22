@@ -298,7 +298,12 @@ export default class TrackPresenter extends ZonePresenter {
     this.controllerWaveform.loading(true);
     this.blob
       .stretchBuffer(stretchFactor, pitch)
-      .then(() => {
+      .then(applied => {
+        // A newer stretch is on its way: let that one update the clip
+        if (applied === false) {
+          return;
+        }
+
         const newDuration = originalDuration * stretchFactor;
         this.setDuration(newDuration);
         this.blob.setDuration(newDuration);

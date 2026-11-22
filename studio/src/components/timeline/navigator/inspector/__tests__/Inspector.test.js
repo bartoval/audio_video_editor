@@ -244,6 +244,28 @@ describe('Inspector', () => {
       expect($playBtn.disabled).toBe(false);
     });
 
+    it('re-renders the audio once, when the speed slider is released', () => {
+      const mockZone = createMockZone();
+      inspector.set({ getSelected: () => mockZone });
+      const $speed = document.querySelector('[data-ref="speed"]');
+      const $label = document.querySelector('[data-ref="speedValue"]');
+
+      // Dragging: many input events only move the label
+      for (const value of ['110', '120', '130', '140', '150']) {
+        $speed.value = value;
+        $speed.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      expect($label.textContent).toBe('150%');
+      expect(mockZone.setSpeed).not.toHaveBeenCalled();
+
+      // Release: one stretch, at the final value (150% speed = 1/1.5 stretch)
+      $speed.dispatchEvent(new Event('change', { bubbles: true }));
+
+      expect(mockZone.setSpeed).toHaveBeenCalledTimes(1);
+      expect(mockZone.setSpeed).toHaveBeenCalledWith(1 / 1.5);
+    });
+
     it('disables controls when no zone selected', () => {
       const mockContainer = { getSelected: () => null };
 
@@ -365,6 +387,7 @@ describe('Inspector', () => {
       const $speed = document.querySelector('[data-ref="speed"]');
 
       fireEvent.input($speed, { target: { value: '120' } });
+      fireEvent.change($speed, { target: { value: '120' } });
 
       expect(mockAudioElement.playbackRate).toBe(1.2);
     });
@@ -378,6 +401,7 @@ describe('Inspector', () => {
       const $speed = document.querySelector('[data-ref="speed"]');
 
       fireEvent.input($speed, { target: { value: '50' } });
+      fireEvent.change($speed, { target: { value: '50' } });
 
       expect(mockAudioElement.playbackRate).toBe(0.5);
     });
@@ -402,12 +426,13 @@ describe('Inspector', () => {
       expect(mockZone.setPitch).toHaveBeenCalledWith(5);
     });
 
-    it('updates speed on input', () => {
+    it('updates speed when the slider is released', () => {
       // Slider value 120 = 120% playback speed
       // setSpeed is called with stretch factor: 1/1.2 = 0.833...
       const $speed = document.querySelector('[data-ref="speed"]');
 
       fireEvent.input($speed, { target: { value: '120' } });
+      fireEvent.change($speed, { target: { value: '120' } });
 
       expect(mockZone.setSpeed).toHaveBeenCalledWith(1 / 1.2);
     });

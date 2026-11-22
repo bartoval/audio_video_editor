@@ -141,6 +141,7 @@ export default class InspectorView extends View {
     this.#$pitchInput.addEventListener('input', this.#handlePitchInput);
     this.#$pitchInput.addEventListener('change', this.#handlePitchCommit);
     this.#$speedInput.addEventListener('input', this.#handleSpeedInput);
+    this.#$speedInput.addEventListener('change', this.#handleSpeedCommit);
     this.#$gainInput.addEventListener('input', this.#handleGainInput);
     this.#$panInput.addEventListener('input', this.#handlePanInput);
     this.#$playBtn.addEventListener('click', this.#handlePlayClick);
@@ -157,6 +158,7 @@ export default class InspectorView extends View {
     this.#$pitchInput?.removeEventListener('input', this.#handlePitchInput);
     this.#$pitchInput?.removeEventListener('change', this.#handlePitchCommit);
     this.#$speedInput?.removeEventListener('input', this.#handleSpeedInput);
+    this.#$speedInput?.removeEventListener('change', this.#handleSpeedCommit);
     this.#$gainInput?.removeEventListener('input', this.#handleGainInput);
     this.#$panInput?.removeEventListener('input', this.#handlePanInput);
     this.#$playBtn?.removeEventListener('click', this.#handlePlayClick);
@@ -286,10 +288,14 @@ export default class InspectorView extends View {
     this.#onPitchChange(event.target.value);
   };
 
+  // While dragging only the label moves; the stretch (a full re-render of the audio)
+  // runs once, on release, like pitch
   #handleSpeedInput = event => {
-    const { value } = event.target;
-    this.#$speedValue.textContent = `${value}%`;
-    this.#onSpeedChange(value);
+    this.#$speedValue.textContent = `${event.target.value}%`;
+  };
+
+  #handleSpeedCommit = event => {
+    this.#onSpeedChange(event.target.value);
   };
 
   #handleGainInput = event => {

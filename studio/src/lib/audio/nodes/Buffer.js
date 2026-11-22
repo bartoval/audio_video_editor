@@ -8,6 +8,8 @@ import BufferLoader from './BufferLoader';
 export default class Buffer {
   /** @type {import('./BufferLoader').default} */
   #loader;
+  /** Id of the latest stretch request: older results are dropped (latest wins) */
+  #stretchRequest = 0;
 
   /**
    * @param {Object} options
@@ -52,8 +54,13 @@ export default class Buffer {
     return this.buffer;
   }
 
-  /** Time-stretch audio */
+  /**
+   * Time-stretch audio. Requests can overlap (a slider sends many): only the latest
+   * one updates the buffer, so a slow older result can never overwrite a newer one.
+   * @returns {Promise<boolean>} false when a newer request superseded this one
+   */
   async stretch(idTrack, stretchFactor, pitchValue = 0) {
+    const request = ++this.#stretchRequest;
     this.stretchFactor = parseFloat(stretchFactor.toFixed(2));
     this.pitchValue = pitchValue;
 
@@ -70,6 +77,10 @@ export default class Buffer {
       pitchValue,
       context
     );
+
+    if (request !== this.#stretchRequest) {
+      return false;
+    }
 
     this.originalBuffer = context.originalBuffer;
     this.buffer = Promise.resolve(buffer);
