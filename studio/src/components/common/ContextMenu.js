@@ -46,11 +46,6 @@ export class ContextMenu {
     }, 0);
   }
 
-  /** Open the menu at a screen point, e.g. where the user right-clicked. */
-  showAt(clientX, clientY, onSelect) {
-    this.show({ getBoundingClientRect: () => new DOMRect(clientX, clientY, 0, 0) }, onSelect);
-  }
-
   hide() {
     if (this.listenerAttachTimeout) {
       clearTimeout(this.listenerAttachTimeout);
