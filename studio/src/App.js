@@ -1,7 +1,7 @@
 /**
  * Audio Video Sync Studio
  */
-import './style.css';
+import './styles/index.css';
 import Library from './components/audioLibrary';
 import Navigator from './components/timeline/Navigator';
 import Video from './components/playback/video';

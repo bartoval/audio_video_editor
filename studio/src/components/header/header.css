@@ -1,0 +1,176 @@
+/* ============================================================================
+ * Studio Header
+ * ============================================================================ */
+/* No box: the header sits on the app background */
+.studio .studio-header.navbar {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  position: relative;
+  z-index: 1050;
+}
+
+.studio .studio-header .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-3);
+  font-weight: 500;
+}
+
+.studio .studio-header .btn-primary {
+  font-weight: 600;
+}
+
+.studio .studio-header .project-select {
+  height: 34px;
+  border-radius: var(--radius-full);
+  background-color: var(--surface-raised);
+  border-color: transparent;
+  font-weight: 500;
+}
+
+.studio .studio-header.navbar .navbar-brand {
+  color: var(--text-primary);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+.studio .studio-header.navbar .nav-link {
+  color: var(--icon-color);
+  transition:
+    color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.studio .studio-header.navbar .nav-link:hover {
+  color: var(--icon-hover);
+  text-shadow: 0 0 8px var(--accent-glow);
+}
+
+.studio .studio-header.navbar .nav-link.active {
+  color: var(--accent);
+}
+
+/* User menu in header */
+.studio .studio-header .user-menu {
+  color: var(--text-secondary);
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: color 0.2s ease;
+}
+
+.studio .studio-header .user-menu:hover {
+  color: var(--text-primary);
+}
+
+.studio .studio-header .user-menu::after {
+  margin-left: 0.25rem;
+  opacity: 0.6;
+}
+
+/* User dropdown menu */
+.studio .studio-header .dropdown-menu {
+  background: #2a2a2e;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  min-width: 200px;
+  padding: 0.5rem 0;
+}
+
+.studio .studio-header .dropdown-item {
+  color: var(--text-primary);
+  padding: 0.5rem 1rem;
+  transition: background-color 0.15s ease;
+}
+
+.studio .studio-header .dropdown-item:hover,
+.studio .studio-header .dropdown-item:focus {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.studio .studio-header .dropdown-item-text {
+  padding: 0.25rem 1rem;
+}
+
+.studio .studio-header .dropdown-divider {
+  border-color: var(--border-soft);
+  margin: 0.25rem 0;
+}
+
+.select-base {
+  width: 200px;
+}
+
+.studio-resizer {
+  height: 12px;
+  background: var(--border-soft);
+  position: relative;
+  transition: background-color 0.2s ease;
+}
+
+.studio-resizer:hover {
+  background: var(--accent-dim);
+}
+
+/* The Resizer component creates a child .resizer.resizableY element */
+.studio-resizer .resizer.resizableY {
+  width: 100%;
+  height: 100%;
+  cursor: ns-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.studio-resizer .resizer.resizableY::before {
+  content: '';
+  width: 40px;
+  height: 4px;
+  background-image: repeating-linear-gradient(
+    0deg,
+    var(--text-muted) 0px,
+    var(--text-muted) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  border-radius: 2px;
+  transition: background-image 0.2s ease;
+}
+
+.studio-resizer:hover .resizer.resizableY::before {
+  background-image: repeating-linear-gradient(
+    0deg,
+    var(--accent) 0px,
+    var(--accent) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+.studio-timeline {
+  flex: 1 1 300px;
+  min-height: 200px;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  position: relative;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.studio:not(.has-video) .studio-preview > .bg-body-tertiary {
+  display: none;
+}
+
+.studio:not(.has-video) .thumbs {
+  display: none;
+}

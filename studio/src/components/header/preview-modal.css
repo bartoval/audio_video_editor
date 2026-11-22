@@ -1,0 +1,221 @@
+/* ============================================================================
+ * Preview Modal - Glassmorphism
+ * ============================================================================ */
+.preview-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 5, 20, 0.85);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
+}
+
+.preview-modal-backdrop.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.preview-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.95);
+  z-index: 2001;
+  max-width: 90vw;
+  max-height: 90vh;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease,
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.preview-modal.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.preview-modal-content {
+  background: var(--panel-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-medium), var(--shadow-glow);
+}
+
+.preview-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.preview-modal-header h5 {
+  color: var(--accent-light);
+  font-weight: 600;
+  margin: 0;
+}
+
+.preview-modal-body {
+  padding: 0;
+  background: #000;
+}
+
+.preview-video {
+  display: block;
+  max-width: 80vw;
+  max-height: 60vh;
+  width: auto;
+  height: auto;
+}
+
+.preview-audio {
+  display: none;
+  width: 100%;
+  min-width: 400px;
+  padding: 40px 20px;
+  background: var(--panel-bg);
+}
+
+.preview-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--panel-bg);
+  border-top: 1px solid var(--border-soft);
+}
+
+.preview-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  min-width: 300px;
+  background: var(--panel-bg);
+}
+
+.preview-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--border-medium);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: preview-spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes preview-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.preview-loader-text {
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.preview-loader-subtext {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.preview-error-icon {
+  color: #ff6b6b;
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.preview-error-text {
+  color: #ff6b6b;
+  font-size: 1.125rem;
+  margin-bottom: 8px;
+}
+
+.preview-error-subtext {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.preview-success-icon {
+  color: #51cf66;
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.preview-format-selector {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  min-width: 340px;
+  background: var(--panel-bg);
+}
+
+.preview-format-title {
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.preview-format-subtext {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  margin-bottom: 24px;
+}
+
+.preview-format-options {
+  display: flex;
+  gap: 16px;
+}
+
+.preview-format-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 32px;
+  min-width: 140px;
+  border-radius: var(--radius-lg);
+  transition: all 0.2s ease;
+}
+
+.preview-format-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-medium);
+}
+
+.preview-format-btn i {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+}
+
+.preview-format-name {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.preview-format-desc {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}

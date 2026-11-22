@@ -1,0 +1,96 @@
+/* ============================================================================
+ * Custom Range Input (Pitch Slider) - Glassmorphism
+ * ============================================================================ */
+.form-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-pill);
+}
+
+.form-range::-moz-range-track {
+  height: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-pill);
+}
+
+.form-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    0 0 8px var(--accent-glow);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.form-range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    0 0 8px var(--accent-glow);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.form-range:hover::-webkit-slider-thumb {
+  transform: scale(1.15);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    var(--shadow-glow);
+}
+
+.form-range:hover::-moz-range-thumb {
+  transform: scale(1.15);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    var(--shadow-glow);
+}
+
+.form-range:focus::-webkit-slider-thumb {
+  box-shadow:
+    0 0 0 4px var(--accent-dim),
+    var(--shadow-glow);
+}
+
+.form-range:focus::-moz-range-thumb {
+  box-shadow:
+    0 0 0 4px var(--accent-dim),
+    var(--shadow-glow);
+}
+
+.form-range:disabled {
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.form-range:disabled::-webkit-slider-thumb {
+  background: var(--toggle-off);
+  box-shadow: none;
+}
+
+.form-range:disabled::-moz-range-thumb {
+  background: var(--text-muted);
+  transform: scale(0.8);
+  box-shadow: none;
+}
