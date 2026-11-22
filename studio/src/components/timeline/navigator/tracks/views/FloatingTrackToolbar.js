@@ -48,6 +48,10 @@ export default class FloatingTrackToolbar {
     // modes (change what the mouse does), actions (act now), options (persistent toggles).
     this.#$root.innerHTML = `
       <div class="floating-toolbar-inner">
+        <div class="toolbar-target" data-ref="target" title="Selected track">
+          <i class="bi bi-music-note-beamed" aria-hidden="true"></i>
+          <span class="toolbar-target__label" data-ref="targetLabel"></span>
+        </div>
         <div class="toolbar-group toolbar-group--modes" role="group" aria-label="Edit mode">
           <button data-action="cut" class="toolbar-btn" title="${LABEL.TOOLBAR_CUT}">
             <i class="bi bi-scissors"></i><span class="toolbar-btn__label">Cut</span>
@@ -286,6 +290,13 @@ export default class FloatingTrackToolbar {
   setMuteActive(active) {
     this.#muteActive = active;
     this.#updateMuteIcon();
+  }
+
+  /** Name the track the buttons act on, so the docked bar never feels detached from it */
+  setTarget(label) {
+    const $label = this.#$toolbar.querySelector('[data-ref="targetLabel"]');
+    $label.textContent = label || 'Untitled';
+    $label.parentElement.title = label || '';
   }
 
   setSnapActive(active) {

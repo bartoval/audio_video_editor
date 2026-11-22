@@ -112,6 +112,17 @@ describe('FloatingTrackToolbar', () => {
       expect(actionsIn('options')).toEqual(['snap', 'superzoom']);
     });
 
+    it('names the track it acts on', () => {
+      toolbar = new FloatingTrackToolbar(document.querySelector('.track'));
+      const $label = toolbar.getRoot().querySelector('[data-ref="targetLabel"]');
+
+      toolbar.setTarget('music');
+      expect($label.textContent).toBe('music');
+
+      toolbar.setTarget('');
+      expect($label.textContent).toBe('Untitled');
+    });
+
     it('still dispatches actions to the track callbacks', () => {
       const onCopy = vi.fn();
       const onDelete = vi.fn();

@@ -975,6 +975,35 @@ body.tool-split {
   flex: 1;
 }
 
+/* Name of the selected track: tells which track the buttons act on */
+.toolbar-target {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 200px;
+  height: 30px;
+  padding: 0 var(--space-3) 0 var(--space-2);
+  margin-right: var(--space-2);
+  color: var(--text-default);
+  font-size: var(--font-size-2);
+  font-weight: 500;
+  border-right: 1px solid var(--border-subtle);
+}
+
+.toolbar-target i {
+  color: var(--accent-text);
+}
+
+.toolbar-target__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.floating-track-toolbar:not(.docked) .toolbar-target {
+  display: none;
+}
+
 /* Buttons: pills with text labels */
 .timeline-dock .toolbar-btn {
   display: inline-flex;

@@ -125,6 +125,7 @@ export default class TrackPresenter extends ZonePresenter {
   select() {
     this.moveHandle.show();
     this.resizeHandles.show();
+    this.floatingToolbar.setTarget(this.model.getLabel());
     this.floatingToolbar.show();
 
     if (this.model.isVolumeVisible()) {
