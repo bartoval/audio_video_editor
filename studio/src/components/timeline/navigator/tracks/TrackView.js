@@ -19,6 +19,7 @@ export default class TrackView extends ZoneView {
       <div class="zone track-content" data-zone-group="${groupId}" data-zone-id="${id}" data-testid="track-item">
         <div data-ref="content" class="zone-content" data-zone-id="${id}"></div>
         <div data-ref="label" class="track-label"></div>
+        <i class="bi bi-volume-mute track-muted-badge" aria-label="Muted"></i>
         <div data-ref="gainIndicator" class="track-gain-indicator"></div>
       </div>
     `;
@@ -72,6 +73,11 @@ export default class TrackView extends ZoneView {
     }
     this.$gainIndicator.style.display = 'block';
     this.$gainIndicator.style.height = `${(1 - gain) * 100}%`;
+  }
+
+  /** Muted tracks are dimmed and show a badge, so the state is visible without selecting */
+  setMuted(muted) {
+    this.$root.classList.toggle('muted', muted);
   }
 
   /** Get content container for controllers */

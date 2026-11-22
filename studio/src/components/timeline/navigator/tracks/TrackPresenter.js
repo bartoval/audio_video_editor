@@ -415,6 +415,7 @@ export default class TrackPresenter extends ZonePresenter {
     this.#gainBeforeMute = this.getGain();
     this.#isMuted = true;
     this.blob.setGain(0);
+    this.#showMuted(true);
   }
 
   unmute() {
@@ -424,6 +425,12 @@ export default class TrackPresenter extends ZonePresenter {
 
     this.#isMuted = false;
     this.blob.setGain(this.#gainBeforeMute);
+    this.#showMuted(false);
+  }
+
+  #showMuted(muted) {
+    this.view.setMuted(muted);
+    this.floatingToolbar?.setMuteActive(muted);
   }
 
   isMuted() {

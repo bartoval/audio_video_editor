@@ -41,9 +41,28 @@ export default class TracksEventHandler {
     this.#$tracks.addEventListener('drop', this.#handleDrop);
     this.#$tracks.addEventListener('mousedown', this.#handleMouseDown);
     this.#$tracks.addEventListener('dblclick', this.#handleDblClick);
+    this.#$tracks.addEventListener('contextmenu', this.#handleContextMenu);
   }
 
+  #handleContextMenu = event => {
+    const id = event.target.closest('[data-zone-id]')?.getAttribute('data-zone-id');
+    const zone = id ? this.#controller.getChild(id) : null;
+
+    if (!zone) {
+      return;
+    }
+
+    event.preventDefault();
+    this.#container.select(id, { reveal: true });
+    this.#container.showContextMenu(zone, event.clientX, event.clientY);
+  };
+
   #handleMouseDown = event => {
+    // Only the primary button edits; the secondary one opens the context menu
+    if (event.button !== 0) {
+      return;
+    }
+
     event.preventDefault();
     event.stopPropagation();
 
@@ -507,6 +526,7 @@ export default class TracksEventHandler {
 
     if (this.#$tracks) {
       this.#$tracks.removeEventListener('mousedown', this.#handleMouseDown);
+      this.#$tracks.removeEventListener('contextmenu', this.#handleContextMenu);
       this.#$tracks.removeEventListener('drop', this.#handleDrop);
       this.#$tracks.removeEventListener('dblclick', this.#handleDblClick);
     }

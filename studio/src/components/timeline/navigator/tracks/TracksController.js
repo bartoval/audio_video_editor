@@ -6,6 +6,7 @@ import { ZoneListController } from '../../../core/zones';
 import Track from './TrackPresenter';
 import TracksEventHandler from './TracksEventHandler';
 import { CutZoneOverlay } from './views';
+import { ContextMenu } from '../../../common/ContextMenu';
 import * as ToolMode from '../../../../services/ToolMode';
 import * as CutService from '../../../../services/CutService';
 import * as SplitModeService from '../../../../services/SplitModeService';
@@ -392,6 +393,46 @@ export default class TracksController {
     }
 
     return true;
+  }
+
+  /**
+   * Right-click menu of a track: the same actions as the toolbar, plus a split
+   * at the clicked point.
+   * @param {Object} zone
+   * @param {number} clientX
+   * @param {number} clientY
+   */
+  showContextMenu(zone, clientX, clientY) {
+    const splitTime = this.getTimeFromClientX(clientX) - zone.getStart();
+    const menu = new ContextMenu([
+      { id: 'split', label: 'Split here', icon: 'bi-layout-split' },
+      { id: 'duplicate', label: 'Duplicate', icon: 'bi-copy', shortcut: 'D' },
+      {
+        id: 'mute',
+        label: zone.isMuted() ? 'Unmute' : 'Mute',
+        icon: zone.isMuted() ? 'bi-volume-up' : 'bi-volume-mute',
+        shortcut: 'U'
+      },
+      { type: 'divider' },
+      { id: 'delete', label: 'Delete', icon: 'bi-trash', danger: true, shortcut: 'Del' }
+    ]);
+
+    menu.showAt(clientX, clientY, action => {
+      switch (action) {
+        case 'split':
+          this.#executeSplit(zone, splitTime);
+          break;
+        case 'duplicate':
+          this.clone(zone);
+          break;
+        case 'mute':
+          this.toggleMute(zone);
+          break;
+        case 'delete':
+          this.remove(zone);
+          break;
+      }
+    });
   }
 
   /**

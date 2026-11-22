@@ -743,6 +743,27 @@ body.tool-split {
   display: none;
 }
 
+.track-muted-badge {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  display: none;
+  padding: 1px 6px;
+  font-size: var(--font-size-1);
+  color: var(--text-default);
+  background-color: var(--overlay-shade);
+  border-radius: var(--radius-full);
+  pointer-events: none;
+}
+
+.track-content.muted .track-muted-badge {
+  display: block;
+}
+
+.track-content.muted .waveform {
+  opacity: 0.25;
+}
+
 .track-content.selected .track-label {
   color: var(--text-default);
   font-weight: 500;
