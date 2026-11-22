@@ -65,6 +65,26 @@ export const scenarios = [
     }
   },
   {
+    name: 'pan-mode-1440',
+    viewport: { width: 1440, height: 900 },
+    run: async (page, media) => {
+      await addMedia(page, media);
+      await selectFirstClip(page);
+      await page.click('.timeline-dock button[data-action="pan"]');
+      await parkMouse(page);
+    }
+  },
+  {
+    name: 'cut-mode-1440',
+    viewport: { width: 1440, height: 900 },
+    run: async (page, media) => {
+      await addMedia(page, media);
+      await selectFirstClip(page);
+      await page.click('.timeline-dock button[data-action="cut"]');
+      await parkMouse(page);
+    }
+  },
+  {
     name: 'clip-selected-1280x720',
     viewport: { width: 1280, height: 720 },
     run: async (page, media) => {
