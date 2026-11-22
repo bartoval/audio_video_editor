@@ -1,0 +1,374 @@
+/* ============================================================================
+ * Design Tokens & Utility Classes
+ *
+ * Three layers:
+ *   1. Primitives  (--gray-*, --iris-*, ...)    raw values, never used by components
+ *   2. Semantic    (--surface-*, --text-*, ...)  meaning; the only layer features use
+ *   3. Legacy      (--accent, --panel-bg, ...)   old names mapped onto semantic tokens,
+ *                                                removed as each component is migrated
+ *
+ * Rule: one color = one meaning. --accent is selection, focus, active mode and
+ * primary action only. Functional colors (--fn-*) appear only inside their function.
+ * ============================================================================ */
+
+:root {
+  /* ==========================================================================
+   * 1. PRIMITIVES
+   * ========================================================================== */
+
+  /* Graphite neutrals (cool, slightly blue) */
+  --gray-0: #ffffff;
+  --gray-50: #eef0f3;
+  --gray-200: #b0b6bf;
+  --gray-300: #8f96a0;
+  --gray-400: #727b87;
+  --gray-600: #2d3037;
+  --gray-650: #2c2f35;
+  --gray-700: #2a2d33;
+  --gray-750: #222429;
+  --gray-800: #1c1e22;
+  --gray-850: #1a1b1f;
+  --gray-900: #141518;
+
+  /* Iris (accent) */
+  --iris-300: #b3abff;
+  --iris-400: #a29aff;
+  --iris-500: #8b80ff;
+  --iris-500-rgb: 139, 128, 255;
+
+  /* Functional hues */
+  --blue-400: #5cc2ff;
+  --orange-400: #ffb15c;
+  --teal-400: #2dd4bf;
+  --red-400: #ff6363;
+  --green-400: #5bd99a;
+  --amber-400: #fbbf24;
+
+  /* Scales */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius-1: 6px;
+  --radius-2: 10px;
+  --radius-3: 12px;
+  --radius-4: 16px;
+  --radius-full: 999px;
+
+  --font-size-1: 11px;
+  --font-size-2: 12px;
+  --font-size-3: 13px;
+  --font-size-4: 16px;
+  --font-size-5: 19px;
+  --font-size-6: 24px;
+
+  /* ==========================================================================
+   * 2. SEMANTIC
+   * ========================================================================== */
+
+  /* Surfaces: app background < panel < raised; inset sits inside a panel */
+  --surface-app: var(--gray-850);
+  --surface-panel: var(--gray-750);
+  --surface-inset: var(--gray-800);
+  --surface-raised: var(--gray-650);
+  --surface-menu: var(--gray-700);
+  --surface-hover: rgba(128, 134, 148, 0.16);
+  --surface-clip: var(--gray-600);
+  --surface-viewer: #0f1013;
+  --surface-scrim: rgba(8, 9, 11, 0.72);
+
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --lane-line: rgba(255, 255, 255, 0.05);
+
+  --text-default: var(--gray-50);
+  --text-subtle: var(--gray-200);
+  --text-faint: var(--gray-300);
+  --text-on-accent: #0b0c0e;
+
+  --accent-default: var(--iris-500);
+  --accent-hover: var(--iris-400);
+  --accent-text: var(--iris-300);
+  --accent-rgb-value: var(--iris-500-rgb);
+  --accent-soft: rgba(var(--iris-500-rgb), 0.16);
+  --accent-ring: rgba(var(--iris-500-rgb), 0.22);
+  --accent-glow-value: rgba(var(--iris-500-rgb), 0.35);
+  --focus-ring: var(--iris-500);
+
+  --playhead: var(--gray-0);
+  --fn-volume: var(--blue-400);
+  --fn-pan: var(--orange-400);
+  --fn-cut: var(--teal-400);
+  --danger-default: var(--red-400);
+  --danger-rgb-value: 255, 99, 99;
+  --success-default: var(--green-400);
+  --warning-default: var(--amber-400);
+
+  --highlight-match: rgba(251, 191, 36, 0.25);
+  --highlight-match-current: rgba(251, 191, 36, 0.5);
+
+  --waveform: var(--gray-400);
+  --waveform-selected: #d0d5dc;
+
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --elevation-2: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 10px 30px rgba(0, 0, 0, 0.22);
+  --elevation-3: 0 18px 44px rgba(0, 0, 0, 0.45);
+
+  --font-sans:
+    'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Space Grotesk', var(--font-sans);
+  --font-mono-value: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Layout */
+  --cursor-size: 18px;
+  --row-track-size: 88px;
+  --row-toolbar-size: 50px;
+  --timeline-min-height: 320px;
+
+  /* ==========================================================================
+   * 3. LEGACY NAMES → SEMANTIC (do not use in new code)
+   * ========================================================================== */
+  --space-xs: var(--space-1);
+  --space-sm: var(--space-2);
+  --space-md: var(--space-3);
+  --space-lg: var(--space-4);
+  --space-xl: 20px;
+
+  --bg-body: var(--surface-app);
+  --bg-gradient: var(--surface-app);
+  --panel-bg: var(--surface-panel);
+  --panel-bg-solid: var(--surface-panel);
+  --panel-bg-hover: var(--surface-hover);
+  --panel-glass-gradient: var(--surface-panel);
+  --panel-bg-deep: var(--surface-inset);
+
+  --border-soft: var(--border-subtle);
+  --border-medium: var(--border-strong);
+  --border-light: var(--border-strong);
+
+  --accent: var(--accent-default);
+  --accent-light: var(--accent-hover);
+  --accent-dim: var(--accent-soft);
+  --accent-glow: var(--accent-glow-value);
+  --accent-rgb: var(--accent-rgb-value);
+
+  /* The old teal "secondary accent" competed with the main accent: it now maps
+     onto the accent too, so there is a single highlight color. */
+  --accent-secondary: var(--accent-default);
+  --accent-secondary-light: var(--accent-hover);
+  --accent-secondary-dim: var(--accent-soft);
+  --accent-secondary-glow: var(--accent-glow-value);
+  --accent-secondary-rgb: var(--accent-rgb-value);
+
+  --accent-tertiary: var(--warning-default);
+  --accent-tertiary-light: var(--warning-default);
+  --accent-tertiary-dim: rgba(251, 191, 36, 0.2);
+
+  --text-primary: var(--text-default);
+  --text-secondary: var(--text-subtle);
+  --text-muted: var(--text-faint);
+  --text-inverse: var(--text-on-accent);
+
+  --font-family-base: var(--font-sans);
+  --font-mono: var(--font-mono-value);
+
+  --icon-color: var(--text-subtle);
+  --icon-hover: var(--text-default);
+
+  --radius-sm: var(--radius-1);
+  --radius-md: var(--radius-2);
+  --radius-lg: var(--radius-3);
+  --radius-xl: var(--radius-4);
+  --radius-xxl: var(--radius-4);
+  --radius-pill: var(--radius-full);
+
+  --shadow-sm: var(--elevation-1);
+  --shadow-soft: var(--elevation-2);
+  --shadow-medium: var(--elevation-2);
+  --shadow-glow: 0 6px 18px var(--accent-glow-value);
+  --shadow-inset: none;
+
+  --glass-blur: none;
+
+  --btn-bg: var(--surface-raised);
+  --btn-border: transparent;
+  --btn-shadow: none;
+
+  --toggle-off: var(--border-strong);
+  --toggle-on: var(--accent-default);
+
+  --color-volume: var(--fn-volume);
+  --color-volume-dim: rgba(92, 194, 255, 0.22);
+  --color-pan: var(--fn-pan);
+  --color-pan-dim: rgba(255, 177, 92, 0.22);
+  --color-cut: var(--fn-cut);
+  --color-cut-dim: rgba(45, 212, 191, 0.22);
+  --color-online: var(--success-default);
+  --color-offline: var(--danger-default);
+
+  --danger: var(--danger-default);
+  --danger-rgb: var(--danger-rgb-value);
+
+  --text-color: var(--text-subtle);
+  --btn-default: var(--accent-default);
+  --btn-default-dark: var(--border-subtle);
+  --btn-default-light: var(--accent-hover);
+  --bg-secondary: var(--surface-panel);
+  --bg-tertiary: var(--surface-panel);
+  --main-color: var(--accent-default);
+  --main-color-light: var(--accent-hover);
+
+  /* Bootstrap overrides (until Bootstrap is removed) */
+  --bs-body-bg: var(--surface-app);
+  --bs-body-color: var(--text-default);
+  --bs-secondary-color: var(--text-subtle);
+  --bs-tertiary-bg: var(--surface-panel);
+  --bs-secondary-bg: var(--surface-panel);
+  --bs-border-color: var(--border-subtle);
+  --bs-info: var(--accent-default);
+  --bs-info-rgb: var(--accent-rgb-value);
+  --bs-cyan: var(--accent-hover);
+  --bs-dark: var(--surface-app);
+  --bs-danger: var(--danger-default);
+  --bs-danger-rgb: var(--danger-rgb-value);
+}
+
+/* ============================================================================
+ * Utility Classes
+ * ============================================================================ */
+
+/* Text overflow / ellipsis */
+.u-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.u-ellipsis-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Text colors */
+.u-text-muted {
+  color: var(--text-muted);
+}
+
+.u-text-secondary {
+  color: var(--text-secondary);
+}
+
+/* Flex utilities */
+.u-flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.u-flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.u-flex-start {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.u-flex-end {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.u-flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Gap utilities */
+.u-gap-xs {
+  gap: var(--space-xs);
+}
+.u-gap-sm {
+  gap: var(--space-sm);
+}
+.u-gap-md {
+  gap: var(--space-md);
+}
+.u-gap-lg {
+  gap: var(--space-lg);
+}
+.u-gap-xl {
+  gap: var(--space-xl);
+}
+
+/* Column width utilities (for grids) */
+.u-col-xxs {
+  width: 40px;
+  min-width: 40px;
+}
+.u-col-xs {
+  width: 60px;
+  min-width: 60px;
+}
+.u-col-sm {
+  width: 80px;
+  min-width: 80px;
+}
+.u-col-md {
+  width: 120px;
+  min-width: 120px;
+}
+.u-col-lg {
+  width: 160px;
+  min-width: 160px;
+}
+.u-col-xl {
+  width: 200px;
+  min-width: 200px;
+}
+
+/* Glass container - reusable frosted glass effect */
+.glass-container {
+  background: var(--panel-glass-gradient);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Glass panel - alias for backwards compatibility */
+.glass-panel {
+  background: var(--panel-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Glass tooltip - reusable tooltip with glassmorphism effect */
+.glass-tooltip {
+  position: absolute;
+  display: none;
+  transform: translate(calc(-100% - 8px), 8px);
+  background: var(--surface-menu);
+  color: var(--text-default);
+  font: 500 var(--font-size-2) var(--font-sans);
+  padding: 5px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-2);
+  box-shadow: var(--elevation-3);
+  pointer-events: none;
+  z-index: 9999;
+  white-space: nowrap;
+}

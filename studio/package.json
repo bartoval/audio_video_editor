@@ -26,7 +26,10 @@
     "typecheck:watch": "tsc --noEmit --watch",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "prepare": "cd .. && husky"
+    "prepare": "cd .. && husky",
+    "lint:css": "node scripts/check-css.mjs",
+    "visual:baseline": "node scripts/visual/run.mjs baseline",
+    "visual:check": "node scripts/visual/run.mjs check"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -41,7 +44,9 @@
     "happy-dom": "^20.0.11",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
+    "pixelmatch": "^7.1.0",
     "playwright": "^1.52.0",
+    "pngjs": "^7.0.0",
     "prettier": "^3.7.4",
     "typescript": "^5.7.3",
     "vite": "^7.3.0",
@@ -53,10 +58,13 @@
       "prettier --write"
     ],
     "src/**/*.css": [
-      "prettier --write"
+      "prettier --write",
+      "node scripts/check-css.mjs"
     ]
   },
   "dependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
     "rubberband-wasm": "^3.3.0"

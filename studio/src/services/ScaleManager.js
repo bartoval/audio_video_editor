@@ -11,6 +11,9 @@
 
 import { setScale, setScaleFactor } from '../lib/utils/scale.js';
 
+/** Minimum zoom range past the fit-to-view scale, whatever the media length */
+export const MIN_ZOOM_RANGE = 8;
+
 class ScaleManager {
   #scale = -1;
   #minScale = 0.001;
@@ -55,13 +58,13 @@ class ScaleManager {
   #calculateLimits() {
     const svgLimitScale = this.#duration / this.#maxWidth;
     const readabilityScale = 0.01;
-    this.#minScale = Math.max(
-      svgLimitScale,
-      Math.min(
-        readabilityScale,
-        this.#viewportWidth > 0 ? this.#duration / this.#viewportWidth : readabilityScale
-      )
-    );
+    // Always allow some zoom past "fit": with a fixed 10 ms/px floor a 20 s video had a
+    // 1.4x range in total, one wheel notch from fit to the limit, and felt stuck.
+    const fitScale = this.#viewportWidth > 0 ? this.#duration / this.#viewportWidth : 0;
+    const zoomFloor =
+      fitScale > 0 ? Math.min(readabilityScale, fitScale / MIN_ZOOM_RANGE) : readabilityScale;
+
+    this.#minScale = Math.max(svgLimitScale, zoomFloor);
 
     if (this.#viewportWidth > 0) {
       this.#maxScale = this.#duration / this.#viewportWidth;
@@ -157,8 +160,21 @@ class ScaleManager {
     return this.setScale(this.#scale * factor);
   }
 
+  /**
+   * Zoom by a wheel delta in pixels (positive = zoom out).
+   *
+   * Exponential, not linear: `1 + delta * k` turned zero or negative for fast scrolls
+   * (delta <= -1000) and the clamp then jumped straight to the zoom limit; it was also
+   * asymmetric (-500 halved the scale, +500 only multiplied it by 1.5).
+   * e^(delta * k) is always positive, and equal deltas in and out cancel out.
+   * One mouse notch (100px) still zooms by ~10%.
+   *
+   * @param {number} delta - wheel delta in pixels
+   * @param {number} [sensitivity]
+   * @returns {number} the new (clamped) scale
+   */
   zoomByDelta(delta, sensitivity = 0.001) {
-    const factor = 1 + delta * sensitivity;
+    const factor = Math.exp(delta * sensitivity);
 
     return this.setScale(this.#scale * factor);
   }

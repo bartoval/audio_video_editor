@@ -53,6 +53,14 @@ jobs:
         working-directory: studio
         run: npm test
 
+      - name: Check CSS token budget
+        working-directory: studio
+        run: npm run lint:css
+
+      - name: Type check
+        working-directory: studio
+        run: npm run typecheck
+
       - name: Run tests with coverage
         working-directory: studio
         run: npm run test:coverage

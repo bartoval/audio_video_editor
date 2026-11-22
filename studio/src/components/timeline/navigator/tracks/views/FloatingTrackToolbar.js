@@ -5,11 +5,11 @@ import * as CutService from '../../../../../services/CutService';
 import * as SuperZoomService from '../../../../../services/SuperZoomService';
 
 /**
- * FloatingTrackToolbar - Contextual toolbar that appears below selected track
+ * FloatingTrackToolbar - Contextual toolbar for the selected track
  *
  * Features:
- * - Glass effect styling
- * - Follows mouse X position within track bounds
+ * - Docks into the timeline's fixed tool bar (.timeline-dock) when present
+ * - Otherwise floats below the track and follows the mouse X position
  * - Fade-in/out animation
  * - Actions: Split, Cut, Copy, Delete, Volume, Pan, Snap
  */
@@ -18,6 +18,7 @@ export default class FloatingTrackToolbar {
   #$toolbar = null;
   #$parent = null;
   #isVisible = false;
+  #isDocked = false;
   #isHovering = false;
   #callbacks = {};
   #volumeActive = false;
@@ -44,37 +45,45 @@ export default class FloatingTrackToolbar {
   #render($parent) {
     this.#$root = document.createElement('div');
     this.#$root.className = 'floating-track-toolbar';
+    // Three kinds of control, grouped so they read differently:
+    // modes (change what the mouse does), actions (act now), options (persistent toggles).
     this.#$root.innerHTML = `
       <div class="floating-toolbar-inner">
-        <button data-action="cut" class="toolbar-btn" title="${LABEL.TOOLBAR_CUT}">
-          <i class="bi bi-scissors"></i>
-        </button>
-        <button data-action="copy" class="toolbar-btn" title="${LABEL.TOOLBAR_DUPLICATE}">
-          <i class="bi bi-copy"></i>
-        </button>
-        <button data-action="delete" class="toolbar-btn toolbar-btn-danger" title="${LABEL.TOOLBAR_DELETE}">
-          <i class="bi bi-trash"></i>
-        </button>
+        <div class="toolbar-group toolbar-group--modes" role="group" aria-label="Edit mode">
+          <button data-action="cut" class="toolbar-btn" title="${LABEL.TOOLBAR_CUT}">
+            <i class="bi bi-scissors"></i><span class="toolbar-btn__label">Cut</span>
+          </button>
+          <button data-action="volume" class="toolbar-btn" title="${LABEL.TOOLBAR_VOLUME}">
+            <i class="bi bi-sliders"></i><span class="toolbar-btn__label">Volume</span>
+          </button>
+          <button data-action="pan" class="toolbar-btn" title="${LABEL.TOOLBAR_PAN}">
+            <i class="bi bi-arrows-expand-vertical"></i><span class="toolbar-btn__label">Pan</span>
+          </button>
+        </div>
         <div class="toolbar-separator"></div>
-        <button data-action="mute" class="toolbar-btn" title="${LABEL.TOOLBAR_MUTE}">
-          <i class="bi bi-volume-up"></i>
-        </button>
-        <button data-action="volume" class="toolbar-btn" title="${LABEL.TOOLBAR_VOLUME}">
-          <i class="bi bi-sliders"></i>
-        </button>
-        <button data-action="pan" class="toolbar-btn" title="${LABEL.TOOLBAR_PAN}">
-          <i class="bi bi-arrows-expand"></i>
-        </button>
-        <div class="toolbar-separator"></div>
-        <button data-action="inspector" class="toolbar-btn" title="${LABEL.TOOLBAR_INSPECTOR}">
-          <i class="bi bi-gear"></i>
-        </button>
-        <button data-action="snap" class="toolbar-btn active" title="${LABEL.TOOLBAR_SNAP}">
-          <i class="bi bi-magnet"></i>
-        </button>
-        <button data-action="superzoom" class="toolbar-btn" title="${LABEL.TOOLBAR_SUPERZOOM}">
-          <i class="bi bi-zoom-in"></i>
-        </button>
+        <div class="toolbar-group toolbar-group--actions" role="group" aria-label="Clip actions">
+          <button data-action="copy" class="toolbar-btn" title="${LABEL.TOOLBAR_DUPLICATE}">
+            <i class="bi bi-copy"></i><span class="toolbar-btn__label">Duplicate</span>
+          </button>
+          <button data-action="mute" class="toolbar-btn" title="${LABEL.TOOLBAR_MUTE}" aria-label="Mute">
+            <i class="bi bi-volume-up"></i>
+          </button>
+          <button data-action="delete" class="toolbar-btn toolbar-btn-danger" title="${LABEL.TOOLBAR_DELETE}" aria-label="Delete">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+        <div class="toolbar-spacer"></div>
+        <div class="toolbar-group toolbar-group--options" role="group" aria-label="Options">
+          <button data-action="snap" class="toolbar-btn active" title="${LABEL.TOOLBAR_SNAP}">
+            <i class="bi bi-magnet"></i><span class="toolbar-btn__label">Snap</span>
+          </button>
+          <button data-action="superzoom" class="toolbar-btn" title="${LABEL.TOOLBAR_SUPERZOOM}" aria-label="SuperZoom">
+            <i class="bi bi-search"></i>
+          </button>
+          <button data-action="inspector" class="toolbar-btn" title="${LABEL.TOOLBAR_INSPECTOR}" aria-label="Inspector">
+            <i class="bi bi-layout-sidebar-reverse"></i>
+          </button>
+        </div>
       </div>
     `;
 
@@ -106,7 +115,7 @@ export default class FloatingTrackToolbar {
     const parentRect = this.#$parent.getBoundingClientRect();
     this.#lastMouseX = event.clientX - parentRect.left;
 
-    if (!this.#isVisible || this.#isHovering) {
+    if (!this.#isVisible || this.#isHovering || this.#isDocked) {
       return;
     }
 
@@ -263,8 +272,32 @@ export default class FloatingTrackToolbar {
     }
 
     this.#isVisible = true;
-    this.#updatePosition(this.#lastMouseX);
+    this.#dockIfPossible();
+
+    if (!this.#isDocked) {
+      this.#updatePosition(this.#lastMouseX);
+    }
+
     this.#$root.classList.add('visible');
+  }
+
+  /**
+   * Move the toolbar into the timeline's fixed tool bar (.timeline-dock) when there is one,
+   * so selecting a clip never covers or shifts the tracks. Without a dock it keeps floating.
+   */
+  #dockIfPossible() {
+    const $dock = this.#$parent?.closest('.timeline')?.querySelector('.timeline-dock');
+
+    if (!$dock) {
+      return;
+    }
+
+    if (this.#$root.parentElement !== $dock) {
+      $dock.appendChild(this.#$root);
+    }
+
+    this.#isDocked = true;
+    this.#$root.classList.add('docked');
   }
 
   hide() {

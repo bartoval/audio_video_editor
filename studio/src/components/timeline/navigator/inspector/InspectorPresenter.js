@@ -3,6 +3,8 @@ import * as ToolMode from '../../../../services/ToolMode';
 import { audioUrl } from '../../../../services/offline/LocalMedia';
 import ErrorHandler from '../../../../services/ErrorHandler';
 import uiStore from '../../../../store/uiStore';
+import * as EventService from '../../../../services/EventService';
+import { EVENT } from '../../../../config/constants';
 import InspectorView from './InspectorView';
 
 /** Orchestrates Inspector state, store subscriptions and playback */
@@ -15,6 +17,7 @@ export default class InspectorPresenter {
   #zoneEnd = 0;
   #isPlaying = false;
   #currentUrl = null;
+  #unsubscribeTab = null;
 
   constructor($parent) {
     this.#view = new InspectorView($parent, {
@@ -31,6 +34,13 @@ export default class InspectorPresenter {
     });
 
     this.#unsubscribeStore = uiStore.subscribe(() => this.#refresh());
+    this.#unsubscribeTab = EventService.on(EVENT.SIDE_PANEL_TAB, ({ tab }) => {
+      if (tab === 'inspector' && !this.#isOpen) {
+        this.open();
+      } else if (tab !== 'inspector' && this.#isOpen) {
+        this.close();
+      }
+    });
   }
 
   toggle() {
@@ -44,6 +54,7 @@ export default class InspectorPresenter {
   open() {
     this.#isOpen = true;
     this.#view?.open();
+    EventService.emitLocal(EVENT.INSPECTOR_VISIBILITY, { isOpen: true });
   }
 
   close() {
@@ -51,6 +62,7 @@ export default class InspectorPresenter {
     this.#view?.close();
     this.#view?.stopWaveform();
     this.#isPlaying = false;
+    EventService.emitLocal(EVENT.INSPECTOR_VISIBILITY, { isOpen: false });
   }
 
   isOpen() {
@@ -78,6 +90,7 @@ export default class InspectorPresenter {
 
   destroy() {
     this.#unsubscribeStore?.();
+    this.#unsubscribeTab?.();
     this.#view?.destroy();
     this.#view = null;
   }

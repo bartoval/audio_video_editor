@@ -484,6 +484,37 @@ For the rationale behind these choices, see the [Architecture Decision Records](
 
 ---
 
+## Styles
+
+```
+src/styles/
+├── index.css        entry point: the import order IS the cascade order
+├── tokens.css       design tokens (the only file allowed to hold raw colors)
+├── layout.css       html/body, app shell, focus rings
+├── utilities.css    utility classes, responsive tweaks
+└── components/      shared controls: button, range, toggles
+src/components/**/   each component keeps its stylesheet next to its JS
+```
+
+**Tokens have three layers:**
+
+| Layer | Examples | Used by |
+| --- | --- | --- |
+| Primitives | `--gray-750`, `--iris-500`, `--space-3` | `tokens.css` only |
+| Semantic | `--surface-panel`, `--text-subtle`, `--accent-default`, `--fn-volume`, `--playhead` | all components |
+| Legacy | `--accent`, `--panel-bg`, `--bs-info` | old rules; mapped onto semantic tokens, removed as components migrate |
+
+**Rules:**
+
+1. **One color, one meaning.** `--accent-*` marks selection, focus, the active mode and the primary action. `--fn-volume`, `--fn-pan`, `--fn-cut` appear only inside their function. `--playhead` is reserved for time. Red (`--danger-*`) shows on hover or confirmation, never at rest.
+2. **Three kinds of control**, each with its own look: modes (segmented pill, accent when active), actions (neutral buttons), options (switches or soft-accent toggles).
+3. **Selection never changes layout.** Tools for the selected clip dock in `.timeline-dock`.
+4. **A rule lives in exactly one file.** No override layers appended at the end.
+5. **Debt only goes down.** `npm run lint:css` counts raw colors, `!important` and `backdrop-filter` outside `tokens.css` and fails above `css-budget.json`. It runs in the pre-commit hook and in CI. After a cleanup, lock the gain with `npm run lint:css -- --update`.
+6. **Check style refactors visually.** With the dev servers running, `npm run visual:baseline` before the change and `npm run visual:check` after: it replays deterministic app states (see `scripts/visual/scenarios.mjs`) and diffs them pixel by pixel into `.visual/diff/`. Baselines stay local because rendering differs across operating systems.
+
+---
+
 ## Type Safety
 
 The project uses `// @ts-check` + JSDoc for gradual type checking.

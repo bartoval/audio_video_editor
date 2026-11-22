@@ -1,7 +1,7 @@
 /**
  * Audio Video Sync Studio
  */
-import './style.css';
+import './styles/index.css';
 import Library from './components/audioLibrary';
 import Navigator from './components/timeline/Navigator';
 import Video from './components/playback/video';
@@ -11,6 +11,7 @@ import { Header } from './components/header';
 import { StatusBar } from './components/footer';
 import { AppLoader } from './components/loader';
 import Mediator from './components/Mediator';
+import { SidePanel } from './components/sidePanel';
 import * as Workspace from './services/workspace';
 import * as Api from './services/api';
 import * as Offline from './services/offline';
@@ -46,6 +47,9 @@ class App {
     } else {
       console.log('[App] WASM support detected');
     }
+
+    // Tabs first: the Navigator mounts the Inspector into the side panel's Inspector pane
+    new SidePanel(root.querySelector('.studio-library'));
 
     const library = new Library(root.querySelector('.studio-library .library'), {
       api: { list: Workspace.getRouteUrl('audio') },

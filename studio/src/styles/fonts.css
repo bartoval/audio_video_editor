@@ -1,0 +1,11 @@
+/* ============================================================================
+ * Fonts, bundled with the app so they work offline (no Google Fonts request).
+ * Latin subset only, and only the weights the UI uses.
+ *   Inter           → --font-sans  (UI)
+ *   JetBrains Mono  → --font-mono  (timecodes and numeric values: fixed-width digits)
+ * ============================================================================ */
+@import '@fontsource/inter/latin-400.css';
+@import '@fontsource/inter/latin-500.css';
+@import '@fontsource/inter/latin-600.css';
+@import '@fontsource/jetbrains-mono/latin-400.css';
+@import '@fontsource/jetbrains-mono/latin-500.css';

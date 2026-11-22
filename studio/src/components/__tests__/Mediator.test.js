@@ -17,6 +17,7 @@ vi.mock('../../services/PlaybackController', () => ({
     registerNavigator: vi.fn(),
     startLoop: vi.fn(),
     cleanup: vi.fn(),
+    destroy: vi.fn(),
     play: vi.fn(),
     pause: vi.fn(),
     resetPlayback: vi.fn(),
@@ -102,6 +103,9 @@ describe('Mediator video events', () => {
 
   afterEach(() => {
     storeConnectors?.destroyStoreConnectors();
+    // Each test imports a fresh Mediator: unsubscribe this one, or its listeners stay
+    // registered and answer the next test's events with this test's components.
+    Mediator?.destroy();
   });
 
   it('adds has-video and updates workspace store on load', async () => {

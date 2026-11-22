@@ -5,16 +5,15 @@
 .context-menu {
   position: fixed;
   z-index: 10000;
-  min-width: 180px;
+  min-width: 200px;
   max-width: 280px;
-  padding: 4px 0;
-  background: #282828;
-  border-radius: 4px;
-  box-shadow:
-    0 16px 24px rgba(0, 0, 0, 0.3),
-    0 6px 8px rgba(0, 0, 0, 0.2);
+  padding: 6px;
+  background: var(--surface-menu);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-3);
+  box-shadow: var(--elevation-3);
   opacity: 0;
-  transform: scale(0.95) translateY(-4px);
+  transform: scale(0.97) translateY(-4px);
   transform-origin: top left;
   transition:
     opacity 0.1s ease,
@@ -32,42 +31,64 @@
 .context-menu-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
   width: 100%;
-  padding: 10px 12px;
+  height: 34px;
+  padding: 0 var(--space-3);
   margin: 0;
   border: none;
+  border-radius: var(--radius-2);
   background: transparent;
-  color: #fff;
-  font-size: 14px;
+  color: var(--text-default);
+  font-size: var(--font-size-3);
   font-weight: 400;
   text-align: left;
   cursor: pointer;
-  transition: background 0.1s ease;
+  transition:
+    background-color 0.1s ease,
+    color 0.1s ease;
 }
 
-.context-menu-item:hover:not(.disabled) {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.context-menu-item:active:not(.disabled) {
-  background: rgba(255, 255, 255, 0.15);
+.context-menu-item:hover:not(.disabled),
+.context-menu-item:focus-visible {
+  background: var(--surface-hover);
+  outline: none;
 }
 
 .context-menu-item.disabled {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-faint);
   cursor: not-allowed;
 }
 
 .context-menu-item i {
-  font-size: 16px;
   width: 16px;
+  font-size: 15px;
   text-align: center;
-  opacity: 0.7;
+  color: var(--text-subtle);
 }
 
 .context-menu-item span {
   flex: 1;
+}
+
+/* Destructive item: red only on hover */
+.context-menu-item--danger:hover:not(.disabled),
+.context-menu-item--danger:hover:not(.disabled) i {
+  background: rgba(var(--danger-rgb-value), 0.14);
+  color: var(--danger-default);
+}
+
+.context-menu-item--danger:hover:not(.disabled) i {
+  background: transparent;
+}
+
+/* Keyboard shortcut hint */
+.context-menu-shortcut {
+  padding: 0;
+  background: none;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-1);
 }
 
 /* Badge (e.g., "Pro") */
@@ -77,16 +98,16 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-  color: rgba(255, 255, 255, 0.6);
+  background: var(--accent-soft);
+  border-radius: var(--radius-full);
+  color: var(--accent-text);
 }
 
 /* Divider */
 .context-menu-divider {
   height: 1px;
-  margin: 4px 12px;
-  background: rgba(255, 255, 255, 0.1);
+  margin: 4px 8px;
+  background: var(--border-subtle);
 }
 
 /* Menu Trigger Button (circular "...") */
@@ -100,19 +121,19 @@
   border-radius: 50%;
   background: transparent;
   border: none;
-  color: var(--text-secondary, #b3b3b3);
+  color: var(--text-subtle);
   transition:
     background 0.15s ease,
     color 0.15s ease;
 }
 
 .btn-menu-trigger:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: var(--surface-hover);
+  color: var(--text-default);
 }
 
 .btn-menu-trigger:active {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--surface-raised);
 }
 
 .btn-menu-trigger i {

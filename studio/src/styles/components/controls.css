@@ -1,0 +1,75 @@
+/* ============================================================================
+ * Toggle Switch - Pill style with clear on/off states
+ * ============================================================================ */
+.studio .form-check-input[type='checkbox'] {
+  width: 30px;
+  height: 18px;
+  margin: 0;
+  background-color: var(--border-strong);
+  border: 0;
+  border-radius: var(--radius-pill);
+  /* Bootstrap paints a check mark as background image: the knob is the indicator */
+  background-image: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.studio .form-check-input[type='checkbox']::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: var(--gray-0);
+  border-radius: 50%;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
+  box-shadow: var(--elevation-1);
+}
+
+.studio .form-check-input[type='checkbox']:checked {
+  background-color: var(--accent-default);
+  background-image: none;
+  border-color: var(--accent-default);
+  box-shadow: none;
+}
+
+.studio .form-check-input[type='checkbox']:checked::before {
+  transform: translateX(12px);
+  background: var(--gray-0);
+  box-shadow: var(--elevation-1);
+}
+
+.studio .form-check-input[type='checkbox']:hover:not(:checked) {
+  background-color: var(--text-faint);
+}
+
+.studio .form-check-input[type='checkbox']:focus-visible {
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* ============================================================================
+ * Label Typography
+ * ============================================================================ */
+.studio label,
+.studio .form-label {
+  font-size: var(--font-size-2);
+  font-weight: 500;
+  color: var(--text-subtle);
+}
+
+.studio .badge {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+}

@@ -47,6 +47,7 @@ exports[`TracksController > Snapshots > matches public API shape > tracks-contro
   "moveTo",
   "remove",
   "removeByTrackId",
+  "revealSelection",
   "select",
   "toggleMute",
   "togglePan",

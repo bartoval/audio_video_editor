@@ -29,6 +29,7 @@ export default class TracksController {
 
   onMove = null;
   onSetMenu = null;
+  onRevealSelection = null;
   onDragEnd = null;
   onInspectorToggle = null;
   onTracksChange = null;
@@ -36,6 +37,7 @@ export default class TracksController {
   constructor($parent, callbacks = {}) {
     this.onMove = callbacks.onMove || (() => {});
     this.onSetMenu = callbacks.onSetMenu || (() => {});
+    this.onRevealSelection = callbacks.onRevealSelection || (() => {});
     this.onDragEnd = callbacks.onDragEnd || (() => {});
     this.onInspectorToggle = callbacks.onInspectorToggle || (() => {});
     this.onTracksChange = callbacks.onTracksChange || (() => {});
@@ -77,7 +79,13 @@ export default class TracksController {
     return true;
   }
 
-  select(id) {
+  /**
+   * @param {string | number} id
+   * @param {{ reveal?: boolean }} [options] - reveal: the user picked this clip, so show
+   *   its details (opens the Inspector). Selections made by code (new track, split,
+   *   duplicate) leave the side panel alone.
+   */
+  select(id, { reveal = false } = {}) {
     const previousZone = this.#controller.getSelected();
     const previousId = previousZone?.getId();
 
@@ -102,11 +110,22 @@ export default class TracksController {
 
     this.onSetMenu(this);
 
+    if (reveal && currentZone) {
+      this.onRevealSelection();
+    }
+
     return currentZone;
   }
 
   getSelected() {
     return this.#controller.getSelected();
+  }
+
+  /** The user clicked the clip that is already selected: show its details anyway */
+  revealSelection() {
+    if (this.#controller.getSelected()) {
+      this.onRevealSelection();
+    }
   }
 
   addTrack(config, $parent) {
@@ -654,6 +673,7 @@ export default class TracksController {
 
     this.onMove = null;
     this.onSetMenu = null;
+    this.onRevealSelection = null;
     this.onDragEnd = null;
     this.onInspectorToggle = null;
     this.onTracksChange = null;

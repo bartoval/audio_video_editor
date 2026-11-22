@@ -33,7 +33,7 @@ export const TRACK_COLORS = [
 
 export const THEME = {
   // Canvas non risolve CSS var: usare colore reale per waveform
-  waveformColor: '#c084fc',
+  waveformColor: '#a3abb6',
   btnVariant: {
     primary: 'outline-info',
     secondary: 'outline-secondary'

@@ -1,0 +1,107 @@
+/* ============================================================================
+ * Timeline Component
+ * ============================================================================ */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-4);
+  box-shadow: var(--elevation-2);
+  overflow: hidden;
+}
+
+/* ============================================================================
+ * Timeline Navigator
+ * ============================================================================ */
+.navigator {
+  width: 100%;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  padding: 12px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.navigator::-webkit-scrollbar {
+  display: none;
+}
+
+/* Panel: the timeline holds the clip tool bar and the navigator */
+.navigator.glass-container {
+  min-height: 0;
+  padding-top: var(--space-1);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Clip tool bar (.timeline-dock): the selected clip's tools dock here */
+.timeline-dock {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 0 0 auto;
+  min-height: 46px;
+  padding: 6px var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.timeline-dock__empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-faint);
+  font-size: var(--font-size-2);
+}
+
+.timeline-dock:has(.floating-track-toolbar.visible) .timeline-dock__empty {
+  display: none;
+}
+
+/* Zoom: always available, at the right end of the bar (after the clip tools) */
+.timeline-zoom {
+  display: inline-flex;
+  order: 2;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  padding: 3px;
+  background: var(--surface-inset);
+  border-radius: var(--radius-full);
+}
+
+.timeline-zoom__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 28px;
+  padding: 0 var(--space-2);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-full);
+  color: var(--text-subtle);
+  font-size: var(--font-size-2);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.timeline-zoom__btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-default);
+}
+
+.timeline-zoom__btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}

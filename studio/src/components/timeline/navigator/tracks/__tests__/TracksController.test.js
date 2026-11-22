@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import TracksController from '../TracksController';
 
 const trackInstances = [];
+// Lets a test choose what the zone list reports as selected
+const zoneState = vi.hoisted(() => ({ selected: null }));
 
 vi.mock('../../../../../config/constants', () => ({
   TRACK_ACTION: { CUT: 'cut', VOLUME: 'volume', PAN: 'pan' },
@@ -20,7 +22,7 @@ vi.mock('../../../../core/zones', () => ({
     add = vi.fn();
     remove = vi.fn();
     getChild = vi.fn();
-    getSelected = vi.fn().mockReturnValue(null);
+    getSelected = vi.fn(() => zoneState.selected);
     setSelected = vi.fn().mockReturnValue(true);
     getComposite = vi.fn().mockReturnValue(null);
     addComposite = vi.fn().mockReturnValue(document.createElement('div'));
@@ -96,8 +98,10 @@ describe('TracksController', () => {
       onSetMenu: vi.fn(),
       onDragEnd: vi.fn(),
       onInspectorToggle: vi.fn(),
+      onRevealSelection: vi.fn(),
       onTracksChange: vi.fn()
     };
+    zoneState.selected = null;
 
     vi.clearAllMocks();
   });
@@ -161,6 +165,43 @@ describe('TracksController', () => {
       expect(cloned).toBe(true);
       expect(trackInstances).toHaveLength(1);
       expect(trackInstances[0].setContainerCallbacks).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('select', () => {
+    const zone = { getId: () => 'clip-1', select: vi.fn(), deselect: vi.fn() };
+
+    beforeEach(async () => {
+      controller = new TracksController($parent, mockCallbacks);
+      await controller.init([], { getScale: () => 0.1 });
+      zoneState.selected = zone;
+    });
+
+    it('reveals the clip when the user picked it (opens the Inspector)', () => {
+      controller.select('clip-1', { reveal: true });
+
+      expect(mockCallbacks.onRevealSelection).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not reveal selections made by code (new track, split, duplicate)', () => {
+      controller.select('clip-1');
+
+      expect(mockCallbacks.onRevealSelection).not.toHaveBeenCalled();
+      expect(mockCallbacks.onSetMenu).toHaveBeenCalled();
+    });
+
+    it('revealSelection reveals the clip that is already selected', () => {
+      controller.revealSelection();
+
+      expect(mockCallbacks.onRevealSelection).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not reveal when nothing ends up selected', () => {
+      zoneState.selected = null;
+
+      controller.select('missing', { reveal: true });
+
+      expect(mockCallbacks.onRevealSelection).not.toHaveBeenCalled();
     });
   });
 

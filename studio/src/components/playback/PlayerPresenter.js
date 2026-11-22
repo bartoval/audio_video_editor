@@ -98,6 +98,10 @@ export default class PlayerPresenter {
       onMarkerNext: () => this.#handleMarkerNext(),
       onLoopToggle: () => this.#handleLoopToggle()
     });
+
+    // Render the initial state: the store subscription only forwards changes,
+    // so without this the timer keeps its "--:--.--" placeholder until playback starts.
+    this.#controlBar.setState({ currentTime: this.#state.currentTime });
   }
 
   #registerWithMediator() {

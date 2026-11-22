@@ -227,7 +227,9 @@ export default class TracksEventHandler {
 
     if ($volumeZone && clickedZone.isEditingEnvelope()) {
       if (previousZone === null || String(previousZone.getId()) !== id) {
-        this.#container.select(id);
+        this.#container.select(id, { reveal: true });
+      } else {
+        this.#container.revealSelection();
       }
 
       return;
@@ -271,7 +273,9 @@ export default class TracksEventHandler {
     window.addEventListener('blur', this.#handleDragEnd, false);
 
     if (previousZone === null || String(previousZone.getId()) !== id) {
-      this.#container.select(id);
+      this.#container.select(id, { reveal: true });
+    } else {
+      this.#container.revealSelection();
     }
   }
 

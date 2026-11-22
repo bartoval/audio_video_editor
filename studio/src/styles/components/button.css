@@ -1,0 +1,188 @@
+/* ============================================================================
+ * Buttons - shared styles across the app
+ * ============================================================================ */
+
+/* Base buttons used in player/library/toolbars: neutral raised pills */
+.btn,
+.btn-soft,
+.player-panel .btn,
+.player-panel .btn-group .btn,
+.library .btn:not(.btn-outline-danger):not(.btn-outline-info),
+.studio-library .btn:not(.btn-outline-danger):not(.btn-outline-info) {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-raised);
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  color: var(--text-default);
+  box-shadow: none;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+/* btn-group: round first/last button only */
+.btn-group > .btn:not(:first-child):not(:last-child) {
+  border-radius: 0;
+}
+
+.btn-group > .btn:first-child:not(:last-child) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.btn-group > .btn:last-child:not(:first-child) {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.btn:hover,
+.btn-soft:hover,
+.player-panel .btn:hover,
+.player-panel .btn-group .btn:hover,
+.library .btn:not(.btn-outline-danger):not(.btn-outline-info):hover,
+.studio-library .btn:not(.btn-outline-danger):not(.btn-outline-info):hover {
+  background: color-mix(in srgb, var(--surface-raised) 85%, white);
+  border-color: transparent;
+  color: var(--text-default);
+  box-shadow: none;
+}
+/* Active toggle (loop, sort, filters): soft accent */
+.btn.active,
+.btn-soft.active,
+.player-panel .btn.active,
+.library .btn:not(.btn-outline-danger):not(.btn-outline-info).active,
+.studio-library .btn:not(.btn-outline-danger):not(.btn-outline-info).active {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  border-color: transparent;
+  box-shadow: none;
+}
+.btn:focus,
+.btn-soft:focus,
+.player-panel .btn:focus,
+.library .btn:not(.btn-outline-danger):not(.btn-outline-info):focus,
+.studio-library .btn:not(.btn-outline-danger):not(.btn-outline-info):focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.btn-secondary,
+.btn-info {
+  background: var(--surface-raised);
+  border: 1px solid transparent;
+  color: var(--text-default);
+}
+
+.btn-secondary:hover,
+.btn-info:hover,
+.btn-secondary:active,
+.btn-info:active {
+  background: color-mix(in srgb, var(--surface-raised) 85%, white);
+  border-color: transparent;
+  color: var(--text-default);
+}
+
+/* Primary: the accent, one per area */
+.btn-primary {
+  background: var(--accent-default);
+  border: 1px solid transparent;
+  color: var(--text-on-accent);
+  font-weight: 600;
+  box-shadow: 0 6px 18px var(--accent-glow-value);
+}
+
+.btn-primary:hover,
+.btn-primary:active {
+  background: var(--accent-hover);
+  border-color: transparent;
+  color: var(--text-on-accent);
+}
+
+/* Outline variants: neutral raised surface, no glass */
+.btn-outline-primary,
+.btn-outline-secondary,
+.btn-outline-info {
+  background: var(--surface-raised);
+  color: var(--text-default);
+  border: 1px solid transparent;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-secondary:hover,
+.btn-outline-info:hover,
+.btn-outline-primary:active,
+.btn-outline-secondary:active,
+.btn-outline-info:active {
+  background: color-mix(in srgb, var(--surface-raised) 85%, white);
+  color: var(--text-default);
+  border-color: transparent;
+}
+
+/* Disabled variants: Bootstrap paints a colored border here, keep them neutral */
+.btn-primary:disabled,
+.btn-outline-primary:disabled,
+.btn-outline-secondary:disabled,
+.btn-outline-info:disabled,
+.btn-outline-danger:disabled {
+  background: var(--surface-raised);
+  border-color: transparent;
+  color: var(--text-subtle);
+  box-shadow: none;
+}
+
+/* Danger (solid): confirmations only */
+.btn-danger {
+  background: var(--danger-default);
+  border: 1px solid transparent;
+  color: var(--text-on-accent);
+}
+
+.btn-danger:hover,
+.btn-danger:active {
+  background: color-mix(in srgb, var(--danger-default) 85%, white);
+  border-color: transparent;
+  color: var(--text-on-accent);
+}
+
+/* Danger (outline): neutral until hover, so red never competes with the accent */
+.btn-outline-danger {
+  background: var(--surface-raised);
+  color: var(--text-subtle);
+  border: 1px solid transparent;
+}
+
+.btn-outline-danger:hover,
+.btn-outline-danger:active {
+  background: rgba(var(--danger-rgb-value), 0.14);
+  color: var(--danger-default);
+  border-color: transparent;
+}
+
+/* States: the only definition for every button (was split with controls.css) */
+.btn:focus-visible,
+.nav-link:focus-visible,
+[role='button']:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn:disabled,
+.btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}

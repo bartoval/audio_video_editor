@@ -34,28 +34,28 @@ export function createItemRenderer(handlers) {
 
     $li.innerHTML = `
       <div class="library-item-inner">
-        <i class="bi bi-grip-vertical drag-handle text-body-tertiary fs-4 align-self-center" title="${LABEL.LIBRARY_DRAG}"></i>
-        <button class="btn btn-sm btn-outline-info audio-play align-self-center" data-id="${id}" title="${LABEL.LIBRARY_PLAY}">
+        <i class="bi bi-grip-vertical drag-handle" title="${LABEL.LIBRARY_DRAG}"></i>
+        <button class="btn audio-play" data-id="${id}" title="${LABEL.LIBRARY_PLAY}" aria-label="${LABEL.LIBRARY_PLAY} ${safeName}">
           <i class="bi bi-play-fill"></i>
         </button>
-        <span class="text-truncate align-self-center library-track-name" title="${safeName}">${safeName}</span>
-        <div class="library-meta-col d-flex align-items-center gap-2">
-          <button class="btn btn-sm btn-dark audio-info py-0 px-1" title="${LABEL.LIBRARY_INFO}">
-            <i class="bi bi-info-lg"></i>
-          </button>
-          <small class="text-body-tertiary library-meta-text text-truncate" title="${metaString}">${metaString}</small>
+        <div class="library-title-col">
+          <span class="library-track-name" title="${safeName}">${safeName}</span>
+          <div class="library-meta-row">
+            <small class="library-meta-text" title="${metaString}">${metaString}</small>
+            <button class="btn audio-info" title="${LABEL.LIBRARY_INFO}" aria-label="${LABEL.LIBRARY_INFO}">
+              <i class="bi bi-info-circle"></i>
+            </button>
+          </div>
         </div>
         <div class="library-wave-col">
-          <canvas class="oscilloscope-canvas" width="240" height="28"></canvas>
+          <canvas class="oscilloscope-canvas" width="144" height="48"></canvas>
         </div>
-        <div class="library-time-col text-end">
-          <code class="text-body-secondary d-block text-nowrap">${durationFormatted || '00:00'}</code>
-        </div>
-        <div class="library-actions-col d-flex align-items-center gap-2">
-          <button class="btn btn-sm btn-menu-trigger audio-menu align-self-center" data-id="${id}" title="${LABEL.MORE_OPTIONS}">
+        <div class="library-time-col">${durationFormatted || '00:00'}</div>
+        <div class="library-actions-col">
+          <button class="btn audio-menu" data-id="${id}" title="${LABEL.MORE_OPTIONS}" aria-label="${LABEL.MORE_OPTIONS}">
             <i class="bi bi-three-dots"></i>
           </button>
-          <button class="btn btn-sm btn-outline-danger audio-delete align-self-center" data-id="${id}" title="${LABEL.LIBRARY_DELETE}">
+          <button class="btn audio-delete" data-id="${id}" title="${LABEL.LIBRARY_DELETE}" aria-label="${LABEL.LIBRARY_DELETE}">
             <i class="bi bi-trash"></i>
           </button>
         </div>

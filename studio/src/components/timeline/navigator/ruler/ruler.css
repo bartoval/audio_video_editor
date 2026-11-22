@@ -1,0 +1,166 @@
+/* ============================================================================
+ * Navigator Ruler
+ * ============================================================================ */
+.navigator .progress-bar-container {
+  position: absolute;
+  height: 1px;
+  background-color: var(--text-color);
+}
+
+.navigator .progress-bar-container .scrubber-container {
+  position: absolute;
+  left: 0;
+  top: calc(-1 * var(--cursor-size) / 2);
+  z-index: 100;
+  will-change: transform;
+}
+
+.navigator .progress-bar-container .scrubber-container .scrubber-button {
+  cursor: grab;
+  width: 20px;
+  height: 20px;
+  background: var(--accent);
+  border: none;
+  border-radius: 50%;
+  z-index: 100;
+  position: relative;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    0 0 12px var(--accent-glow);
+}
+
+.navigator .progress-bar-container .scrubber-container .scrubber-button:active {
+  cursor: grabbing;
+}
+
+.navigator .progress-bar-container .scrubber-container .scrubber-button::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: -12px;
+  right: -12px;
+  bottom: -12px;
+  cursor: grab;
+}
+
+.navigator .progress-bar-container .scrubber-container .scrubber-button:active::before {
+  cursor: grabbing;
+}
+
+.navigator .progress-bar-container .scrubber-container .line {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  background: var(--accent);
+  z-index: 99;
+  cursor: grab;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.navigator .progress-bar-container .scrubber-container .line:active {
+  cursor: grabbing;
+}
+
+.navigator .progress-bar-container .scrubber-container .line::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -8px;
+  right: -8px;
+  bottom: 0;
+  cursor: grab;
+}
+
+.navigator .progress-bar-container .scrubber-container .line:active::before {
+  cursor: grabbing;
+}
+
+.navigator .progress-bar-container .scrubber-container .hide-with-animation {
+  opacity: 0;
+  transition: opacity 0.25s ease-out;
+}
+
+.ruler {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  margin: 0 calc(var(--cursor-size) / 2);
+  cursor: pointer;
+}
+
+.ruler .rulerDiv {
+  flex: 1;
+  position: relative;
+}
+
+.ruler .loop-region {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: rgba(var(--accent-rgb), 0.25);
+  border-left: 2px solid var(--accent);
+  border-right: 2px solid var(--accent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.ruler .loop-region.visible {
+  opacity: 1;
+}
+
+/* Loop button active state */
+[data-action='loop'].active {
+  background-color: var(--accent) !important;
+  color: var(--text-inverse) !important;
+}
+
+/* Cursor line (ghost line that follows mouse) */
+.cursor-container {
+  position: absolute;
+  top: calc(-1 * var(--cursor-size) / 2);
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  will-change: transform;
+}
+
+.cursor-container.visible {
+  opacity: 1;
+}
+
+.cursor-line-bar {
+  width: 1px;
+  background: rgba(255, 255, 255, 0.5);
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Playhead head: white, reserved for time */
+.navigator .scrubber-button {
+  width: 14px;
+  height: 14px;
+  background: var(--playhead);
+  border: 2px solid var(--playhead);
+  box-shadow: var(--elevation-1);
+}
+
+.navigator .scrubber-button::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid var(--playhead);
+}
+
+/* Main ruler only: the minimap has its own ruler inside .minimap-ruler */
+.navigator > .ruler {
+  height: 26px;
+  flex: 0 0 26px;
+}

@@ -12,6 +12,9 @@ import * as api from './api';
 import SyncManager from './offline/SyncManager';
 import * as EventService from './EventService';
 
+/** Readable message for toasts and dialogs: "Use Sync server first…", not "Error: Use Sync server first…" */
+const errorMessage = error => (error instanceof Error ? error.message : String(error));
+
 class HeaderActionsService {
   async load() {
     try {
@@ -42,7 +45,7 @@ class HeaderActionsService {
 
       return { success: true, data: response };
     } catch (error) {
-      return { success: false, error: String(error) };
+      return { success: false, error: errorMessage(error) };
     }
   }
 
@@ -51,7 +54,7 @@ class HeaderActionsService {
       const data = await EventService.emitAsync(EVENT.WORKSPACE_GET_DATA);
       return await api.backup(data);
     } catch (error) {
-      return { success: false, error: String(error) };
+      return { success: false, error: errorMessage(error) };
     }
   }
 
@@ -63,7 +66,7 @@ class HeaderActionsService {
       EventService.connect();
       return { success: true };
     } catch (error) {
-      return { success: false, error: String(error) };
+      return { success: false, error: errorMessage(error) };
     }
   }
 
@@ -85,7 +88,7 @@ class HeaderActionsService {
     } catch (error) {
       console.error('[HeaderActionsService] Export error:', error);
 
-      return { success: false, error: String(error) };
+      return { success: false, error: errorMessage(error) };
     }
   }
 }

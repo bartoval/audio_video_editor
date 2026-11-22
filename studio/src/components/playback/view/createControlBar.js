@@ -10,11 +10,12 @@ export function createControlBar($parent) {
   let scrubber = null;
   let timer = null;
 
+  // Layout: scrubber across the full width, then [timecode | centered buttons | spacer]
   const $el = createElement('div', {
-    className: 'd-flex flex-column gap-3 w-100',
+    className: 'transport w-100',
     html: `
-      <div data-ref="scrubberRow" class="d-flex align-items-center gap-3"></div>
-      <div data-ref="controls" class="d-flex align-items-center gap-3"></div>
+      <div data-ref="scrubberRow" class="transport-scrubber"></div>
+      <div data-ref="controls" class="transport-controls"></div>
     `,
     parent: $parent
   });
@@ -22,8 +23,8 @@ export function createControlBar($parent) {
   const $controlsRow = $el.querySelector('[data-ref="controls"]');
   const $scrubberRow = $el.querySelector('[data-ref="scrubberRow"]');
 
+  timer = createTimer($controlsRow);
   buttons = createPlaybackButtons($controlsRow);
-  timer = createTimer($scrubberRow);
   scrubber = createScrubber($scrubberRow);
 
   buttons.bind({

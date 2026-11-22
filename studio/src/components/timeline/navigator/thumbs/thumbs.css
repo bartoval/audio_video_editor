@@ -1,0 +1,130 @@
+/* ============================================================================
+ * Navigator Thumbs
+ * ============================================================================ */
+.thumbs {
+  height: 80px;
+  margin: 0 calc(var(--cursor-size) / 2);
+  position: relative;
+  overflow: hidden;
+  contain: layout style;
+}
+
+.thumbs ul {
+  z-index: 1;
+  position: absolute;
+  overflow: hidden;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.thumbs .hideThumb {
+  display: none;
+}
+
+.thumbs .thumb {
+  height: 100%;
+  width: 100%;
+}
+
+.thumbs .thumb .img {
+  height: 80px;
+  width: 100%;
+  object-fit: fill;
+}
+
+/* Thumbs Loading Skeleton */
+.thumbs.loading::after {
+  content: 'Generating thumbnails...';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    90deg,
+    rgba(var(--bs-info-rgb), 0.08) 0%,
+    rgba(var(--bs-info-rgb), 0.25) 50%,
+    rgba(var(--bs-info-rgb), 0.08) 100%
+  );
+  background-size: 200% 100%;
+  animation: thumbsSkeleton 1.2s ease-in-out infinite;
+  color: var(--bs-info);
+  font-size: 0.8rem;
+  font-weight: 500;
+  z-index: 2;
+  pointer-events: none;
+}
+
+@keyframes thumbsSkeleton {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Thumb Preview Popup */
+.thumb-preview {
+  position: fixed;
+  z-index: 1000;
+  background-color: var(--bs-dark);
+  border: 2px solid var(--bs-info);
+  border-radius: 6px;
+  padding: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.thumb-preview.visible {
+  opacity: 1;
+}
+
+.thumb-preview .preview-image {
+  /* width and height set dynamically based on video aspect ratio */
+  min-width: 160px;
+  min-height: 90px;
+  background-repeat: no-repeat;
+  background-color: var(--bs-secondary-bg);
+  border-radius: 4px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thumb-preview .preview-image.loading::after {
+  content: '';
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--bs-info);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: thumb-spinner 0.8s linear infinite;
+}
+
+@keyframes thumb-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.thumb-preview .preview-time {
+  text-align: center;
+  color: var(--bs-info);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding-top: 4px;
+}
+
+/* Short screens: crop the thumbnail strip (sprites are 80px tall) to keep a track visible */
+@media (max-height: 800px) {
+  .thumbs {
+    height: 52px;
+    overflow: hidden;
+  }
+}

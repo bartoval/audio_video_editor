@@ -38,5 +38,8 @@ exports[`Navigator > Snapshots > matches public API shape > navigator-public-api
   "template",
   "updateDuration",
   "updateFrame",
+  "zoomIn",
+  "zoomOut",
+  "zoomToFit",
 ]
 `;

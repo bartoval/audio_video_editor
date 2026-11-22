@@ -1,0 +1,37 @@
+/* ============================================================================
+ * Stylesheet entry point
+ *
+ * Order matters: it is the cascade order. Tokens first, then base, then
+ * components. Each rule lives in exactly one file: no override layers.
+ * ============================================================================ */
+
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+@import './fonts.css';
+@import './tokens.css';
+@import './components/button.css';
+@import './layout.css';
+@import '../components/audioLibrary/library.css';
+@import '../components/sidePanel/side-panel.css';
+@import '../components/playback/video/video.css';
+@import '../components/playback/view/transport.css';
+@import '../components/playback/view/scrubber.css';
+@import '../components/timeline/timeline.css';
+@import '../components/timeline/navigator/ruler/ruler.css';
+@import '../components/timeline/navigator/tracks/tracks.css';
+@import '../components/timeline/navigator/markers/markers.css';
+@import '../components/timeline/navigator/thumbs/thumbs.css';
+@import '../components/header/preview-modal.css';
+@import '../components/timeline/navigator/inspector/inspector.css';
+@import '../components/footer/status-bar.css';
+@import '../components/audioLibrary/library-panel.css';
+@import '../components/loader/loader.css';
+@import '../components/timeline/navigator/minimap/minimap.css';
+@import '../components/core/task-progress.css';
+@import '../components/timeline/navigator/tracks/cut-overlay.css';
+@import '../components/timeline/navigator/tracks/views/superzoom-popup.css';
+@import '../components/common/contextMenu.css';
+@import '../components/header/header.css';
+@import './components/range.css';
+@import './components/controls.css';
+@import './utilities.css';

@@ -38,6 +38,9 @@ body {
   overflow: hidden;
   box-shadow: var(--shadow-medium);
   letter-spacing: 0.01em;
+  font-size: 0.875rem;
+  /* 14px base */
+  line-height: 1.5;
 }
 
 /* ============================================================================
@@ -60,4 +63,16 @@ body {
   flex-shrink: 0;
   position: relative;
   z-index: 10;
+}
+
+/* Focus: keyboard users always see where they are */
+*:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }

@@ -95,6 +95,7 @@ describe('TracksEventHandler', () => {
       handleSplitClick: vi.fn(),
       enterSplitMode: vi.fn(),
       select: vi.fn(),
+      revealSelection: vi.fn(),
       clone: vi.fn(),
       remove: vi.fn(),
       addTrack: vi.fn(),
@@ -417,7 +418,7 @@ describe('TracksEventHandler', () => {
   });
 
   describe('selection', () => {
-    it('selects zone on click if not selected', () => {
+    it('selects zone on click if not selected, revealing it in the Inspector', () => {
       mockController.getSelected.mockReturnValue(null);
 
       const $zone = document.createElement('div');
@@ -427,10 +428,10 @@ describe('TracksEventHandler', () => {
       const event = new MouseEvent('mousedown', { clientX: 100, bubbles: true });
       $zone.dispatchEvent(event);
 
-      expect(mockContainer.select).toHaveBeenCalledWith('zone-1');
+      expect(mockContainer.select).toHaveBeenCalledWith('zone-1', { reveal: true });
     });
 
-    it('does not re-select already selected zone', () => {
+    it('does not re-select an already selected zone, but still reveals it', () => {
       mockController.getSelected.mockReturnValue({ getId: () => 'zone-1' });
 
       const $zone = document.createElement('div');
@@ -441,6 +442,7 @@ describe('TracksEventHandler', () => {
       $zone.dispatchEvent(event);
 
       expect(mockContainer.select).not.toHaveBeenCalled();
+      expect(mockContainer.revealSelection).toHaveBeenCalledTimes(1);
     });
   });
 

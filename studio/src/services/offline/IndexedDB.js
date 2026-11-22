@@ -111,10 +111,10 @@ class IndexedDBService {
    * @param {string} workspaceUuid - Workspace UUID
    * @param {string} idTrack - Track ID
    * @param {Blob} blob - Audio blob data
-   * @param {Object} options - Additional metadata
-   * @param {boolean} options.isDerived - True if processed (stretched, etc)
-   * @param {string} options.sourceHash - Hash of source for invalidation
-   * @param {string} options.mimeType - MIME type of audio
+   * @param {Object} [options] - Additional metadata
+   * @param {boolean} [options.isDerived] - True if processed (stretched, etc); default false
+   * @param {string | null} [options.sourceHash] - Hash of source for invalidation; default null
+   * @param {string} [options.mimeType] - MIME type of audio; default 'audio/wav'
    * @returns {Promise<void>}
    */
   static async saveAudioBlob(workspaceUuid, idTrack, blob, options = {}) {

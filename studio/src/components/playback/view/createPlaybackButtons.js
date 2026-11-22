@@ -11,12 +11,12 @@ export function createPlaybackButtons($parent) {
   let hasMarkers = false;
 
   const $container = createElement('div', {
-    className: 'd-flex align-items-center gap-2',
+    className: 'transport-buttons',
     parent: $parent
   });
 
   const $el = createElement('div', {
-    className: 'btn-group btn-group-lg',
+    className: 'transport-group',
     attrs: { role: 'group', 'aria-label': 'Playback controls' },
     parent: $container
   });
@@ -59,6 +59,8 @@ export function createPlaybackButtons($parent) {
     parent: $el
   });
   $pauseBtn.classList.add('d-none');
+  $playBtn.classList.add('transport-play');
+  $pauseBtn.classList.add('transport-play');
 
   createIconButton({
     icon: 'stop-fill',
@@ -85,7 +87,7 @@ export function createPlaybackButtons($parent) {
   });
 
   const $markerGroup = createElement('div', {
-    className: 'btn-group btn-group-lg',
+    className: 'transport-group transport-group--markers',
     attrs: { role: 'group', 'aria-label': 'Marker navigation' },
     parent: $container
   });

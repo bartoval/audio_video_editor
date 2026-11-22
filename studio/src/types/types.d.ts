@@ -43,7 +43,10 @@ export interface StoreOptions<T, A extends Record<string, ActionCreator<T>>> {
   actions?: A;
 }
 
-export interface Store<T, A extends Record<string, (...args: unknown[]) => void> = Record<string, never>> {
+export interface Store<
+  T,
+  A extends Record<string, (...args: unknown[]) => void> = Record<string, never>
+> {
   getState: () => T;
   setState: (updater: StateUpdater<T>) => void;
   subscribe: (callback: StoreSubscriber<T>) => Unsubscribe;
@@ -121,6 +124,8 @@ export interface AudioConfig {
   /** -1 to 1 */
   panValue?: number;
   volumeData?: VolumeEnvelope;
+  /** Injectable for tests; defaults to the shared WaveformTileService */
+  waveformTileService?: import('../services/WaveformTileService').default;
 }
 
 /** -1 (left) to 1 (right), 0 center */
@@ -298,7 +303,13 @@ export interface PersistOptions {
 
 export interface DragCallbacks {
   onStart?: (event: MouseEvent, startX: number, startY: number) => void;
-  onMove?: (event: MouseEvent, deltaX: number, deltaY: number, startX: number, startY: number) => void;
+  onMove?: (
+    event: MouseEvent,
+    deltaX: number,
+    deltaY: number,
+    startX: number,
+    startY: number
+  ) => void;
   onEnd?: (event: MouseEvent, deltaX: number, deltaY: number, wasDragged: boolean) => void;
 }
 

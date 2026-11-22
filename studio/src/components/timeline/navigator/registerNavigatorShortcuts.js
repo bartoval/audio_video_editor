@@ -16,17 +16,20 @@ const SHORTCUT_ACTIONS = [
   'toggleCutMode',
   'goToPreviousMarker',
   'goToNextMarker',
-  'toggleLoop'
+  'toggleLoop',
+  'zoomIn',
+  'zoomOut',
+  'zoomToFit'
 ];
 
 /**
  * Register all navigator keyboard shortcuts.
  * Returns a cleanup function that removes all handlers.
  *
- * @param {{ inspector: any, markers: any, tracks: any, onLoopToggle: () => void }} deps
+ * @param {{ inspector: any, markers: any, tracks: any, onLoopToggle: () => void, zoom: { in: () => void, out: () => void, fit: () => void } }} deps
  * @returns {() => void}
  */
-export function registerNavigatorShortcuts({ inspector, markers, tracks, onLoopToggle }) {
+export function registerNavigatorShortcuts({ inspector, markers, tracks, onLoopToggle, zoom }) {
   ShortcutService.setActionHandler('toggleInspector', () => inspector.toggle());
   ShortcutService.setActionHandler('addMarker', () => markers.addAtPlayhead());
 
@@ -120,6 +123,12 @@ export function registerNavigatorShortcuts({ inspector, markers, tracks, onLoopT
   ShortcutService.setActionHandler('toggleLoop', () => {
     onLoopToggle();
   });
+
+  if (zoom) {
+    ShortcutService.setActionHandler('zoomIn', () => zoom.in());
+    ShortcutService.setActionHandler('zoomOut', () => zoom.out());
+    ShortcutService.setActionHandler('zoomToFit', () => zoom.fit());
+  }
 
   return () => {
     SHORTCUT_ACTIONS.forEach(action => ShortcutService.clearActionHandler(action));

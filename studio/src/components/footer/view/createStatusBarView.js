@@ -17,25 +17,25 @@ export function createStatusBarView($parent) {
   let handlers = {};
 
   const $el = createElement('div', {
-    className: 'studio-statusbar glass-container',
+    className: 'studio-statusbar',
     html: `
-      <div class="statusbar-left d-flex align-items-center gap-3">
-        <div class="status-indicator d-flex align-items-center gap-2" data-ref="status-indicator">
+      <div class="statusbar-left">
+        <div class="status-indicator" data-ref="status-indicator">
           <span class="status-dot" data-ref="status-dot"></span>
           <i class="bi bi-wifi" data-ref="status-icon"></i>
           <span class="status-label" data-ref="status-label">${LABEL.STATUS_ONLINE}</span>
         </div>
-        <label class="d-flex align-items-center gap-1 small text-secondary mb-0" style="cursor: pointer">
+        <label class="statusbar-toggle">
           <input type="checkbox" class="form-check-input mt-0" data-ref="offline-toggle">
           <span data-ref="offline-label">${LABEL.OFFLINE}</span>
         </label>
       </div>
-      <div class="statusbar-right d-flex align-items-center justify-content-end gap-3">
-        <div class="pending-ops d-flex align-items-center gap-2 small text-light" data-ref="pending-ops" role="button" tabindex="0">
+      <div class="statusbar-right">
+        <div class="pending-ops" data-ref="pending-ops" role="button" tabindex="0">
           <i class="bi bi-check-circle" data-ref="pending-ops-icon"></i>
           <span><span data-ref="pending-ops-count">0</span> ${LABEL.PENDING_OPERATIONS}</span>
         </div>
-        <div class="task-status d-flex align-items-center gap-2" data-ref="task-status"></div>
+        <div class="task-status" data-ref="task-status"></div>
       </div>
     `,
     parent: $parent
@@ -82,7 +82,7 @@ export function createStatusBarView($parent) {
       const progressText = progress !== undefined ? ` ${progress}%` : '';
 
       const $task = document.createElement('div');
-      $task.className = 'task-item d-flex align-items-center gap-1';
+      $task.className = 'task-item';
       $task.dataset.task = taskId;
       $task.innerHTML = `<i class="bi ${icon} spin"></i><span>${status}${progressText}</span>`;
 

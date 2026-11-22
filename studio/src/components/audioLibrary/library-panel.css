@@ -1,0 +1,120 @@
+/* ============================================================================
+ * Library Offline Overlay
+ * ============================================================================ */
+.library-offline-overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 100;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.library-offline-overlay.visible {
+  display: flex;
+}
+
+.library-offline-overlay .offline-icon {
+  font-size: 3rem;
+  color: var(--color-offline);
+  animation: offline-pulse 2s ease-in-out infinite;
+}
+
+.library-offline-overlay .offline-label {
+  color: var(--color-offline);
+  font-weight: 700;
+  font-size: 1.125rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.library-offline-overlay .offline-hint {
+  color: #888;
+  font-size: 0.75rem;
+}
+
+@keyframes offline-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.95);
+  }
+}
+
+/* ============================================================================
+ * Library Mini Player
+ * ============================================================================ */
+.library-mini-player {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--surface-raised);
+  border-top: 1px solid var(--border-subtle);
+  border-radius: var(--radius-3) var(--radius-3) 0 0;
+  padding: 10px 14px;
+  z-index: 50;
+  transform: translateY(100%);
+  /* Hidden below the list: without visibility its top border shows in the panel padding */
+  visibility: hidden;
+  transition:
+    transform 0.15s ease-out,
+    visibility 0.15s;
+  display: flex;
+  align-items: center;
+}
+
+.library-mini-player.visible {
+  transform: translateY(0);
+  visibility: visible;
+}
+
+.library-mini-player .mini-player-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.library-mini-player .mini-player-track {
+  flex-shrink: 0;
+  color: var(--text-default);
+  font-size: var(--font-size-3);
+  max-width: 150px;
+}
+
+.library-mini-player .mini-player-waveform-container {
+  flex: 1;
+  height: 24px;
+  min-width: 0;
+}
+
+.library-mini-player .mini-player-waveform-container .waveform-player {
+  width: 100%;
+  height: 24px;
+  overflow: hidden;
+}
+
+.library-mini-player .mini-player-waveform-container .waveform-player-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.library-mini-player .mini-player-pause,
+.library-mini-player .mini-player-goto {
+  padding: 4px 8px;
+  flex-shrink: 0;
+}
+
+.library:has(.library-mini-player.visible) .library-list-container {
+  padding-bottom: 50px;
+}

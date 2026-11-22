@@ -1,0 +1,142 @@
+/* ============================================================================
+ * Minimap (Timeline Overview)
+ * ============================================================================ */
+
+.minimap-container {
+  margin: 0 calc(var(--cursor-size) / 2);
+}
+
+.minimap {
+  width: 100%;
+  padding: 3px 0;
+}
+
+.minimap-track {
+  position: relative;
+  height: 16px;
+  background: var(--panel-bg);
+  cursor: pointer;
+}
+
+.minimap-ruler {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.minimap-ruler,
+.minimap-ruler * {
+  pointer-events: none !important;
+}
+
+.minimap-ruler .ruler {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+.minimap-ruler .rulerDiv {
+  width: 100%;
+  height: 100%;
+  transform: none !important;
+}
+
+.minimap-ruler .rulerImg {
+  width: 100%;
+  height: 100%;
+}
+
+.minimap-tick {
+  stroke: var(--border-medium);
+  stroke-width: 1;
+}
+
+.minimap-tick-minor {
+  stroke: var(--border-soft);
+  stroke-width: 1;
+}
+
+.minimap-label {
+  fill: var(--text-secondary);
+  font-size: 9px;
+  font-family: var(--font-mono);
+}
+
+.minimap-markers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  pointer-events: none;
+}
+
+.minimap-marker {
+  position: absolute;
+  top: 2px;
+  width: 2px;
+  height: calc(100% - 4px);
+  background: var(--accent);
+  transform: translateX(-50%);
+}
+
+.minimap-viewport {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  cursor: grab;
+  box-sizing: border-box;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  z-index: 2;
+}
+
+.minimap-viewport:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.minimap-viewport:active {
+  cursor: grabbing;
+}
+
+.minimap-playhead {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--bs-danger);
+  pointer-events: none;
+  z-index: 10;
+  will-change: transform;
+}
+
+.minimap-handle {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  cursor: ew-resize;
+  z-index: 5;
+}
+
+.minimap-handle-left {
+  left: 0;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.minimap-handle-right {
+  right: 0;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: linear-gradient(270deg, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.minimap-handle:hover {
+  background: rgba(255, 255, 255, 0.4);
+}

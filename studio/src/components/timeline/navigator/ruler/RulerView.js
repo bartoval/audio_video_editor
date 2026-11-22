@@ -4,6 +4,36 @@ import { getDefaultScale, getScales } from '../../../../services/ConfigStore';
 import scaleManager from '../../../../services/ScaleManager';
 
 /** SVG ruler rendering and scroll handling */
+const LABEL_SPACING_PX = 100;
+
+/**
+ * Ruler label for a time. When labels are less than a second apart (deep zoom),
+ * show hundredths, otherwise neighbouring labels would all read the same second.
+ * @param {number} time - seconds
+ * @param {number} step - seconds between two labels
+ * @returns {string} mm:ss or mm:ss.cc
+ */
+export function formatRulerLabel(time, step) {
+  const pad = n => String(n).padStart(2, '0');
+
+  // Before the scale is known (NaN), keep showing 00:00 as before
+  if (!Number.isFinite(time)) {
+    time = 0;
+  }
+
+  if (!(step < 1)) {
+    const totalSeconds = Math.floor(time);
+
+    return `${pad(Math.floor(totalSeconds / 60))}:${pad(totalSeconds % 60)}`;
+  }
+
+  // Round once, on the whole time, so 59.996 s becomes 01:00.00 and not 00:60.00
+  const totalHundredths = Math.round(time * 100);
+  const totalSeconds = Math.floor(totalHundredths / 100);
+
+  return `${pad(Math.floor(totalSeconds / 60))}:${pad(totalSeconds % 60)}.${pad(totalHundredths % 100)}`;
+}
+
 export default class RulerView extends View {
   #$svgContainer = null;
   #$svg = null;
@@ -247,11 +277,10 @@ export default class RulerView extends View {
     $node.setAttributeNS(null, 'width', width + 6);
     $node.setAttributeNS(null, 'height', height);
 
-    for (let x = 0; x <= width + 10; x += 100) {
-      const time = x * scale;
-      const minutes = ~~(time / 60);
-      const secs = ~~(time % 60);
-      const t = (minutes < 10 ? '0' : '') + minutes + ':' + (secs < 10 ? '0' : '') + secs;
+    const labelStep = LABEL_SPACING_PX * scale;
+
+    for (let x = 0; x <= width + 10; x += LABEL_SPACING_PX) {
+      const t = formatRulerLabel(x * scale, labelStep);
 
       const newLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
       newLine.setAttributeNS(null, 'x1', x);
