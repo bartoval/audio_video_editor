@@ -6,7 +6,6 @@ export const ZONE_TYPE = {
 /** Track toolbar actions */
 export const TRACK_ACTION = {
   VOLUME: 'volume',
-  PAN: 'pan',
   CUT: 'cut'
 };
 
@@ -262,7 +261,6 @@ export const LABEL = {
   TOOLBAR_DELETE: 'Delete (Del)',
   TOOLBAR_MUTE: 'Mute (U)',
   TOOLBAR_VOLUME: 'Volume (V)',
-  TOOLBAR_PAN: 'Pan (P)',
   TOOLBAR_INSPECTOR: 'Inspector (I)',
   TOOLBAR_SNAP: 'Snap (S)',
   TOOLBAR_SUPERZOOM: 'SuperZoom (Z)',

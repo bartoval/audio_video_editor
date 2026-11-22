@@ -50,7 +50,6 @@ exports[`TracksController > Snapshots > matches public API shape > tracks-contro
   "revealSelection",
   "select",
   "toggleMute",
-  "togglePan",
   "toggleVolume",
   "updateFrame",
   "updateSnapPoints",

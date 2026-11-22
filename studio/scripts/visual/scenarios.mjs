@@ -65,16 +65,6 @@ export const scenarios = [
     }
   },
   {
-    name: 'pan-mode-1440',
-    viewport: { width: 1440, height: 900 },
-    run: async (page, media) => {
-      await addMedia(page, media);
-      await selectFirstClip(page);
-      await page.click('.timeline-dock button[data-action="pan"]');
-      await parkMouse(page);
-    }
-  },
-  {
     name: 'cut-mode-1440',
     viewport: { width: 1440, height: 900 },
     run: async (page, media) => {

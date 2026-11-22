@@ -10,7 +10,6 @@ const SHORTCUT_ACTIONS = [
   'duplicateSelectedTrack',
   'deleteSelectedTrack',
   'toggleVolumeSelectedTrack',
-  'togglePanSelectedTrack',
   'toggleMuteSelectedTrack',
   'toggleSnapSelectedTrack',
   'toggleCutMode',
@@ -75,15 +74,6 @@ export function registerNavigatorShortcuts({ inspector, markers, tracks, onLoopT
     if (selected) {
       tracks.toggleVolume(selected);
       selected.floatingToolbar?.setVolumeActive(selected.model?.isVolumeVisible());
-    }
-  });
-
-  ShortcutService.setActionHandler('togglePanSelectedTrack', () => {
-    const selected = tracks.getSelected();
-
-    if (selected) {
-      tracks.togglePan(selected);
-      selected.floatingToolbar?.setPanActive(selected.model?.isPanVisible());
     }
   });
 

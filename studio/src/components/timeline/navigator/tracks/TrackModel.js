@@ -7,7 +7,7 @@ import { ZoneModel } from '../../../core/zones';
  * - Audio reference (idTrack)
  * - Pitch shifting
  * - Cut buffer boundaries
- * - Visibility states for volume/pan editors
+ * - Visibility state for the volume editor (pan is set from the Inspector)
  * - Available commands
  */
 export default class TrackModel extends ZoneModel {
@@ -29,14 +29,12 @@ export default class TrackModel extends ZoneModel {
     this.set('originalDuration', durationTime);
     this.set('stretchFactor', stretchFactor);
     this.set('volumeVisible', false);
-    this.set('panVisible', false);
     this.set('commands', {
       back: false,
       forward: false,
       cut: false,
       copy: false,
       volume: false,
-      pan: false,
       remove: false,
       pitch: false
     });
@@ -128,16 +126,6 @@ export default class TrackModel extends ZoneModel {
 
   setVolumeVisible(visible) {
     this.set('volumeVisible', visible);
-
-    return this;
-  }
-
-  isPanVisible() {
-    return this.get('panVisible');
-  }
-
-  setPanVisible(visible) {
-    this.set('panVisible', visible);
 
     return this;
   }

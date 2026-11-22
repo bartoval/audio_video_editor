@@ -107,7 +107,7 @@ describe('FloatingTrackToolbar', () => {
           $btn => $btn.dataset.action
         );
 
-      expect(actionsIn('modes')).toEqual(['cut', 'volume', 'pan']);
+      expect(actionsIn('modes')).toEqual(['cut', 'volume']);
       expect(actionsIn('actions')).toEqual(['copy', 'mute', 'delete']);
       expect(actionsIn('options')).toEqual(['snap', 'superzoom', 'inspector']);
     });

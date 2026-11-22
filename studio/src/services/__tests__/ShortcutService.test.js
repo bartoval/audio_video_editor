@@ -276,15 +276,8 @@ describe('ShortcutService', () => {
       ShortcutService.clearActionHandler('toggleVolumeSelectedTrack');
     });
 
-    it('p calls togglePanSelectedTrack handler', () => {
-      const handler = vi.fn();
-      ShortcutService.setActionHandler('togglePanSelectedTrack', handler);
-
-      const event = new KeyboardEvent('keydown', { key: 'p' });
-      document.dispatchEvent(event);
-
-      expect(handler).toHaveBeenCalled();
-      ShortcutService.clearActionHandler('togglePanSelectedTrack');
+    it('p is free: pan lives in the Inspector, not on the timeline', () => {
+      expect(ShortcutService.has('p')).toBe(false);
     });
 
     it('m calls addMarker action handler', () => {

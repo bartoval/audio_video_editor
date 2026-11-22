@@ -1,5 +1,3 @@
-import { TRACK_ACTION } from '../../../../config/constants';
-import * as ToolMode from '../../../../services/ToolMode';
 import { audioUrl } from '../../../../services/offline/LocalMedia';
 import ErrorHandler from '../../../../services/ErrorHandler';
 import uiStore from '../../../../store/uiStore';
@@ -132,14 +130,8 @@ export default class InspectorPresenter {
   #handlePanChange(value) {
     const pan = Number(value) / 100;
 
-    if (this.#selectedZone) {
-      if (!ToolMode.isMode(TRACK_ACTION.PAN)) {
-        ToolMode.activate(TRACK_ACTION.PAN);
-        this.#selectedZone.panShow?.();
-      }
-
-      this.#selectedZone.setPan?.(pan);
-    }
+    // Pan is one value per clip: the Inspector slider is its only control
+    this.#selectedZone?.setPan?.(pan);
   }
 
   async #handlePlayClick() {

@@ -22,7 +22,6 @@ const redraw = (self, width1, path, scale, showLoadingOnStart = false) => {
     .then(data => {
       const { path: dataPath } = data;
       const canvass = self.canvasCache;
-      const { supportCtx } = self;
 
       let start = 0;
       let end = ~~(width * 2);
@@ -54,17 +53,6 @@ const redraw = (self, width1, path, scale, showLoadingOnStart = false) => {
         ctx.lineWidth = WAVEFORM_LINE_WIDTH;
         ctx.stroke();
 
-        if (self.channelsView) {
-          const imageData = ctx.getImageData(0, 0, width, height);
-          self.supportCanvas.width = width;
-          supportCtx.putImageData(imageData, 0, 0);
-          supportCtx.putImageData(imageData, 0, height);
-          ctx.clearRect(0, 0, width, height);
-          canvas.height = height * 2;
-          ctx.drawImage(self.supportCanvas, 0, 0);
-          supportCtx.clearRect(0, 0, width, self.supportCanvas.height);
-        }
-
         canvas.style.height = '100%';
 
         start = end;
@@ -87,11 +75,8 @@ export default class WaveformController extends View {
     super($parent);
     this.viewBox = config.viewBox || 0;
     this.blob = blob;
-    this.channelsView = false;
     this.canvasCache = [];
     this.contextCache = [];
-    this.supportCanvas = null;
-    this.supportCtx = null;
     this.path = config.path;
     this.mount();
   }
@@ -117,12 +102,9 @@ export default class WaveformController extends View {
       canvas.style.width = canvasStretch + '%';
       this.$node.appendChild(canvas);
       this.canvasCache.push(canvas);
-      this.contextCache.push(canvas.getContext('2d', { willReadFrequently: true }));
+      // No pixel read-back (getImageData) any more: let the browser keep these on the GPU
+      this.contextCache.push(canvas.getContext('2d'));
     }
-
-    this.supportCanvas = document.createElement('canvas');
-    this.supportCanvas.height = height * 2;
-    this.supportCtx = this.supportCanvas.getContext('2d', { willReadFrequently: true });
 
     // Initial draw with loading skeleton enabled
     redraw(this, width, this.path, getScale(), true);
@@ -151,16 +133,6 @@ export default class WaveformController extends View {
     }
 
     return true;
-  }
-
-  mono() {
-    this.channelsView = true;
-    redraw(this, this.$node.offsetWidth, false, getScale());
-  }
-
-  stereo() {
-    this.channelsView = false;
-    redraw(this, this.$node.offsetWidth, false, getScale());
   }
 
   getCopy(startPosX, stretchFactor) {

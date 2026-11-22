@@ -125,15 +125,6 @@ vi.mock('../controllers/VolumeController', () => ({
   }
 }));
 
-vi.mock('../controllers/PanController', () => ({
-  default: class {
-    render = vi.fn();
-    destroy = vi.fn();
-    show = vi.fn();
-    hide = vi.fn();
-  }
-}));
-
 vi.mock('../controllers/CutZoneController', () => ({
   default: class {
     render = vi.fn();

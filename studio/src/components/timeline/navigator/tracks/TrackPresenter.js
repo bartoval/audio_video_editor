@@ -7,7 +7,6 @@ import TrackView from './TrackView';
 import { fromFlat } from './TrackConfig';
 import WaveformController from './controllers/WaveformController';
 import VolumeController from './controllers/VolumeController';
-import PanController from './controllers/PanController';
 import CutZoneController from './controllers/CutZoneController';
 import StretchInfoOverlay from './controllers/StretchInfoOverlay';
 import SuperZoomController from './controllers/SuperZoomController';
@@ -23,7 +22,7 @@ import DragCoordinator, { MoveDragStrategy, ResizeDragStrategy } from './DragStr
  * - TrackModel (state)
  * - TrackView (DOM)
  * - Audio blob (Web Audio)
- * - Controllers (waveform, volume, pan, resize, move, cut)
+ * - Controllers (waveform, volume, resize, move, cut); pan is set from the Inspector
  */
 export default class TrackPresenter extends ZonePresenter {
   #containerCallbacks = {};
@@ -87,11 +86,6 @@ export default class TrackPresenter extends ZonePresenter {
         this.blob.setVolumeData(volumeArray);
       }
     });
-    this.controllerPan = new PanController(controllerConfig, $content, {
-      onChangePan: value => {
-        this.blob.setPanValue(value);
-      }
-    });
     this.stretchOverlay = new StretchInfoOverlay(
       { originalDuration: this.model.getOriginalDuration() },
       $content
@@ -107,7 +101,6 @@ export default class TrackPresenter extends ZonePresenter {
       onCopy: () => this.#handleCopyRequest(),
       onDelete: () => this.#handleDeleteRequest(),
       onVolumeToggle: active => this.#handleVolumeToggle(active),
-      onPanToggle: active => this.#handlePanToggle(active),
       onMuteToggle: active => this.#handleMuteToggle(active),
       onInspectorToggle: () => this.#handleInspectorToggle(),
       onSnapToggle: active => this.setSnapEnabled(active)
@@ -140,11 +133,6 @@ export default class TrackPresenter extends ZonePresenter {
       this.floatingToolbar.setVolumeActive(true);
     }
 
-    if (this.model.isPanVisible()) {
-      this.controllerPan.enable();
-      this.floatingToolbar.setPanActive(true);
-    }
-
     this.floatingToolbar.setMuteActive(this.#isMuted);
     this.view.select();
 
@@ -158,10 +146,6 @@ export default class TrackPresenter extends ZonePresenter {
     }
 
     this.floatingToolbar.hide();
-
-    if (this.model.isPanVisible()) {
-      this.panHide();
-    }
 
     if (this.model.isVolumeVisible()) {
       this.volumeHide();
@@ -202,10 +186,6 @@ export default class TrackPresenter extends ZonePresenter {
   }
 
   volumeShow() {
-    if (this.model.isPanVisible()) {
-      this.panHide();
-    }
-
     this.model.setVolumeVisible(true);
 
     if (!this.controllerVolume.isEnabled()) {
@@ -220,32 +200,6 @@ export default class TrackPresenter extends ZonePresenter {
 
     if (this.controllerVolume.isEnabled()) {
       this.controllerVolume.disable();
-    }
-
-    return true;
-  }
-
-  panShow() {
-    if (this.model.isVolumeVisible()) {
-      this.volumeHide();
-    }
-
-    this.model.setPanVisible(true);
-
-    if (!this.controllerPan.isEnabled()) {
-      this.controllerPan.enable();
-      this.controllerWaveform.mono();
-    }
-
-    return true;
-  }
-
-  panHide() {
-    this.model.setPanVisible(false);
-
-    if (this.controllerPan.isEnabled()) {
-      this.controllerPan.disable();
-      this.controllerWaveform.stereo();
     }
 
     return true;
@@ -287,7 +241,6 @@ export default class TrackPresenter extends ZonePresenter {
 
   setPan(value) {
     this.blob.setPanValue(value);
-    this.controllerPan.updateFromValue(value);
   }
 
   #applyStretch() {
@@ -447,14 +400,6 @@ export default class TrackPresenter extends ZonePresenter {
     }
   }
 
-  #handlePanToggle(active) {
-    if (active) {
-      this.panShow();
-    } else {
-      this.panHide();
-    }
-  }
-
   #handleMuteToggle(active) {
     if (active) {
       this.mute();
@@ -514,7 +459,6 @@ export default class TrackPresenter extends ZonePresenter {
       this.moveHandle = null;
       this.cutZone = null;
       this.controllerVolume = null;
-      this.controllerPan = null;
       this.controllerWaveform = null;
       this.superZoomController?.destroy();
       this.superZoomController = null;

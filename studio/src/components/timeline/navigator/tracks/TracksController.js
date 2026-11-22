@@ -398,24 +398,6 @@ export default class TracksController {
   }
 
   /**
-   * Toggle pan envelope on a zone
-   * @param {Object} zone - The zone to toggle pan on
-   */
-  togglePan(zone) {
-    if (!zone) {
-      return false;
-    }
-
-    if (zone.model?.isPanVisible()) {
-      zone.panHide();
-    } else {
-      zone.panShow();
-    }
-
-    return true;
-  }
-
-  /**
    * Toggle mute on a zone
    * @param {Object} zone - The zone to toggle mute on
    */
@@ -575,10 +557,6 @@ export default class TracksController {
       this.#hideAllVolume();
     }
 
-    if (this.#previousMode === TRACK_ACTION.PAN && newMode !== TRACK_ACTION.PAN) {
-      this.#hideAllPan();
-    }
-
     this.#previousMode = newMode;
   };
 
@@ -602,16 +580,6 @@ export default class TracksController {
 
       if (zone?.model?.isVolumeVisible()) {
         zone.volumeHide();
-      }
-    }
-  }
-
-  #hideAllPan() {
-    for (let i = 0; i < this.#controller.getNumChildren(); i++) {
-      const zone = this.#controller.getChildByIndex(i);
-
-      if (zone?.model?.isPanVisible()) {
-        zone.panHide();
       }
     }
   }

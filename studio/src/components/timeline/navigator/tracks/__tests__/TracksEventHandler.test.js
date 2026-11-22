@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('../../../../../config/constants', () => ({
-  TRACK_ACTION: { CUT: 'cut', VOLUME: 'volume', PAN: 'pan', COPY: 'copy', REMOVE: 'remove' },
+  TRACK_ACTION: { CUT: 'cut', VOLUME: 'volume', COPY: 'copy', REMOVE: 'remove' },
   CUT_STATE: { ACTIVE: 'active', READY: 'ready', IDLE: 'idle' }
 }));
 
@@ -81,11 +81,9 @@ describe('TracksEventHandler', () => {
       isSnapEnabled: vi.fn().mockReturnValue(true),
       isEditingEnvelope: vi.fn().mockReturnValue(false),
       model: {
-        isVolumeVisible: vi.fn().mockReturnValue(false),
-        isPanVisible: vi.fn().mockReturnValue(false)
+        isVolumeVisible: vi.fn().mockReturnValue(false)
       },
-      volumeShow: vi.fn(),
-      panShow: vi.fn()
+      volumeShow: vi.fn()
     };
 
     mockContainer = {
@@ -233,19 +231,6 @@ describe('TracksEventHandler', () => {
       $zone.dispatchEvent(event);
 
       expect(mockZone.volumeShow).toHaveBeenCalled();
-    });
-
-    it('shows pan envelope on pan tool', () => {
-      ToolMode.getMode.mockReturnValue('pan');
-
-      const $zone = document.createElement('div');
-      $zone.setAttribute('data-zone-id', 'zone-1');
-      $tracks.appendChild($zone);
-
-      const event = new MouseEvent('mousedown', { clientX: 100, bubbles: true });
-      $zone.dispatchEvent(event);
-
-      expect(mockZone.panShow).toHaveBeenCalled();
     });
   });
 

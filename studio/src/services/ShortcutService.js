@@ -140,18 +140,6 @@ function registerDefaults() {
     return false;
   });
 
-  register('p', () => {
-    const handler = actionHandlers.get('togglePanSelectedTrack');
-
-    if (handler) {
-      handler();
-
-      return true;
-    }
-
-    return false;
-  });
-
   register('u', () => {
     const handler = actionHandlers.get('toggleMuteSelectedTrack');
 

@@ -11,7 +11,7 @@ import * as SuperZoomService from '../../../../../services/SuperZoomService';
  * - Docks into the timeline's fixed tool bar (.timeline-dock) when present
  * - Otherwise floats below the track and follows the mouse X position
  * - Fade-in/out animation
- * - Actions: Split, Cut, Copy, Delete, Volume, Pan, Snap
+ * - Actions: Cut, Volume, Duplicate, Mute, Delete, Snap, SuperZoom, Inspector
  */
 export default class FloatingTrackToolbar {
   #$root = null;
@@ -22,7 +22,6 @@ export default class FloatingTrackToolbar {
   #isHovering = false;
   #callbacks = {};
   #volumeActive = false;
-  #panActive = false;
   #muteActive = false;
   #snapActive = true;
   #cutActive = false;
@@ -55,9 +54,6 @@ export default class FloatingTrackToolbar {
           </button>
           <button data-action="volume" class="toolbar-btn" title="${LABEL.TOOLBAR_VOLUME}">
             <i class="bi bi-sliders"></i><span class="toolbar-btn__label">Volume</span>
-          </button>
-          <button data-action="pan" class="toolbar-btn" title="${LABEL.TOOLBAR_PAN}">
-            <i class="bi bi-arrows-expand-vertical"></i><span class="toolbar-btn__label">Pan</span>
           </button>
         </div>
         <div class="toolbar-separator"></div>
@@ -176,10 +172,6 @@ export default class FloatingTrackToolbar {
         this.#toggleVolume();
         break;
 
-      case 'pan':
-        this.#togglePan();
-        break;
-
       case 'inspector':
         this.#callbacks.onInspectorToggle?.();
         break;
@@ -196,26 +188,8 @@ export default class FloatingTrackToolbar {
 
   #toggleVolume() {
     this.#volumeActive = !this.#volumeActive;
-
-    if (this.#volumeActive && this.#panActive) {
-      this.#panActive = false;
-      this.#updateButtonState('pan', false);
-    }
-
     this.#updateButtonState('volume', this.#volumeActive);
     this.#callbacks.onVolumeToggle?.(this.#volumeActive);
-  }
-
-  #togglePan() {
-    this.#panActive = !this.#panActive;
-
-    if (this.#panActive && this.#volumeActive) {
-      this.#volumeActive = false;
-      this.#updateButtonState('volume', false);
-    }
-
-    this.#updateButtonState('pan', this.#panActive);
-    this.#callbacks.onPanToggle?.(this.#panActive);
   }
 
   #toggleMute() {
@@ -307,20 +281,13 @@ export default class FloatingTrackToolbar {
 
     this.#isVisible = false;
     this.#volumeActive = false;
-    this.#panActive = false;
     this.#updateButtonState('volume', false);
-    this.#updateButtonState('pan', false);
     this.#$root.classList.remove('visible');
   }
 
   setVolumeActive(active) {
     this.#volumeActive = active;
     this.#updateButtonState('volume', active);
-  }
-
-  setPanActive(active) {
-    this.#panActive = active;
-    this.#updateButtonState('pan', active);
   }
 
   setMuteActive(active) {

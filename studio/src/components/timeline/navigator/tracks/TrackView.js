@@ -53,8 +53,8 @@ export default class TrackView extends ZoneView {
       this.#updateGainIndicator(state.gain);
     }
 
-    if (changes.volumeVisible !== undefined || changes.panVisible !== undefined) {
-      const editing = state.volumeVisible || state.panVisible;
+    if (changes.volumeVisible !== undefined) {
+      const editing = state.volumeVisible;
       this.$root.classList.toggle('editing-envelope', editing);
     }
   }

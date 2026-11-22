@@ -83,7 +83,7 @@ export default class TracksEventHandler {
       this.#container.select(id);
       const toolMode = ToolMode.getMode();
 
-      if (toolMode === TRACK_ACTION.VOLUME || toolMode === TRACK_ACTION.PAN) {
+      if (toolMode === TRACK_ACTION.VOLUME) {
         this.#handleEnvelopeToolAction(clickedZone, posX, event, toolMode);
 
         return;
@@ -204,14 +204,6 @@ export default class TracksEventHandler {
   }
 
   #handleEnvelopeToolAction(clickedZone, posX, event, toolMode) {
-    if (toolMode === TRACK_ACTION.PAN) {
-      if (!clickedZone.model?.isPanVisible()) {
-        clickedZone.panShow();
-      }
-
-      return;
-    }
-
     if (toolMode === TRACK_ACTION.VOLUME) {
       if (!clickedZone.model?.isVolumeVisible()) {
         clickedZone.volumeShow();
