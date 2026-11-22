@@ -26,12 +26,19 @@
   font-weight: 600;
 }
 
+/* Same type and box as the header buttons. Without an explicit size the select
+   inherits Bootstrap's 1rem, which grows with the screen density and got clipped. */
 .studio .studio-header .project-select {
   height: 34px;
+  padding: 0 36px 0 14px;
   border-radius: var(--radius-full);
   background-color: var(--surface-raised);
+  background-position: right 12px center;
   border-color: transparent;
+  color: var(--text-default);
+  font-size: var(--font-size-3);
   font-weight: 500;
+  line-height: 34px;
 }
 
 .studio .studio-header.navbar .navbar-brand {
