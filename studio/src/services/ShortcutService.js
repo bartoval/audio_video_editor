@@ -164,6 +164,24 @@ function registerDefaults() {
     return false;
   });
 
+  // Zoom: "+" is "=" or Shift+"=" depending on the keyboard layout, so accept all of them
+  const zoomAction = action => () => {
+    const handler = actionHandlers.get(action);
+
+    if (handler) {
+      handler();
+
+      return true;
+    }
+
+    return false;
+  };
+  ['Ctrl++', 'Ctrl+Shift++', 'Ctrl+=', 'Ctrl+Shift+='].forEach(key =>
+    register(key, zoomAction('zoomIn'))
+  );
+  ['Ctrl+-', 'Ctrl+Shift+_', 'Ctrl+_'].forEach(key => register(key, zoomAction('zoomOut')));
+  register('Ctrl+0', zoomAction('zoomToFit'));
+
   register('i', () => {
     const handler = actionHandlers.get('toggleInspector');
 
@@ -298,11 +316,17 @@ function buildKeyString(event) {
 }
 
 function normalizeKey(key) {
-  if (!key.includes('+')) {
+  if (!key.includes('+') || key === '+') {
     return key;
   }
 
-  const parts = key.split('+');
+  // "Ctrl++": the key itself is "+", which split('+') would turn into empty parts
+  const endsWithPlusKey = key.endsWith('++');
+  const parts = (endsWithPlusKey ? key.slice(0, -2) : key).split('+');
+
+  if (endsWithPlusKey) {
+    parts.push('+');
+  }
   const modifiers = [];
   let mainKey = '';
 

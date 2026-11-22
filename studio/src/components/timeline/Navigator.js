@@ -26,6 +26,7 @@ const { TOOLTIP_THROTTLE_MS } = TRACKS;
 
 // A Firefox notch is 3 lines: ~33px per line makes it zoom like a Chrome notch (100px)
 const LINE_HEIGHT_PX = 33;
+const ZOOM_STEP_PX = 200;
 const PAGE_HEIGHT_PX = 800;
 
 /**
@@ -90,7 +91,25 @@ export default class Navigator extends View {
         <i class="bi bi-cursor" aria-hidden="true"></i>
         Select a clip on the timeline to edit it
       </span>
+      <div class="timeline-zoom" role="group" aria-label="Zoom">
+        <button type="button" class="timeline-zoom__btn" data-zoom="out" title="Zoom out (Ctrl −)" aria-label="Zoom out">
+          <i class="bi bi-dash-lg"></i>
+        </button>
+        <button type="button" class="timeline-zoom__btn timeline-zoom__fit" data-zoom="fit" title="Fit timeline (Ctrl 0)">Fit</button>
+        <button type="button" class="timeline-zoom__btn" data-zoom="in" title="Zoom in (Ctrl +)" aria-label="Zoom in">
+          <i class="bi bi-plus-lg"></i>
+        </button>
+      </div>
     `;
+
+    $dock.querySelector('.timeline-zoom').addEventListener('click', event => {
+      const $btn = /** @type {HTMLElement} */ (event.target).closest('[data-zoom]');
+      const action = $btn?.getAttribute('data-zoom');
+
+      if (action === 'in') this.zoomIn();
+      else if (action === 'out') this.zoomOut();
+      else if (action === 'fit') this.zoomToFit();
+    });
 
     return $dock;
   }
@@ -204,7 +223,8 @@ export default class Navigator extends View {
       inspector: this.#inspector,
       markers: this.markers,
       tracks: this.tracks,
-      onLoopToggle: () => this.#handleLoopToggle()
+      onLoopToggle: () => this.#handleLoopToggle(),
+      zoom: { in: () => this.zoomIn(), out: () => this.zoomOut(), fit: () => this.zoomToFit() }
     });
     this.#unsubscribeAddTracks = EventService.on(EVENT.TIMELINE_ADD_TRACKS, tracks =>
       this.addTracksToTimeline(tracks)
@@ -452,9 +472,36 @@ export default class Navigator extends View {
     const delta = this.#accumulatedDelta;
     this.#accumulatedDelta = 0;
 
+    this.#applyScale(() => scaleManager.zoomByDelta(delta));
+  };
+
+  /** One button press or key press: about two wheel notches (~22%) */
+  zoomIn() {
+    this.#applyScale(() => scaleManager.zoomByDelta(-ZOOM_STEP_PX));
+  }
+
+  zoomOut() {
+    this.#applyScale(() => scaleManager.zoomByDelta(ZOOM_STEP_PX));
+  }
+
+  /** Whole timeline in view */
+  zoomToFit() {
+    this.#applyScale(() => scaleManager.setScale(scaleManager.getLimits().max));
+  }
+
+  /**
+   * The single zoom path for wheel, buttons and shortcuts: change the scale, keep the
+   * playhead's time in place, then redraw every lane.
+   * @param {() => number} changeScale - applies the new scale and returns it
+   */
+  #applyScale(changeScale) {
+    if (!scaleManager.isInitialized()) {
+      return;
+    }
+
     const time = getTimeFromPosX(this.ruler.getAbsolutePosX());
     const previousScale = scaleManager.getScale();
-    const newScale = scaleManager.zoomByDelta(delta);
+    const newScale = changeScale();
 
     if (scalesEqual(newScale, previousScale)) {
       return;
@@ -469,7 +516,7 @@ export default class Navigator extends View {
     this.#updateMinimap();
 
     EventService.emitLocal(EVENT.PLAYBACK_PAUSE);
-  };
+  }
 
   #handleMinimapZoom(startTime, endTime, visibleDuration, resizeEdge) {
     const navigatorViewportWidth = this.ruler.getRange().width;

@@ -78,7 +78,7 @@ export default class FloatingTrackToolbar {
             <i class="bi bi-magnet"></i><span class="toolbar-btn__label">Snap</span>
           </button>
           <button data-action="superzoom" class="toolbar-btn" title="${LABEL.TOOLBAR_SUPERZOOM}" aria-label="SuperZoom">
-            <i class="bi bi-zoom-in"></i>
+            <i class="bi bi-search"></i>
           </button>
           <button data-action="inspector" class="toolbar-btn" title="${LABEL.TOOLBAR_INSPECTOR}" aria-label="Inspector">
             <i class="bi bi-layout-sidebar-reverse"></i>

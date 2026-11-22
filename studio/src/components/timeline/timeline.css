@@ -64,3 +64,44 @@
 .timeline-dock:has(.floating-track-toolbar.visible) .timeline-dock__empty {
   display: none;
 }
+
+/* Zoom: always available, at the right end of the bar (after the clip tools) */
+.timeline-zoom {
+  display: inline-flex;
+  order: 2;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  padding: 3px;
+  background: var(--surface-inset);
+  border-radius: var(--radius-full);
+}
+
+.timeline-zoom__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 28px;
+  padding: 0 var(--space-2);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-full);
+  color: var(--text-subtle);
+  font-size: var(--font-size-2);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.timeline-zoom__btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-default);
+}
+
+.timeline-zoom__btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}

@@ -185,6 +185,55 @@ describe('ShortcutService', () => {
       ShortcutService.init();
     });
 
+    describe('zoom', () => {
+      const press = init => {
+        const event = new KeyboardEvent('keydown', { cancelable: true, ...init });
+        document.dispatchEvent(event);
+
+        return event;
+      };
+
+      it.each([
+        ['Ctrl and "+" (Italian, Spanish layouts)', { key: '+', ctrlKey: true }],
+        ['Cmd and "+"', { key: '+', metaKey: true }],
+        ['Ctrl, Shift and "+" (US layout)', { key: '+', ctrlKey: true, shiftKey: true }],
+        ['Ctrl and "="', { key: '=', ctrlKey: true }]
+      ])('zooms in with %s', (_label, init) => {
+        const handler = vi.fn();
+        ShortcutService.setActionHandler('zoomIn', handler);
+
+        const event = press(init);
+
+        expect(handler).toHaveBeenCalledTimes(1);
+        // The browser's own page zoom must not run as well
+        expect(event.defaultPrevented).toBe(true);
+      });
+
+      it('zooms out with Ctrl and "-"', () => {
+        const handler = vi.fn();
+        ShortcutService.setActionHandler('zoomOut', handler);
+
+        press({ key: '-', ctrlKey: true });
+
+        expect(handler).toHaveBeenCalledTimes(1);
+      });
+
+      it('fits the timeline with Ctrl and "0"', () => {
+        const handler = vi.fn();
+        ShortcutService.setActionHandler('zoomToFit', handler);
+
+        press({ key: '0', ctrlKey: true });
+
+        expect(handler).toHaveBeenCalledTimes(1);
+      });
+
+      it('leaves browser zoom alone when the timeline has no zoom handler', () => {
+        const event = press({ key: '+', ctrlKey: true });
+
+        expect(event.defaultPrevented).toBe(false);
+      });
+    });
+
     it('ESC deactivates tool mode', () => {
       ToolMode.activate('volume');
 
