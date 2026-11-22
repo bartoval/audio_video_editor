@@ -33,9 +33,22 @@ const createMockObjectStore = (data = {}) => ({
   }))
 });
 
-const createMockTransaction = (stores = {}) => ({
-  objectStore: vi.fn(name => stores[name] || createMockObjectStore())
-});
+// Like a real IDBTransaction, it completes after its requests have succeeded:
+// writes (put) resolve on `oncomplete`, so the mock must fire it.
+const createMockTransaction = (stores = {}) => {
+  const transaction = {
+    oncomplete: null,
+    onerror: null,
+    onabort: null,
+    error: null,
+    objectStore: vi.fn(name => stores[name] || createMockObjectStore())
+  };
+
+  // Next turn after the requests' own onsuccess (also scheduled with setTimeout 0)
+  setTimeout(() => setTimeout(() => transaction.oncomplete?.(), 0), 0);
+
+  return transaction;
+};
 
 const createMockDB = (stores = {}) => ({
   transaction: vi.fn((storeNames, mode) => createMockTransaction(stores)),
