@@ -77,11 +77,12 @@
 
 /* Player panel (aligns with library/panels) */
 .player-panel {
-  background: var(--panel-glass-gradient);
-  border: 1px solid var(--border-soft);
-  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
-  box-shadow: var(--shadow-soft);
-  color: var(--text-primary);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-4) var(--radius-4);
+  box-shadow: var(--elevation-2);
+  color: var(--text-default);
 }
 
 /* Dragging state - highlight timeline drop zone */
@@ -764,15 +765,15 @@ body.tool-split {
   background: linear-gradient(to left, rgba(0, 0, 0, 0.4), transparent);
 }
 
-/* Time Tooltip (ruler, markers, tracks) */
+/* Time Tooltip (ruler, markers, tracks): compact chip */
 .time-tooltip {
   position: fixed;
   transform: none;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.15s ease;
-  line-height: 1.4;
-  max-width: 200px;
+  transition: opacity 0.12s ease;
+  line-height: 1.35;
+  max-width: 340px;
   z-index: 1000;
 }
 
@@ -781,47 +782,37 @@ body.tool-split {
   opacity: 1;
 }
 
-.time-tooltip .tooltip-row {
+.time-tooltip .tooltip-current {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-2);
+  font-weight: 500;
+  color: var(--text-default);
+}
+
+.time-tooltip .tooltip-details {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--bs-secondary-color);
-}
-
-.time-tooltip .tooltip-row span:first-child {
-  color: var(--bs-body-color);
-}
-
-.time-tooltip .tooltip-current-row {
-  color: var(--bs-info);
-  font-weight: 600;
-}
-
-.time-tooltip .tooltip-current-row span:first-child {
-  color: var(--bs-info);
+  gap: var(--space-2);
+  margin-top: 2px;
+  font-size: var(--font-size-1);
+  color: var(--text-faint);
 }
 
 .time-tooltip .tooltip-title {
-  color: var(--bs-info);
-  font-weight: 600;
-  padding-bottom: 4px;
-  margin-bottom: 4px;
-  border-bottom: 1px solid var(--bs-secondary-bg);
-  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--text-subtle);
+  font-weight: 600;
 }
 
-/* Time-only mode - hide track-specific info */
-.time-tooltip.time-only .tooltip-title,
+.time-tooltip .tooltip-range {
+  font-family: var(--font-mono);
+}
+
+/* Time-only mode (ruler, markers): just the time */
 .time-tooltip.time-only .tooltip-details {
   display: none;
-}
-
-.time-tooltip.time-only .tooltip-current-row {
-  border-bottom: none;
-  margin-bottom: 0;
-  padding-bottom: 0;
 }
 
 /* Row Drop Indicator */
@@ -2780,28 +2771,30 @@ body.tool-split {
  * Timer Display - Player time indicator
  * ============================================================================ */
 .timer-display {
-  font-family: var(--font-family-base);
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
 .timer-current {
-  color: var(--text-primary);
-  font-size: 1.125rem;
-  letter-spacing: 0.02em;
+  color: var(--text-default);
+  font-size: var(--font-size-4);
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .timer-duration {
-  color: var(--text-muted);
-  font-size: 0.875rem;
+  color: var(--text-faint);
+  font-size: var(--font-size-2);
 }
 
 .ratio-badge {
-  background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
-  color: #fff;
-  font-size: 0.875rem;
+  background: var(--surface-raised);
+  color: var(--text-subtle);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-1);
   font-weight: 500;
-  padding: 0.35rem 0.65rem;
-  border-radius: 50rem;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
 }
 
 /* ============================================================================

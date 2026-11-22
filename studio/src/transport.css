@@ -1,0 +1,93 @@
+/* ============================================================================
+ * Transport (player controls) — 2026 redesign
+ *
+ * Layout: scrubber across the full width, then
+ *   [ ratio + timecode | rewind · back · PLAY · stop · forward · end | markers · loop ]
+ * ============================================================================ */
+.transport {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.transport-scrubber {
+  display: flex;
+  align-items: center;
+}
+
+.transport-scrubber > * {
+  flex: 1;
+}
+
+.transport-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Buttons take the remaining space: playback centered, markers on the right */
+.transport-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.transport-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.transport-group--markers {
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--border-subtle);
+}
+
+.player-panel .transport-group .btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-full);
+  color: var(--text-subtle);
+  font-size: var(--font-size-4);
+}
+
+.player-panel .transport-group .btn:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text-default);
+}
+
+.player-panel .transport-group .btn.active {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+/* Play / pause: the one accent control */
+.player-panel .transport-group .btn.transport-play {
+  width: 44px;
+  height: 44px;
+  margin: 0 var(--space-1);
+  background: var(--accent-default);
+  color: var(--text-on-accent);
+  font-size: 20px;
+  box-shadow: 0 6px 20px var(--accent-glow-value);
+}
+
+.player-panel .transport-group .btn.transport-play:hover:not(:disabled) {
+  background: var(--accent-hover);
+  color: var(--text-on-accent);
+}
+
+.player-panel .transport-group .btn.transport-play.d-none {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .transport-controls {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+}

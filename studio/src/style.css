@@ -8,6 +8,7 @@
 @import './layout.css';
 @import './library.css';
 @import './video.css';
+@import './transport.css';
 @import './timeline.css';
 @import './timeline-redesign.css';
 @import './components/common/contextMenu.css';
@@ -15,15 +16,37 @@
 /* ============================================================================
  * Studio Header
  * ============================================================================ */
+/* No box: the header sits on the app background */
 .studio .studio-header.navbar {
-  background: var(--panel-glass-gradient);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-bottom: 1px solid var(--border-soft);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-soft);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   position: relative;
   z-index: 1050;
+}
+
+.studio .studio-header .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-3);
+  font-weight: 500;
+}
+
+.studio .studio-header .btn-primary {
+  font-weight: 600;
+}
+
+.studio .studio-header .project-select {
+  height: 34px;
+  border-radius: var(--radius-full);
+  background-color: var(--surface-raised);
+  border-color: transparent;
+  font-weight: 500;
 }
 
 .studio .studio-header.navbar .navbar-brand {

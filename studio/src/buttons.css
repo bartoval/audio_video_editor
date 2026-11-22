@@ -2,7 +2,7 @@
  * Buttons - shared styles across the app
  * ============================================================================ */
 
-/* Glass buttons used in player/library/toolbars */
+/* Base buttons used in player/library/toolbars: neutral raised pills */
 .btn,
 .btn-soft,
 .navigator-toolbar .btn,
@@ -15,18 +15,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
-    rgba(26, 15, 41, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: var(--radius-pill);
-  color: var(--text-primary);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
-    0 4px 12px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
+  background: var(--surface-raised);
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  color: var(--text-default);
+  box-shadow: none;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
 }
 
 /* btn-group: round first/last button only */
@@ -52,19 +50,13 @@
 .player-panel .btn-group .btn:hover,
 .library .btn:not(.btn-outline-danger):not(.btn-outline-info):hover,
 .studio-library .btn:not(.btn-outline-danger):not(.btn-outline-info):hover {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.15)),
-    rgba(240, 91, 181, 0.45);
-  border-color: rgba(255, 255, 255, 0.4);
-  color: var(--icon-hover);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.15),
-    0 8px 24px rgba(0, 0, 0, 0.35),
-    0 0 30px rgba(240, 91, 181, 0.4);
-  transform: translateY(-2px);
+  background: color-mix(in srgb, var(--surface-raised) 85%, white);
+  border-color: transparent;
+  color: var(--text-default);
+  box-shadow: none;
 }
 
+/* Active toggle (loop, sort, filters): soft accent */
 .btn.active,
 .btn-soft.active,
 .navigator-toolbar .btn.active,
@@ -72,15 +64,10 @@
 .player-panel .btn.active,
 .library .btn:not(.btn-outline-danger):not(.btn-outline-info).active,
 .studio-library .btn:not(.btn-outline-danger):not(.btn-outline-info).active {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08)),
-    rgba(240, 91, 181, 0.5);
-  color: var(--text-primary);
-  border-color: var(--accent);
-  box-shadow:
-    inset 0 2px 6px rgba(0, 0, 0, 0.2),
-    0 0 24px var(--accent-glow),
-    0 4px 16px rgba(240, 91, 181, 0.3);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .btn:focus,
@@ -91,9 +78,7 @@
 .library .btn:not(.btn-outline-danger):not(.btn-outline-info):focus,
 .studio-library .btn:not(.btn-outline-danger):not(.btn-outline-info):focus {
   outline: none;
-  box-shadow:
-    0 0 0 2px rgba(var(--bs-info-rgb), 0.15),
-    var(--btn-shadow);
+  box-shadow: none;
 }
 
 .navigator-toolbar .btn:disabled,
@@ -105,50 +90,43 @@
 
 .btn-secondary,
 .btn-info {
-  background: linear-gradient(
-    135deg,
-    rgba(var(--accent-secondary-rgb), 0.35),
-    rgba(var(--accent-secondary-rgb), 0.25)
-  );
-  border: 1px solid rgba(var(--accent-secondary-rgb), 0.35);
-  color: var(--text-primary);
+  background: var(--surface-raised);
+  border: 1px solid transparent;
+  color: var(--text-default);
 }
 
 .btn-secondary:hover,
 .btn-info:hover,
 .btn-secondary:active,
 .btn-info:active {
-  background: linear-gradient(
-    135deg,
-    rgba(var(--accent-secondary-rgb), 0.5),
-    rgba(var(--accent-secondary-rgb), 0.35)
-  );
-  border-color: rgba(var(--accent-secondary-rgb), 0.45);
+  background: color-mix(in srgb, var(--surface-raised) 85%, white);
+  border-color: transparent;
+  color: var(--text-default);
 }
 
+/* Primary: the accent, one per area */
 .btn-primary {
-  background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
-  border: 1px solid rgba(168, 85, 247, 0.5);
-  color: #fff;
-  font-weight: 500;
+  background: var(--accent-default);
+  border: 1px solid transparent;
+  color: var(--text-on-accent);
+  font-weight: 600;
+  box-shadow: 0 6px 18px var(--accent-glow-value);
 }
 
 .btn-primary:hover,
 .btn-primary:active {
-  background: linear-gradient(135deg, #c084fc 0%, #8b5cf6 100%);
-  border-color: rgba(192, 132, 252, 0.6);
-  color: #fff;
+  background: var(--accent-hover);
+  border-color: transparent;
+  color: var(--text-on-accent);
 }
 
-/* Outline variants - transparent glass */
+/* Outline variants: neutral raised surface, no glass */
 .btn-outline-primary,
 .btn-outline-secondary,
 .btn-outline-info {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  color: var(--text-primary);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--surface-raised);
+  color: var(--text-default);
+  border: 1px solid transparent;
 }
 
 .btn-outline-primary:hover,
@@ -157,51 +135,46 @@
 .btn-outline-primary:active,
 .btn-outline-secondary:active,
 .btn-outline-info:active {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: color-mix(in srgb, var(--surface-raised) 85%, white);
+  color: var(--text-default);
+  border-color: transparent;
 }
 
-/* Danger buttons */
+/* Danger (solid): confirmations only */
 .btn-danger {
-  background: linear-gradient(145deg, rgba(var(--danger-rgb), 0.8), rgba(var(--danger-rgb), 0.9));
-  border: 1px solid rgba(var(--danger-rgb), 0.6);
-  color: var(--text-primary);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: var(--danger-default);
+  border: 1px solid transparent;
+  color: var(--text-on-accent);
 }
 
 .btn-danger:hover,
 .btn-danger:active {
-  background: linear-gradient(145deg, rgba(var(--danger-rgb), 0.9), rgba(var(--danger-rgb), 1));
-  border-color: rgba(var(--danger-rgb), 0.8);
-  color: var(--text-primary);
-  box-shadow: 0 0 16px rgba(var(--danger-rgb), 0.4);
+  background: color-mix(in srgb, var(--danger-default) 85%, white);
+  border-color: transparent;
+  color: var(--text-on-accent);
 }
 
+/* Danger (outline): neutral until hover, so red never competes with the accent */
 .btn-outline-danger {
-  background: rgba(var(--danger-rgb), 0.08);
-  color: var(--danger);
-  border: 1px solid rgba(var(--danger-rgb), 0.4);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background: var(--surface-raised);
+  color: var(--text-subtle);
+  border: 1px solid transparent;
 }
 
 .btn-outline-danger:hover,
 .btn-outline-danger:active {
-  background: rgba(var(--danger-rgb), 0.2);
-  color: var(--danger-light, var(--danger));
-  border-color: rgba(var(--danger-rgb), 0.6);
-  box-shadow: 0 0 12px rgba(var(--danger-rgb), 0.3);
+  background: rgba(var(--danger-rgb-value), 0.14);
+  color: var(--danger-default);
+  border-color: transparent;
 }
 
 /* Focus / disabled / hover lift */
 .btn:focus-visible,
 .nav-link:focus-visible,
 [role='button']:focus-visible {
-  outline: 2px solid var(--accent-secondary);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px var(--accent-secondary-dim);
+  box-shadow: none;
 }
 
 .btn:disabled,
@@ -211,7 +184,7 @@
 }
 
 .btn:hover:not(:disabled) {
-  transform: translateY(-1px);
+  transform: none;
 }
 
 .btn:active:not(:disabled) {

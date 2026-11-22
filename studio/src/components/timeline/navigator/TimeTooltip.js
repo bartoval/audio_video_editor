@@ -20,12 +20,13 @@ export default class TimeTooltip {
   #create() {
     this.#$tooltip = document.createElement('div');
     this.#$tooltip.className = 'glass-tooltip time-tooltip';
+    // Compact chip: the time first; on a clip, a second line with its name and range.
     this.#$tooltip.innerHTML = `
-      <div class="tooltip-row tooltip-current-row"><span>Current:</span><span class="tooltip-current"></span></div>
-      <div class="tooltip-title"></div>
-      <div class="tooltip-row tooltip-details"><span>Start:</span><span class="tooltip-start"></span></div>
-      <div class="tooltip-row tooltip-details"><span>End:</span><span class="tooltip-end"></span></div>
-      <div class="tooltip-row tooltip-details"><span>Duration:</span><span class="tooltip-duration"></span></div>
+      <div class="tooltip-current-row"><span class="tooltip-current"></span></div>
+      <div class="tooltip-details">
+        <span class="tooltip-title"></span>
+        <span class="tooltip-range"><span class="tooltip-start"></span>–<span class="tooltip-end"></span> · <span class="tooltip-duration"></span></span>
+      </div>
     `;
     document.body.appendChild(this.#$tooltip);
 
