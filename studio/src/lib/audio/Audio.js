@@ -5,6 +5,7 @@ import BufferCache from './BufferCache';
 import Buffer from './nodes/Buffer';
 import Volume from './nodes/Volume';
 import Pan from './nodes/Pan';
+import { canDrawAt, frameRange, peaksToPath } from './peaks';
 import defaultWaveformTileService from '../../services/WaveformTileService';
 
 /**
@@ -393,58 +394,89 @@ export default class Audio {
   }
 
   /**
+   * Waveform at a zoom level. Uses the file's stored peaks when they fit, so the
+   * waveform shows without waiting for the audio to decode; otherwise (no peaks yet,
+   * buffer from memory, very deep zoom) reads the decoded buffer.
    * @param {number} scale - seconds per pixel (zoom level)
    * @returns {Promise<{path: WaveformPoint[], sampleRate: number, duration: number}>}
    */
-  getWaveForm(scale) {
-    const getChannels = buff => {
-      const channels = [];
+  async getWaveForm(scale) {
+    // Validate scale - must be positive number
+    if (!Number.isFinite(scale) || scale <= 0) {
+      console.warn('[Audio] Invalid scale for waveform:', scale, '- using default 0.1');
+      scale = 0.1;
+    }
 
-      for (let chn = 0; chn < buff.numberOfChannels; chn++) {
-        channels.push(buff.getChannelData(chn));
-      }
+    return (await this.#waveFormFromPeaks(scale)) || this.#waveFormFromBuffer(scale);
+  }
 
-      return channels;
+  /**
+   * @param {number} scale
+   * @returns {Promise<{path: WaveformPoint[], sampleRate: number, duration: number} | null>}
+   */
+  async #waveFormFromPeaks(scale) {
+    const found = await this.buffer.getPeaks?.();
+
+    if (!found || !canDrawAt(found.peaks, scale)) {
+      return null;
+    }
+
+    const { peaks, start, end } = found;
+    const { startFrame, endFrame } = frameRange(peaks, start, end);
+    const duration = (endFrame - startFrame) / peaks.sampleRate;
+    const numSamples = Math.max(1, Math.min(Math.ceil(duration / scale), MAX_WAVEFORM_SAMPLES));
+    const scaleKey = 'peaks-' + scale.toFixed(WAVEFORM_SCALE_PRECISION) + '-' + numSamples;
+
+    if (this._waveformCache.has(scaleKey)) {
+      return this._waveformCache.get(scaleKey);
+    }
+
+    const result = {
+      path: peaksToPath(peaks, { pixels: numSamples, start, end }),
+      sampleRate: numSamples,
+      duration
+    };
+    this._waveformCache.set(scaleKey, result);
+
+    return result;
+  }
+
+  /**
+   * @param {number} scale
+   * @returns {Promise<{path: WaveformPoint[], sampleRate: number, duration: number}>}
+   */
+  async #waveFormFromBuffer(scale) {
+    const buff = await this.buffer.get();
+    const audioChannels = [];
+
+    for (let chn = 0; chn < buff.numberOfChannels; chn++) {
+      audioChannels.push(buff.getChannelData(chn));
+    }
+
+    const duration = buff.duration;
+    // scale is seconds per pixel, so duration/scale gives the pixel width
+    const numSamples = Math.max(1, Math.min(Math.ceil(duration / scale), MAX_WAVEFORM_SAMPLES));
+
+    // Cache by rounded scale to limit recomputation during small zoom changes
+    const scaleKey = scale.toFixed(WAVEFORM_SCALE_PRECISION) + '-' + numSamples;
+
+    if (this._waveformCache.has(scaleKey)) {
+      return this._waveformCache.get(scaleKey);
+    }
+
+    const bufferInfo = {
+      length: buff.length,
+      numSamples,
+      audioChns: audioChannels,
+      numberOfChannels: buff.numberOfChannels
     };
 
-    return new Promise(resolve => {
-      // Validate scale - must be positive number
-      if (!Number.isFinite(scale) || scale <= 0) {
-        console.warn('[Audio] Invalid scale for waveform:', scale, '- using default 0.1');
-        scale = 0.1;
-      }
+    const path = _createSvgPath(bufferInfo);
+    const result = { path, sampleRate: numSamples, duration };
 
-      this.buffer.get().then(buff => {
-        const audioChannels = getChannels(buff);
-        const duration = buff.duration;
-        // Calculate numSamples based on scale for proper visual alignment
-        // scale is pixels per second, so duration/scale gives us the pixel width
-        const numSamples = Math.max(1, Math.min(Math.ceil(duration / scale), MAX_WAVEFORM_SAMPLES));
+    this._waveformCache.set(scaleKey, result);
 
-        // Cache by rounded scale to limit recomputation during small zoom changes
-        const scaleKey = scale.toFixed(WAVEFORM_SCALE_PRECISION) + '-' + numSamples;
-
-        if (this._waveformCache.has(scaleKey)) {
-          resolve(this._waveformCache.get(scaleKey));
-
-          return;
-        }
-
-        const bufferInfo = {
-          length: buff.length,
-          numSamples,
-          audioChns: audioChannels,
-          numberOfChannels: buff.numberOfChannels
-        };
-
-        const path = _createSvgPath(bufferInfo);
-        const result = { path, sampleRate: numSamples, duration };
-
-        this._waveformCache.set(scaleKey, result);
-
-        resolve(result);
-      });
-    });
+    return result;
   }
 
   /**

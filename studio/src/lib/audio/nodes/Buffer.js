@@ -10,6 +10,13 @@ export default class Buffer {
   #loader;
   /** Id of the latest stretch request: older results are dropped (latest wins) */
   #stretchRequest = 0;
+  /**
+   * File the buffer was decoded from and the cropped range, in seconds (-1 = whole file).
+   * Null when the buffer came from memory (a clone, a stretch): stored peaks of the
+   * file would not match it.
+   * @type {{ id: string, start: number, end: number } | null}
+   */
+  #source = null;
 
   /**
    * @param {Object} options
@@ -46,7 +53,45 @@ export default class Buffer {
     this.derivedId = null;
     this.isDerived = isDerived;
     this.#loader = loader || new BufferLoader();
+    this.#source = buffer ? null : { id: String(idTrack), start: start ?? -1, end: end ?? -1 };
     this.buffer = this._load(idTrack, start, end, buffer, isDerived);
+  }
+
+  /**
+   * Stored waveform peaks matching this buffer, with the range to draw.
+   * Null when there are none or the buffer does not come straight from a file.
+   * @returns {Promise<{ peaks: import('../peaks').Peaks, start: number, end: number } | null>}
+   */
+  async getPeaks() {
+    const source = this.#source;
+
+    if (!source || !this.#loader.loadPeaks) {
+      return null;
+    }
+
+    const peaks = await this.#loader.loadPeaks(source.id).catch(() => null);
+
+    // A stretch may have replaced the buffer while reading
+    if (!peaks || source !== this.#source) {
+      return null;
+    }
+
+    return { peaks, start: source.start, end: source.end };
+  }
+
+  /**
+   * Store the peaks of a whole decoded file for later loads (in the background).
+   * @param {string | number} id
+   * @param {AudioBuffer} audioBuffer
+   */
+  #rememberPeaks(id, audioBuffer) {
+    if (!this.#loader.savePeaks || !audioBuffer) {
+      return;
+    }
+
+    Promise.resolve(this.#loader.savePeaks(String(id), audioBuffer)).catch(err => {
+      console.warn('[Buffer] Failed to store waveform peaks:', err?.message);
+    });
   }
 
   /** Get buffer promise */
@@ -87,6 +132,12 @@ export default class Buffer {
     this.duration = duration;
     this.derivedId = derivedId || null;
     this.isDerived = Boolean(this.derivedId);
+    // The stretched audio lives in memory now; its file gets peaks for the next load
+    this.#source = null;
+
+    if (this.derivedId) {
+      this.#rememberPeaks(this.derivedId, buffer);
+    }
 
     return true;
   }
@@ -175,6 +226,7 @@ export default class Buffer {
 
       if (cached) {
         BufferCache.addRef(idTrack);
+        this.#rememberPeaks(idTrack, cached);
 
         return finalize(cached);
       }
@@ -184,6 +236,7 @@ export default class Buffer {
       if (cachedBuffer) {
         console.log('[Buffer] Loading from cache:', idTrack, isDerived ? '(derived)' : '');
         BufferCache.set(idTrack, cachedBuffer);
+        this.#rememberPeaks(idTrack, cachedBuffer);
 
         return finalize(cachedBuffer);
       }
@@ -200,6 +253,7 @@ export default class Buffer {
       this.#loader.saveToCache(idTrack, blob, isDerived).catch(err => {
         console.warn('[Buffer] Failed to save to cache:', err.message);
       });
+      this.#rememberPeaks(idTrack, buffer);
 
       return finalize(buffer);
     } catch (error) {
@@ -210,6 +264,7 @@ export default class Buffer {
 
   /** Reload buffer from track */
   setBuffer(idTrack) {
+    this.#source = { id: String(idTrack), start: -1, end: -1 };
     this.buffer = this._load(idTrack);
 
     return this.buffer;

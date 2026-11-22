@@ -3,7 +3,9 @@
  */
 import LibraryPlaybackEngine from '../LibraryPlaybackEngine';
 import { Oscilloscope } from '../../../lib';
-import { audioUrl } from '../../../services/offline/LocalMedia';
+import { audioRecord, audioUrl } from '../../../services/offline/LocalMedia';
+import * as WaveformPeaks from '../../../services/offline/WaveformPeaks';
+import { getUuid } from '../../../services/workspace';
 
 export default class LibraryPlayback {
   #player = null;
@@ -80,8 +82,24 @@ export default class LibraryPlayback {
         this.#view?.showMiniPlayer(item?.name || 'Unknown');
         this.#view?.updateMiniPlayerState(true);
 
-        const url = await audioUrl(id);
-        this.#view?.setMiniPlayerWaveform(url, duration);
+        // Stored peaks draw at once; without them the file is decoded once and its
+        // peaks kept, so the next play is immediate.
+        const uuid = getUuid();
+        const peaks = await WaveformPeaks.ensure(
+          uuid,
+          id,
+          async () => (await audioRecord(uuid, id))?.blob
+        ).catch(() => null);
+
+        if (this.#currentPlayingId !== id) {
+          return;
+        }
+
+        if (peaks) {
+          this.#view?.setMiniPlayerWaveform(null, duration, peaks);
+        } else {
+          this.#view?.setMiniPlayerWaveform(await audioUrl(id), duration);
+        }
       },
       onTimeUpdate: currentTime => {
         this.#view?.setMiniPlayerProgress(currentTime);

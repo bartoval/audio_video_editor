@@ -5,17 +5,19 @@
  * - workspaces: Project data (title, video, scenes, tracks)
  * - pendingSync: Operations to sync when online
  * - audioBlobs: Cached audio files for offline playback
+ * - waveformPeaks: Min/max summaries of audio files, so waveforms draw without decoding
  */
 
 const DB_NAME = 'audio-video-sync';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 // Store names
 const STORES = {
   WORKSPACES: 'workspaces',
   PENDING_SYNC: 'pendingSync',
   AUDIO_BLOBS: 'audioBlobs',
-  LOCAL_MEDIA: 'localMedia'
+  LOCAL_MEDIA: 'localMedia',
+  WAVEFORM_PEAKS: 'waveformPeaks'
 };
 
 // Audio blob storage limits
@@ -349,6 +351,12 @@ class IndexedDBService {
           audioStore.createIndex('workspaceUuid', 'workspaceUuid', { unique: false });
           audioStore.createIndex('updatedAt', 'updatedAt', { unique: false });
           audioStore.createIndex('isDerived', 'isDerived', { unique: false });
+        }
+
+        // Waveform peaks store (v5): derived data, rebuilt from the audio when missing
+        if (!db.objectStoreNames.contains(STORES.WAVEFORM_PEAKS)) {
+          const peaksStore = db.createObjectStore(STORES.WAVEFORM_PEAKS, { keyPath: 'key' });
+          peaksStore.createIndex('workspaceUuid', 'workspaceUuid', { unique: false });
         }
       };
     });

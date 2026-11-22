@@ -1,3 +1,5 @@
+import { peaksToPath } from './peaks';
+
 /**
  * WaveformPlayer - Canvas-based waveform visualization with integrated audio playback
  */
@@ -193,6 +195,19 @@ export default class WaveformPlayer {
 
   setWaveformData(waveformData) {
     this.#waveformPath = waveformData || null;
+    this.#draw();
+  }
+
+  /**
+   * Draw from stored peaks instead of decoding the audio.
+   * @param {import('./peaks').Peaks} peaks
+   * @param {number} [duration] - seconds
+   */
+  setPeaks(peaks, duration) {
+    this.#resizeCanvas();
+    this.#duration = duration || peaks.length / peaks.sampleRate;
+    this.#progress = 0;
+    this.#waveformPath = peaksToPath(peaks, { pixels: this.#$canvas.width });
     this.#draw();
   }
 

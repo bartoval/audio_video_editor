@@ -235,8 +235,8 @@ export default class LibraryView extends View {
     this.#miniPlayer.updateState(isPlaying);
   }
 
-  setMiniPlayerWaveform(url, duration) {
-    this.#miniPlayer.setWaveformSource(url, duration);
+  setMiniPlayerWaveform(url, duration, peaks = null) {
+    this.#miniPlayer.setWaveformSource(url, duration, peaks);
   }
 
   setMiniPlayerProgress(currentTime) {

@@ -54,7 +54,13 @@ export function createMiniPlayer($parent) {
       $pauseBtn.title = isPlaying ? 'Pause' : 'Play';
     },
 
-    async setWaveformSource(url, duration) {
+    async setWaveformSource(url, duration, peaks = null) {
+      if (peaks) {
+        waveformPlayer?.setPeaks(peaks, duration);
+
+        return;
+      }
+
       await waveformPlayer?.generateWaveformFromUrl(url, duration);
     },
 

@@ -2,6 +2,7 @@
 
 import { getTrackUrl, getDerivedTrackUrl, getUuid } from '../../../services/workspace';
 import * as LocalMedia from '../../../services/offline/LocalMedia';
+import * as WaveformPeaks from '../../../services/offline/WaveformPeaks';
 import IndexedDB from '../../../services/offline/IndexedDB';
 import { blobToAudioBuffer } from '../utils/AudioBufferSerializer';
 
@@ -11,6 +12,8 @@ import { blobToAudioBuffer } from '../utils/AudioBufferSerializer';
  * @property {() => boolean} isNetworkAvailable
  * @property {(idTrack: string, isDerived: boolean) => Promise<{blob: Blob, buffer: AudioBuffer}>} fetchAndDecode
  * @property {(idTrack: string, blob: Blob, isDerived: boolean) => Promise<void>} saveToCache
+ * @property {(idTrack: string) => Promise<import('../peaks').Peaks|null>} [loadPeaks]
+ * @property {(idTrack: string, buffer: AudioBuffer) => Promise<unknown>} [savePeaks]
  */
 
 /**
@@ -69,5 +72,22 @@ export default class BufferLoader {
       isDerived,
       mimeType: blob.type || 'audio/mpeg'
     });
+  }
+
+  /**
+   * Stored waveform peaks of a whole file
+   * @param {string} idTrack
+   */
+  loadPeaks(idTrack) {
+    return WaveformPeaks.get(getUuid(), idTrack);
+  }
+
+  /**
+   * Store the waveform peaks of a whole decoded file (no-op when already stored)
+   * @param {string} idTrack
+   * @param {AudioBuffer} buffer
+   */
+  savePeaks(idTrack, buffer) {
+    return WaveformPeaks.saveFromBuffer(getUuid(), idTrack, buffer);
   }
 }

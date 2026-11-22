@@ -1,4 +1,5 @@
 import IndexedDB, { STORES } from './IndexedDB';
+import * as WaveformPeaks from './WaveformPeaks';
 import { getUuid } from '../workspace';
 import { formatDuration } from '../../lib/utils/format';
 
@@ -60,6 +61,7 @@ export async function remove(uuid, id) {
     URL.revokeObjectURL(urls.get(key));
     urls.delete(key);
   }
+  await WaveformPeaks.remove(uuid, id).catch(() => {});
 }
 
 export async function library(uuid = getUuid()) {
@@ -139,6 +141,11 @@ export async function importAudio(file, uuid = getUuid(), onStage = () => {}) {
   };
   onStage('saving');
   await store(uuid, id, file, { ...metadata, filename: file.name });
+  // Prepare the waveform in the background: the import does not wait for the decode,
+  // and the library and timeline can draw it without decoding again.
+  WaveformPeaks.ensure(uuid, id, () => file).catch(error => {
+    console.warn('[LocalMedia] Waveform peaks not prepared:', error?.message);
+  });
   return { status: 'complete', file: id, metadata };
 }
 
