@@ -1,29 +1,10 @@
 /* ============================================================================
- * Library Component - Audio Library Panel
+ * Library - audio files available to the project
  * ============================================================================ */
 
-/* ============================================================================
- * Library Grid Column Variables
- * ============================================================================ */
-:root {
-  /* Library column widths - easily adjustable */
-  --lib-col-drag: auto;
-  --lib-col-play: auto;
-  --lib-col-name: 160px;
-  --lib-col-meta: minmax(160px, 1fr);
-  --lib-col-wave: 220px;
-  --lib-col-time: 80px;
-  --lib-col-actions: auto;
-
-  /* Library spacing */
-  --lib-gap: 24px;
-  --lib-padding: 12px 16px;
-  --lib-item-margin: 12px;
-}
-
-/* ============================================================================
- * Library Panel Container
- * ============================================================================ */
+/* ----------------------------------------------------------------------------
+ * Panel container
+ * ---------------------------------------------------------------------------- */
 .studio-library {
   flex: 1 1 350px;
   min-width: 320px;
@@ -35,7 +16,6 @@
   flex-direction: column;
   overflow: hidden;
   align-self: stretch;
-  border-color: var(--border-medium);
 }
 
 .studio:not(.has-video) .studio-library {
@@ -59,111 +39,48 @@
   box-sizing: border-box;
 }
 
-/* ============================================================================
- * Library Item Grid
- * ============================================================================ */
-.library-item-inner {
-  background: var(--panel-bg);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-soft);
-  display: grid;
-  grid-template-columns:
-    var(--lib-col-drag)
-    var(--lib-col-play)
-    var(--lib-col-name)
-    var(--lib-col-meta)
-    var(--lib-col-wave)
-    var(--lib-col-time)
-    var(--lib-col-actions);
-  align-items: center;
-  gap: 0 var(--lib-gap);
-  padding: var(--lib-padding);
-  width: 100%;
-  margin-bottom: var(--lib-item-margin);
+/* ----------------------------------------------------------------------------
+ * Toolbar and list header
+ * ---------------------------------------------------------------------------- */
+.library-list-header {
+  background: transparent;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-faint);
+  font-size: var(--font-size-2);
 }
 
-.library-list-container .list-group-item:last-child .library-item-inner {
-  margin-bottom: 0;
+/* Search, sort: inset pills */
+.library-toolbar .input-group-text,
+.library-toolbar .form-control,
+.library-toolbar .form-select {
+  height: 34px;
+  background-color: var(--surface-inset);
+  border-color: transparent;
+  color: var(--text-default);
+  font-size: var(--font-size-3);
 }
 
-/* ============================================================================
- * Library Columns
- * ============================================================================ */
-
-/* Track name column - ellipsis */
-.library-track-name {
-  min-width: 0;
-  max-width: var(--lib-col-name);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.library-toolbar .input-group-text {
+  padding-left: var(--space-3);
+  border-radius: var(--radius-full) 0 0 var(--radius-full);
+  color: var(--text-faint);
 }
 
-/* Meta column - ellipsis */
-.library-meta-col {
-  min-width: 0;
+.library-toolbar .input-group .form-control {
+  border-radius: 0 var(--radius-full) var(--radius-full) 0;
 }
 
-.library-meta-col .library-meta-text {
-  line-height: 1.3;
-  word-break: break-word;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.library-toolbar .form-select {
+  border-radius: var(--radius-full);
 }
 
-/* Wave column */
-.library-wave-col {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.library-toolbar .form-control::placeholder {
+  color: var(--text-faint);
 }
 
-/* Upload List - Fixed toast in bottom right */
-.upload-list {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 500px;
-  max-height: 300px;
-  background: linear-gradient(180deg, rgba(42, 24, 56, 0.95) 0%, rgba(58, 33, 73, 0.95) 100%);
-  border: 1px solid var(--border-medium);
-  border-radius: var(--radius-lg);
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding: 16px;
-  box-sizing: border-box;
-  z-index: 1050;
-  box-shadow: var(--shadow-medium), var(--shadow-glow);
-}
-
-.upload-list .upload-item {
-  background: var(--panel-bg);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  transition: background 0.2s ease;
-}
-
-.upload-list .upload-item:hover {
-  background: var(--panel-bg-hover);
-}
-
-/* Oscilloscope Canvas */
-.oscilloscope-canvas {
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.3);
-  align-self: center;
-  flex-shrink: 0;
-}
-
-.oscilloscope-canvas.hide {
-  display: none;
-}
-
-/* Library List Container */
+/* ----------------------------------------------------------------------------
+ * List
+ * ---------------------------------------------------------------------------- */
 .library-list-container {
   flex: 1;
   min-height: 0;
@@ -172,119 +89,271 @@
   position: relative;
 }
 
-.library-list-container .list-group-item {
+/* The li is only a wrapper: hover and selection live on .library-item-inner */
+.library-list-container .list-group-item,
+.list-group-item.draggable {
   margin: 0;
   padding: 0;
   border: none;
   background: transparent;
+  box-shadow: none;
 }
 
-.library-list-container .list-group-item:hover,
-.library-list-container .list-group-item:focus-within {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Move hover/selection styles onto the inner card instead of the li */
-.list-group-item.draggable,
-.list-group-item.draggable:hover,
-.list-group-item.draggable:active,
-.list-group-item.draggable.selected,
-.list-group-item.draggable.selected:hover {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.list-group-item.draggable .library-item-inner {
+/* Row: [drag] [play] [name / meta] [level] [time] [actions] */
+.library-item-inner {
+  display: grid;
+  grid-template-columns: auto 32px minmax(0, 1fr) 72px 76px auto;
+  align-items: center;
+  gap: 0 var(--space-3);
+  width: 100%;
+  min-height: 52px;
+  margin-bottom: var(--space-1);
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-3);
   transition:
-    background 0.15s ease,
+    background-color 0.15s ease,
     border-color 0.15s ease,
     box-shadow 0.15s ease;
 }
 
+.library-item-inner:hover,
+.library-item-inner:focus-within {
+  background: var(--surface-hover);
+}
+
 .list-group-item.draggable.selected .library-item-inner {
-  background: var(--accent-dim);
-  border-color: var(--accent);
-  box-shadow:
-    inset 3px 0 0 var(--accent),
-    var(--shadow-glow);
+  background: var(--accent-soft);
+  border-color: var(--accent-default);
 }
 
-.list-group-item.draggable.selected:hover .library-item-inner {
-  background: rgba(240, 91, 181, 0.25);
-  border-color: var(--accent-light);
+.library-title-col {
+  min-width: 0;
 }
 
-.library-toolbar .btn-outline-info,
-.library-list-header .library-select-all {
-  color: #fff;
+.library-track-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-default);
+  font-size: var(--font-size-3);
+  font-weight: 500;
 }
 
-.library-list-header {
+.library-meta-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.library-meta-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-faint);
+  font-size: var(--font-size-1);
+}
+
+.library-wave-col {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.library-time-col {
+  color: var(--text-subtle);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-2);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.library-actions-col {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Level meter: drawn while the item plays, a quiet track otherwise */
+.oscilloscope-canvas {
+  width: 72px;
+  height: 24px;
+  border-radius: var(--radius-1);
+  background: var(--surface-inset);
+  flex-shrink: 0;
+}
+
+.oscilloscope-canvas.hide {
+  display: none;
+}
+
+/* ----------------------------------------------------------------------------
+ * Row controls
+ * ---------------------------------------------------------------------------- */
+.library-item-inner .audio-play {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: var(--surface-raised);
+  border: 0;
+  border-radius: var(--radius-full);
+  color: var(--text-default);
+}
+
+.library-item-inner .audio-play:hover {
+  background: var(--accent-default);
+  color: var(--text-on-accent);
+}
+
+.library-item-inner .audio-info {
+  width: 18px;
+  height: 18px;
+  padding: 0;
   background: transparent;
-  border-color: var(--border-soft) !important;
-  color: var(--text-primary);
+  border: 0;
+  color: var(--text-faint);
+  font-size: var(--font-size-1);
 }
 
-/* Library Drop Zone (Empty State) */
+.library-item-inner .audio-info:hover {
+  background: var(--surface-hover);
+  color: var(--text-default);
+}
+
+.library-item-inner .audio-menu,
+.library-item-inner .audio-delete {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-full);
+  color: var(--text-faint);
+}
+
+.library-item-inner .audio-menu:hover {
+  background: var(--surface-hover);
+  color: var(--text-default);
+}
+
+.library-item-inner .audio-delete:hover {
+  background: rgba(var(--danger-rgb-value), 0.14);
+  color: var(--danger-default);
+}
+
+/* Drag handle: visible on hover only */
+.drag-handle {
+  position: relative;
+  color: var(--text-faint);
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.library-item-inner:hover .drag-handle,
+.library-item-inner:focus-within .drag-handle {
+  opacity: 1;
+}
+
+/* ----------------------------------------------------------------------------
+ * Empty state: drop zone
+ * ---------------------------------------------------------------------------- */
 .library-drop-zone {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 12px;
-  border: 2px dashed var(--accent-dim);
-  border-radius: var(--radius-lg);
-  background: var(--panel-bg);
-  cursor: pointer;
-  transition: all 0.25s ease;
-  box-sizing: border-box;
   max-width: calc(100% - 24px);
+  margin: var(--space-3);
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-4);
+  background: var(--surface-inset);
+  cursor: pointer;
+  box-sizing: border-box;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
-.library-drop-zone:hover,
-.library-drop-zone.drag-over {
-  border-color: var(--accent);
-  background: var(--accent-dim);
-  box-shadow: var(--shadow-glow);
+.library-drop-zone:hover {
+  border-color: var(--accent-default);
 }
 
 .library-drop-zone.drag-over {
   border-style: solid;
-  box-shadow: 0 0 24px var(--accent-glow);
+  border-color: var(--accent-default);
+  background: var(--accent-soft);
 }
 
 .drop-zone-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  color: var(--accent);
+  gap: var(--space-2);
+  color: var(--text-subtle);
   text-align: center;
   pointer-events: none;
 }
 
 .drop-zone-content i {
-  font-size: 3rem;
-  opacity: 0.7;
-  text-shadow: var(--shadow-glow);
+  font-size: 2.5rem;
+  color: var(--accent-text);
 }
 
 .drop-zone-content p {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: var(--font-size-4);
   font-weight: 500;
-  color: var(--accent-light);
+  color: var(--text-default);
 }
 
 .drop-zone-content span {
-  font-size: 0.85rem;
-  color: var(--text-muted);
+  font-size: var(--font-size-2);
+  color: var(--text-faint);
 }
 
-/* Virtual Scroll */
+/* ----------------------------------------------------------------------------
+ * Upload progress list (bottom-right)
+ * ---------------------------------------------------------------------------- */
+.upload-list {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 500px;
+  max-height: 300px;
+  padding: var(--space-4);
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+  z-index: 1050;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-4);
+  box-shadow: var(--elevation-3);
+}
+
+.upload-list .upload-item {
+  padding: 10px 12px;
+  margin-bottom: var(--space-2);
+  background: var(--surface-inset);
+  border-radius: var(--radius-2);
+  transition: background-color 0.2s ease;
+}
+
+.upload-list .upload-item:hover {
+  background: var(--surface-hover);
+}
+
+/* ----------------------------------------------------------------------------
+ * Virtual scroll
+ * ---------------------------------------------------------------------------- */
 .vs-viewport {
   width: 100%;
   height: 100%;
@@ -297,16 +366,16 @@
 }
 
 .vs-viewport::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+  background: transparent;
 }
 
 .vs-viewport::-webkit-scrollbar-thumb {
-  background: var(--accent-dim);
-  border-radius: var(--radius-pill);
+  background: var(--border-strong);
+  border-radius: var(--radius-full);
 }
 
 .vs-viewport::-webkit-scrollbar-thumb:hover {
-  background: var(--accent);
+  background: var(--text-faint);
 }
 
 .vs-content {
@@ -324,94 +393,7 @@
   list-style: none;
 }
 
-/* Time column */
-.library-time-col {
-  text-align: right;
-}
-
-/* Actions column */
-.library-actions-col {
-  justify-self: start;
-}
-
-/* ============================================================================
- * Drag Handle
- * ============================================================================ */
-.drag-handle {
-  cursor: grab;
-  position: relative;
-}
-
-.drag-handle:active {
-  cursor: grabbing;
-}
-
-.list-group-item.draggable:hover .drag-handle {
-  opacity: 1 !important;
-  transform: scale(1.1);
-}
-
-.drag-handle:hover {
-  opacity: 1 !important;
-}
-
-/* ============================================================================
- * Item Selection States
- * ============================================================================ */
-.list-group-item.draggable .library-item-inner {
-  transition:
-    box-shadow 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.list-group-item.draggable.selected .library-item-inner {
-  border-color: var(--accent);
-  box-shadow:
-    0 0 0 1px var(--accent),
-    var(--shadow-soft);
-}
-
-.list-group-item.draggable.selected:hover .library-item-inner {
-  border-color: var(--accent-light);
-  box-shadow:
-    0 0 0 1px var(--accent-light),
-    var(--shadow-soft);
-}
-
-/* ============================================================================
- * Item Hover States
- * ============================================================================ */
-.library-item-inner:hover,
-.library-item-inner:focus-within {
-  background: var(--panel-bg-hover);
-  border-color: var(--border-medium);
-}
-
-/* ============================================================================
- * Audio Controls
- * ============================================================================ */
-.audio-play,
-.audio-delete,
-.drag-handle {
-  transition:
-    opacity 0.15s ease,
-    transform 0.15s ease;
-}
-
-.audio-play:hover {
-  opacity: 1 !important;
-  cursor: pointer;
-  transform: scale(1.1);
-}
-
-.audio-delete:hover {
-  opacity: 1 !important;
-  cursor: pointer;
-}
-
-/* ============================================================================
- * Utility for flex truncation
- * ============================================================================ */
+/* Utility for flex truncation */
 .min-width-0 {
   min-width: 0;
 }

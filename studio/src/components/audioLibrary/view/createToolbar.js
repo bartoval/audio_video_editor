@@ -5,7 +5,7 @@ export function createToolbar($parent) {
   let handlers = {};
 
   const $el = createElement('div', {
-    className: 'library-toolbar d-flex flex-column gap-3 py-3 border-bottom',
+    className: 'library-toolbar d-flex flex-column gap-3 pb-3',
     html: `
       <div class="d-flex justify-content-between align-items-center">
         <div class="btn-group btn-group-sm">
@@ -19,7 +19,7 @@ export function createToolbar($parent) {
           </button>
         </div>
         <div class="d-flex align-items-center gap-2">
-          <button class="btn btn-outline-info library-add-to-timeline" disabled title="${LABEL.LIBRARY_ADD_TO_TIMELINE}">
+          <button class="btn btn-primary library-add-to-timeline" disabled title="${LABEL.LIBRARY_ADD_TO_TIMELINE}">
             <i class="bi bi-plus-circle me-1"></i>${LABEL.LIBRARY_TIMELINE}
           </button>
           <button class="btn btn-outline-danger library-delete-selected" disabled title="${LABEL.LIBRARY_DELETE}">

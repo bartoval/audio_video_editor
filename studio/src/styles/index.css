@@ -11,6 +11,7 @@
 @import './components/button.css';
 @import './layout.css';
 @import '../components/audioLibrary/library.css';
+@import '../components/sidePanel/side-panel.css';
 @import '../components/playback/video/video.css';
 @import '../components/playback/view/transport.css';
 @import '../components/playback/view/scrubber.css';

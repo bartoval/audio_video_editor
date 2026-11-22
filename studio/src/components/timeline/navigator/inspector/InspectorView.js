@@ -20,6 +20,8 @@ export default class InspectorView extends View {
   #waveformPlayer = null;
 
   #isDragging = false;
+  /** Docked inside the side panel: no drag, no floating position, no close button */
+  #isDocked = false;
   #dragOffset = { x: 0, y: 0 };
   #hasSelection = false;
 
@@ -107,6 +109,8 @@ export default class InspectorView extends View {
     const wrapper = document.createElement('div');
     wrapper.innerHTML = this.template();
     this.#$panel = wrapper.firstElementChild;
+    this.#isDocked = this.#$parent.classList.contains('side-panel__pane');
+    this.#$panel.classList.toggle('inspector-panel--docked', this.#isDocked);
     this.#$parent.appendChild(this.#$panel);
 
     this.#$header = this.#$panel.querySelector('.inspector-header');
@@ -140,9 +144,12 @@ export default class InspectorView extends View {
     this.#$gainInput.addEventListener('input', this.#handleGainInput);
     this.#$panInput.addEventListener('input', this.#handlePanInput);
     this.#$playBtn.addEventListener('click', this.#handlePlayClick);
-    this.#$header.addEventListener('mousedown', this.#handleDragStart);
-    document.addEventListener('mousemove', this.#handleDragMove);
-    document.addEventListener('mouseup', this.#handleDragEnd);
+
+    if (!this.#isDocked) {
+      this.#$header.addEventListener('mousedown', this.#handleDragStart);
+      document.addEventListener('mousemove', this.#handleDragMove);
+      document.addEventListener('mouseup', this.#handleDragEnd);
+    }
   }
 
   onDestroy() {

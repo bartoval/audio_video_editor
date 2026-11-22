@@ -77,7 +77,12 @@ export default class TranscriptView {
   #searchQuery = '';
 
   /** @type {TranscriptCallbacks} */
-  #callbacks = { onWordClick: () => {}, onSearchChange: () => {}, onNextMatch: () => {}, onPrevMatch: () => {} };
+  #callbacks = {
+    onWordClick: () => {},
+    onSearchChange: () => {},
+    onNextMatch: () => {},
+    onPrevMatch: () => {}
+  };
 
   /**
    * @param {HTMLElement} $parent
@@ -241,7 +246,8 @@ export default class TranscriptView {
   #handlePrevClick = () => {
     if (this.#matchIndices.length === 0) return;
 
-    this.#currentMatchIdx = (this.#currentMatchIdx - 1 + this.#matchIndices.length) % this.#matchIndices.length;
+    this.#currentMatchIdx =
+      (this.#currentMatchIdx - 1 + this.#matchIndices.length) % this.#matchIndices.length;
     this.#highlightCurrentMatch();
     this.#callbacks.onPrevMatch();
   };
@@ -254,7 +260,7 @@ export default class TranscriptView {
     this.#callbacks.onNextMatch();
   };
 
-  #handleBodyClick = (event) => {
+  #handleBodyClick = event => {
     const $word = event.target.closest('.transcript-word');
     if (!$word) return;
 

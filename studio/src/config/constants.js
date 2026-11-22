@@ -112,6 +112,10 @@ export const EVENT = {
   LAYOUT_RESIZE: 'layout:resize',
   TIMELINE_ADD_TRACKS: 'timeline:addTracks',
   LIBRARY_REMOVED: 'library:removed',
+  /** Side panel tab chosen by the user: { tab: 'library' | 'inspector' } */
+  SIDE_PANEL_TAB: 'sidePanel:tab',
+  /** Inspector opened or closed (tab, shortcut, toolbar): { isOpen: boolean } */
+  INSPECTOR_VISIBILITY: 'inspector:visibility',
   CONNECTION: 'connection',
   THUMBNAILS: 'thumbnails',
   MARKER_PREVIOUS: 'marker:previous',

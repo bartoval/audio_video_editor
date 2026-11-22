@@ -82,7 +82,10 @@ export default class Navigator extends View {
     this.#$nav = this.$node.querySelector('.navigator');
     // Outside .navigator: its children (playhead, cursor line) position from its top edge.
     this.$node.insertBefore(this.#createDock(), this.#$nav);
-    const $inspectorParent = document.querySelector('.studio') || document.body;
+    const $inspectorParent =
+      document.querySelector('.side-panel__pane--inspector') ||
+      document.querySelector('.studio') ||
+      document.body;
 
     this.#inspector = new Inspector($inspectorParent);
     this.#timeTooltip = new TimeTooltip();

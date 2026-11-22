@@ -56,18 +56,24 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--bs-dark);
-  border-top: 1px solid var(--bs-info);
+  background: var(--surface-raised);
+  border-top: 1px solid var(--border-subtle);
+  border-radius: var(--radius-3) var(--radius-3) 0 0;
   padding: 10px 14px;
   z-index: 50;
   transform: translateY(100%);
-  transition: transform 0.15s ease-out;
+  /* Hidden below the list: without visibility its top border shows in the panel padding */
+  visibility: hidden;
+  transition:
+    transform 0.15s ease-out,
+    visibility 0.15s;
   display: flex;
   align-items: center;
 }
 
 .library-mini-player.visible {
   transform: translateY(0);
+  visibility: visible;
 }
 
 .library-mini-player .mini-player-content {
@@ -79,8 +85,8 @@
 
 .library-mini-player .mini-player-track {
   flex-shrink: 0;
-  color: var(--bs-light);
-  font-size: 0.875rem;
+  color: var(--text-default);
+  font-size: var(--font-size-3);
   max-width: 150px;
 }
 

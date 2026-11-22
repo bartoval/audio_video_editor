@@ -105,6 +105,9 @@
   --success-default: var(--green-400);
   --warning-default: var(--amber-400);
 
+  --highlight-match: rgba(251, 191, 36, 0.25);
+  --highlight-match-current: rgba(251, 191, 36, 0.5);
+
   --waveform: var(--gray-400);
   --waveform-selected: #d0d5dc;
 

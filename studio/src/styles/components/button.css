@@ -140,6 +140,18 @@
   border-color: transparent;
 }
 
+/* Disabled variants: Bootstrap paints a colored border here, keep them neutral */
+.btn-primary:disabled,
+.btn-outline-primary:disabled,
+.btn-outline-secondary:disabled,
+.btn-outline-info:disabled,
+.btn-outline-danger:disabled {
+  background: var(--surface-raised);
+  border-color: transparent;
+  color: var(--text-subtle);
+  box-shadow: none;
+}
+
 /* Danger (solid): confirmations only */
 .btn-danger {
   background: var(--danger-default);
