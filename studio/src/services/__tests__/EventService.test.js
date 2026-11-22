@@ -106,9 +106,7 @@ describe('EventService', () => {
 
   // Helper to get message handler and simulate unified schema message
   const getMessageHandler = () => {
-    return mockEventSource.addEventListener.mock.calls.find(
-      call => call[0] === 'message'
-    )[1];
+    return mockEventSource.addEventListener.mock.calls.find(call => call[0] === 'message')[1];
   };
 
   const sendMessage = (type, payload) => {
