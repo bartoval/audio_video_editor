@@ -77,6 +77,8 @@
   --surface-menu: var(--gray-700);
   --surface-hover: rgba(128, 134, 148, 0.16);
   --surface-clip: var(--gray-600);
+  --surface-viewer: #0f1013;
+  --surface-scrim: rgba(8, 9, 11, 0.72);
 
   --border-subtle: rgba(255, 255, 255, 0.06);
   --border-strong: rgba(255, 255, 255, 0.14);

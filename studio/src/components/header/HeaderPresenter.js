@@ -314,7 +314,7 @@ export default class HeaderPresenter {
     if (result.success) {
       this.#previewModal.showVideo(result.url);
     } else {
-      this.#previewModal.showError(LABEL.EXPORT_FAILED);
+      this.#previewModal.showError(LABEL.EXPORT_FAILED, result.error);
     }
   }
 
@@ -331,7 +331,7 @@ export default class HeaderPresenter {
     if (result.success) {
       this.#previewModal.showAudio(result.url);
     } else {
-      this.#previewModal.showError(LABEL.EXPORT_FAILED);
+      this.#previewModal.showError(LABEL.EXPORT_FAILED, result.error);
     }
   }
 

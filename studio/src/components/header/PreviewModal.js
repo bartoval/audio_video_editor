@@ -1,5 +1,6 @@
 import Modal from '../core/Modal';
 import { LABEL } from '../../config/constants';
+import { escapeHtml } from '../../lib';
 
 /**
  * PreviewModal - Shows exported video/audio with download option
@@ -98,8 +99,12 @@ export default class PreviewModal extends Modal {
     });
   }
 
-  showError(message) {
-    this.#$loader.innerHTML = this.#errorTemplate(message);
+  /**
+   * @param {string} [message] - what failed (defaults to "Export failed")
+   * @param {string} [detail] - why, or what to do next (defaults to "Please try again")
+   */
+  showError(message, detail) {
+    this.#$loader.innerHTML = this.#errorTemplate(message, detail);
   }
 
   template() {
@@ -133,7 +138,7 @@ export default class PreviewModal extends Modal {
           <audio class="preview-audio" controls data-ref="audio"></audio>
         </div>
         <div class="preview-modal-footer" data-ref="footer">
-          <a class="btn btn-info" download="${LABEL.DEFAULT_FILENAME}" data-ref="download">
+          <a class="btn btn-primary" download="${LABEL.DEFAULT_FILENAME}" data-ref="download">
             <i class="bi bi-download me-2"></i>${LABEL.DOWNLOAD}
           </a>
           <button class="btn btn-outline-secondary" data-action="close">${LABEL.CLOSE}</button>
@@ -196,11 +201,11 @@ export default class PreviewModal extends Modal {
     `;
   }
 
-  #errorTemplate(message) {
+  #errorTemplate(message, detail) {
     return `
       <i class="bi bi-exclamation-triangle preview-error-icon"></i>
-      <div class="preview-error-text">${message || LABEL.EXPORT_FAILED}</div>
-      <div class="preview-error-subtext">${LABEL.TRY_AGAIN}</div>
+      <div class="preview-error-text">${escapeHtml(message || LABEL.EXPORT_FAILED)}</div>
+      <div class="preview-error-subtext">${escapeHtml(detail || LABEL.TRY_AGAIN)}</div>
     `;
   }
 }
