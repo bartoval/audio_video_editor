@@ -218,6 +218,33 @@ describe('ScaleManager', () => {
     });
   });
 
+  describe('zoom range', () => {
+    it('allows at least 8x zoom past fit for short media', () => {
+      // 20 s in 1414 px: the fixed 10 ms/px floor left a 1.4x range
+      scaleManager.init({
+        duration: 20,
+        availableScales: [0.01, 0.1],
+        viewportWidth: 1414,
+        maxWidth: 163835
+      });
+
+      const { min, max } = scaleManager.getLimits();
+
+      expect(max / min).toBeCloseTo(8, 5);
+    });
+
+    it('keeps the 10 ms/px floor when the range is already wide (long media)', () => {
+      scaleManager.init({
+        duration: 180,
+        availableScales: [0.01, 0.1],
+        viewportWidth: 1414,
+        maxWidth: 163835
+      });
+
+      expect(scaleManager.getLimits().min).toBe(0.01);
+    });
+  });
+
   describe('getLimits', () => {
     it('returns min and max scale limits', () => {
       scaleManager.init({
