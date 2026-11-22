@@ -26,6 +26,7 @@ export function findTrackEdgeSnap(
   const draggedEndPx = draggedStartPx + draggedDurationPx;
   const prevEndPx = prevStartPx !== null ? prevStartPx + draggedDurationPx : null;
 
+  /** @type {SnapResult | null} */
   let bestSnap = null;
   let minDistance = Infinity;
 

@@ -9,6 +9,18 @@ export default class Buffer {
   /** @type {import('./BufferLoader').default} */
   #loader;
 
+  /**
+   * @param {Object} options
+   * @param {number} options.startTimeBuffer
+   * @param {number} options.endTimeBuffer
+   * @param {boolean} [options.isCutBuffer]
+   * @param {string | number} options.idTrack
+   * @param {boolean} [options.isDerived]
+   * @param {number} options.start
+   * @param {number} options.end
+   * @param {AudioBuffer} [options.buffer]
+   * @param {import('./BufferLoader').default} [options.loader] - defaults to a new BufferLoader
+   */
   constructor({
     startTimeBuffer,
     endTimeBuffer,

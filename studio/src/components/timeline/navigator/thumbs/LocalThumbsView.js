@@ -72,8 +72,9 @@ export default class LocalThumbsView extends View {
       this.$node.replaceChildren();
     }
   }
-  onProgress() {}
-  updateFrame() {
+  // Same interface as TiledThumbsView: local frames need no server progress or frame update
+  onProgress(_data) {}
+  updateFrame(_posX) {
     return true;
   }
   zoom(_width, posX) {
