@@ -2,8 +2,7 @@
  * Stylesheet entry point
  *
  * Order matters: it is the cascade order. Tokens first, then base, then
- * components. styles/legacy-overrides.css is a late patch layer that is being
- * folded back into the component files.
+ * components. Each rule lives in exactly one file: no override layers.
  * ============================================================================ */
 
 @import 'bootstrap/dist/css/bootstrap.min.css';
@@ -26,8 +25,9 @@
 @import '../components/audioLibrary/library-panel.css';
 @import '../components/loader/loader.css';
 @import '../components/timeline/navigator/minimap/minimap.css';
-@import './legacy-overrides.css';
-@import '../components/timeline/timeline-redesign.css';
+@import '../components/core/task-progress.css';
+@import '../components/timeline/navigator/tracks/cut-overlay.css';
+@import '../components/timeline/navigator/tracks/views/superzoom-popup.css';
 @import '../components/common/contextMenu.css';
 @import '../components/header/header.css';
 @import './components/range.css';

@@ -120,3 +120,11 @@
   font-weight: 600;
   padding-top: 4px;
 }
+
+/* Short screens: crop the thumbnail strip (sprites are 80px tall) to keep a track visible */
+@media (max-height: 800px) {
+  .thumbs {
+    height: 52px;
+    overflow: hidden;
+  }
+}

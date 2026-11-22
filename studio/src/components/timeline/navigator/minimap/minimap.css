@@ -8,12 +8,12 @@
 
 .minimap {
   width: 100%;
-  padding: 4px 0;
+  padding: 3px 0;
 }
 
 .minimap-track {
   position: relative;
-  height: 30px;
+  height: 16px;
   background: var(--panel-bg);
   cursor: pointer;
 }

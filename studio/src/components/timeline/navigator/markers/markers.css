@@ -2,15 +2,16 @@
  * Markers
  * ============================================================================ */
 .markers {
-  margin: 4px calc(var(--cursor-size) / 2) 0;
+  margin: 2px calc(var(--cursor-size) / 2) 0;
   overflow: visible;
   position: relative;
   z-index: 105;
-  height: 32px;
+  height: 24px;
   cursor: crosshair;
-  background: var(--accent-secondary-dim);
-  border-radius: var(--radius-sm);
-  box-shadow: inset 0 0 0 1px var(--accent-secondary);
+  background: var(--surface-inset);
+  border-radius: var(--radius-full);
+  box-shadow: none;
+  margin-top: 2px;
 }
 
 .markers .marker-container {

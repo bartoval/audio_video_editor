@@ -91,3 +91,35 @@
     justify-items: center;
   }
 }
+
+/* Timecode and aspect-ratio badge */
+.timer-display {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-current {
+  color: var(--text-default);
+  font-size: var(--font-size-4);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.timer-duration {
+  color: var(--text-faint);
+  font-size: var(--font-size-2);
+}
+
+.ratio-badge {
+  background: var(--surface-raised);
+  color: var(--text-subtle);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-1);
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+}
+
+.player-panel .btn i {
+  line-height: 1;
+}

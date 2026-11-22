@@ -138,3 +138,29 @@
   margin: 0 auto;
   position: relative;
 }
+
+/* Playhead head: white, reserved for time */
+.navigator .scrubber-button {
+  width: 14px;
+  height: 14px;
+  background: var(--playhead);
+  border: 2px solid var(--playhead);
+  box-shadow: var(--elevation-1);
+}
+
+.navigator .scrubber-button::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid var(--playhead);
+}
+
+/* Main ruler only: the minimap has its own ruler inside .minimap-ruler */
+.navigator > .ruler {
+  height: 26px;
+  flex: 0 0 26px;
+}
