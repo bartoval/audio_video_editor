@@ -250,12 +250,11 @@
 /* ============================================================================
  * Video Actions
  * ============================================================================ */
+/* Top-left: the uploader layer can be wider than the frame, so the right edge is not the video's */
 .video-actions {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  display: flex;
-  gap: 8px;
+  top: var(--space-3);
+  left: var(--space-3);
   z-index: 10;
 }
 
@@ -263,35 +262,34 @@
   display: none;
 }
 
-.video-action-btn {
+/* Solid, so it stays readable over any frame */
+.video-menu-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: rgba(0, 0, 0, 0.5);
-  color: var(--bs-info);
-  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--surface-menu);
+  color: var(--text-default);
+  box-shadow: var(--elevation-1);
   cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 
-.video-action-btn i {
-  font-size: 1.375rem;
+.video-menu-btn:hover {
+  background: var(--surface-raised);
 }
 
-.video-action-btn:hover {
-  opacity: 1;
+.video-menu-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
-.video-scene-detect-btn {
-  color: var(--accent-secondary);
-}
-
-.video-delete-btn {
-  color: var(--bs-danger);
+.video-menu-btn i {
+  font-size: 18px;
 }
 
 /* ============================================================================

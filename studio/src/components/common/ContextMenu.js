@@ -5,8 +5,10 @@
  *     { id: 'mp3', label: 'Download MP3', icon: 'bi-file-earmark-music' },
  *     { id: 'wav', label: 'Download WAV', icon: 'bi-file-earmark-music' },
  *     { type: 'divider' },
- *     { id: 'stems', label: 'Download Stems', icon: 'bi-music-note-list' }
+ *     { id: 'stems', label: 'Download Stems', icon: 'bi-music-note-list' },
+ *     { id: 'delete', label: 'Delete', icon: 'bi-trash', danger: true, shortcut: 'Del' }
  *   ]);
+ * Item options: disabled, badge, danger (red on hover), shortcut (shown on the right).
  *   menu.show(anchorElement, (itemId) => { ... });
  */
 
@@ -66,6 +68,7 @@ export class ContextMenu {
   #createMenu() {
     const $menu = document.createElement('div');
     $menu.className = MENU_CLASS;
+    $menu.setAttribute('role', 'menu');
 
     this.items.forEach(item => {
       if (item.type === 'divider') {
@@ -80,15 +83,24 @@ export class ContextMenu {
       $item.className = MENU_ITEM_CLASS;
       $item.dataset.id = item.id;
 
+      $item.setAttribute('role', 'menuitem');
+
       if (item.disabled) {
         $item.disabled = true;
         $item.classList.add('disabled');
       }
 
+      if (item.danger) {
+        $item.classList.add('context-menu-item--danger');
+      }
+
       const iconHtml = item.icon ? `<i class="bi ${item.icon}"></i>` : '';
       const badgeHtml = item.badge ? `<span class="context-menu-badge">${item.badge}</span>` : '';
+      const shortcutHtml = item.shortcut
+        ? `<kbd class="context-menu-shortcut">${item.shortcut}</kbd>`
+        : '';
 
-      $item.innerHTML = `${iconHtml}<span>${item.label}</span>${badgeHtml}`;
+      $item.innerHTML = `${iconHtml}<span>${item.label}</span>${badgeHtml}${shortcutHtml}`;
 
       $item.addEventListener('click', event => {
         event.stopPropagation();

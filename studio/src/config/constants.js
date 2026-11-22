@@ -193,6 +193,7 @@ export const LABEL = {
   IMPORT_VIDEO: 'Import Video',
   CHANGE_VIDEO: 'Change Video',
   DELETE_VIDEO: 'Delete Video',
+  VIDEO_OPTIONS: 'Video options',
   RESIZE_VIDEO: 'Resize video',
   CONVERTING: 'Converting video...',
   PLEASE_WAIT: 'Please wait',
