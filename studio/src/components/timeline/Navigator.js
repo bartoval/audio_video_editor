@@ -169,6 +169,11 @@ export default class Navigator extends View {
         EventService.emitLocal(EVENT.PLAYBACK_MOVE_FROM_NAVIGATOR, { time });
       },
       onSetMenu: zones => this.#inspector.set(zones),
+      onRevealSelection: () => {
+        if (!this.#inspector.isOpen()) {
+          this.#inspector.open();
+        }
+      },
       onInspectorToggle: () => this.#inspector.toggle(),
       onTracksChange: () => this.#syncTracksToStore()
     });
