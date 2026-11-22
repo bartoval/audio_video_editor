@@ -318,8 +318,9 @@ export default class WaveformPlayer {
     const path = this.#waveformPath;
     const scaleX = width / (path[path.length - 1]?.x || width);
 
-    const playedColor = this.#getCssVar('--bs-pink');
-    const unplayedColor = this.#getCssVar('--bs-gray-500');
+    // Design tokens (styles/tokens.css): played = accent, not yet played = neutral waveform
+    const playedColor = this.#getCssVar('--accent-default', '#8b80ff');
+    const unplayedColor = this.#getCssVar('--waveform', '#727b87');
 
     // Draw played portion
     if (progressX > 0) {
