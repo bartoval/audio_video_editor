@@ -294,22 +294,37 @@ describe('ScaleManager', () => {
       scaleManager.setScale(0.5);
     });
 
-    it('zooms by delta with default sensitivity', () => {
+    it('zooms out by about 10% for one mouse notch', () => {
       scaleManager.zoomByDelta(100);
 
-      expect(scaleManager.getScale()).toBeCloseTo(0.55, 5);
+      expect(scaleManager.getScale()).toBeCloseTo(0.5 * Math.exp(0.1), 5);
     });
 
-    it('zooms out with negative delta', () => {
+    it('zooms in with negative delta', () => {
       scaleManager.zoomByDelta(-100);
 
-      expect(scaleManager.getScale()).toBeCloseTo(0.45, 5);
+      expect(scaleManager.getScale()).toBeCloseTo(0.5 * Math.exp(-0.1), 5);
     });
 
     it('uses custom sensitivity', () => {
       scaleManager.zoomByDelta(100, 0.01);
 
-      expect(scaleManager.getScale()).toBe(1);
+      expect(scaleManager.getScale()).toBeCloseTo(0.5 * Math.E, 5);
+    });
+
+    it('never jumps to the limit on a fast scroll (large negative delta)', () => {
+      // The old linear factor 1 + delta * k became negative here and clamped to min
+      scaleManager.zoomByDelta(-1200);
+
+      expect(scaleManager.getScale()).toBeCloseTo(0.5 * Math.exp(-1.2), 5);
+      expect(scaleManager.getScale()).toBeGreaterThan(scaleManager.getLimits().min);
+    });
+
+    it('is symmetric: the same delta in and out returns to the start', () => {
+      scaleManager.zoomByDelta(-500);
+      scaleManager.zoomByDelta(500);
+
+      expect(scaleManager.getScale()).toBeCloseTo(0.5, 10);
     });
   });
 

@@ -157,8 +157,21 @@ class ScaleManager {
     return this.setScale(this.#scale * factor);
   }
 
+  /**
+   * Zoom by a wheel delta in pixels (positive = zoom out).
+   *
+   * Exponential, not linear: `1 + delta * k` turned zero or negative for fast scrolls
+   * (delta <= -1000) and the clamp then jumped straight to the zoom limit; it was also
+   * asymmetric (-500 halved the scale, +500 only multiplied it by 1.5).
+   * e^(delta * k) is always positive, and equal deltas in and out cancel out.
+   * One mouse notch (100px) still zooms by ~10%.
+   *
+   * @param {number} delta - wheel delta in pixels
+   * @param {number} [sensitivity]
+   * @returns {number} the new (clamped) scale
+   */
   zoomByDelta(delta, sensitivity = 0.001) {
-    const factor = 1 + delta * sensitivity;
+    const factor = Math.exp(delta * sensitivity);
 
     return this.setScale(this.#scale * factor);
   }

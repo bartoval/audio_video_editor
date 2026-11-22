@@ -24,6 +24,28 @@ import scaleManager from '../../services/ScaleManager';
 
 const { TOOLTIP_THROTTLE_MS } = TRACKS;
 
+// A Firefox notch is 3 lines: ~33px per line makes it zoom like a Chrome notch (100px)
+const LINE_HEIGHT_PX = 33;
+const PAGE_HEIGHT_PX = 800;
+
+/**
+ * Wheel delta in pixels whatever the device reports: Firefox sends mouse wheels in
+ * lines (deltaY 3 per notch), so summing raw values made zoom ~30x slower there.
+ * @param {WheelEvent} event
+ * @returns {number}
+ */
+export function wheelDeltaInPixels(event) {
+  if (event.deltaMode === WheelEvent.DOM_DELTA_LINE) {
+    return event.deltaY * LINE_HEIGHT_PX;
+  }
+
+  if (event.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
+    return event.deltaY * PAGE_HEIGHT_PX;
+  }
+
+  return event.deltaY;
+}
+
 export default class Navigator extends View {
   #duration = 0;
   #inspector = null;
@@ -408,7 +430,7 @@ export default class Navigator extends View {
     }
 
     event.preventDefault();
-    this.#accumulatedDelta += event.deltaY;
+    this.#accumulatedDelta += wheelDeltaInPixels(event);
 
     if (this.#rafId === null) {
       this.#rafId = requestAnimationFrame(this.#applyZoom);
