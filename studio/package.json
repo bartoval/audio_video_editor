@@ -26,7 +26,8 @@
     "typecheck:watch": "tsc --noEmit --watch",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "prepare": "cd .. && husky"
+    "prepare": "cd .. && husky",
+    "lint:css": "node scripts/check-css.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -53,7 +54,8 @@
       "prettier --write"
     ],
     "src/**/*.css": [
-      "prettier --write"
+      "prettier --write",
+      "node scripts/check-css.mjs"
     ]
   },
   "dependencies": {
