@@ -193,7 +193,6 @@ export default class Navigator extends View {
           this.#inspector.open();
         }
       },
-      onInspectorToggle: () => this.#inspector.toggle(),
       onTracksChange: () => this.#syncTracksToStore()
     });
 

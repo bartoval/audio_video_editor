@@ -31,7 +31,6 @@ export default class TracksController {
   onSetMenu = null;
   onRevealSelection = null;
   onDragEnd = null;
-  onInspectorToggle = null;
   onTracksChange = null;
 
   constructor($parent, callbacks = {}) {
@@ -39,7 +38,6 @@ export default class TracksController {
     this.onSetMenu = callbacks.onSetMenu || (() => {});
     this.onRevealSelection = callbacks.onRevealSelection || (() => {});
     this.onDragEnd = callbacks.onDragEnd || (() => {});
-    this.onInspectorToggle = callbacks.onInspectorToggle || (() => {});
     this.onTracksChange = callbacks.onTracksChange || (() => {});
 
     this.#$tracks = this.#createTracksElement($parent);
@@ -142,7 +140,6 @@ export default class TracksController {
       onSplitRequest: zone => this.enterSplitMode(zone),
       onCopyRequest: zone => this.clone(zone),
       onDeleteRequest: zone => this.remove(zone),
-      onInspectorToggle: () => this.onInspectorToggle(),
       getTimeFromClientX: clientX => this.getTimeFromClientX(clientX)
     });
   }
@@ -643,7 +640,6 @@ export default class TracksController {
     this.onSetMenu = null;
     this.onRevealSelection = null;
     this.onDragEnd = null;
-    this.onInspectorToggle = null;
     this.onTracksChange = null;
   }
 }

@@ -109,7 +109,7 @@ describe('FloatingTrackToolbar', () => {
 
       expect(actionsIn('modes')).toEqual(['cut', 'volume']);
       expect(actionsIn('actions')).toEqual(['copy', 'mute', 'delete']);
-      expect(actionsIn('options')).toEqual(['snap', 'superzoom', 'inspector']);
+      expect(actionsIn('options')).toEqual(['snap', 'superzoom']);
     });
 
     it('still dispatches actions to the track callbacks', () => {

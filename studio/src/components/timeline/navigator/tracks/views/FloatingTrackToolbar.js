@@ -11,7 +11,7 @@ import * as SuperZoomService from '../../../../../services/SuperZoomService';
  * - Docks into the timeline's fixed tool bar (.timeline-dock) when present
  * - Otherwise floats below the track and follows the mouse X position
  * - Fade-in/out animation
- * - Actions: Cut, Volume, Duplicate, Mute, Delete, Snap, SuperZoom, Inspector
+ * - Actions: Cut, Volume, Duplicate, Mute, Delete, Snap, SuperZoom
  */
 export default class FloatingTrackToolbar {
   #$root = null;
@@ -75,9 +75,6 @@ export default class FloatingTrackToolbar {
           </button>
           <button data-action="superzoom" class="toolbar-btn" title="${LABEL.TOOLBAR_SUPERZOOM}" aria-label="SuperZoom">
             <i class="bi bi-search"></i>
-          </button>
-          <button data-action="inspector" class="toolbar-btn" title="${LABEL.TOOLBAR_INSPECTOR}" aria-label="Inspector">
-            <i class="bi bi-layout-sidebar-reverse"></i>
           </button>
         </div>
       </div>
@@ -170,10 +167,6 @@ export default class FloatingTrackToolbar {
 
       case 'volume':
         this.#toggleVolume();
-        break;
-
-      case 'inspector':
-        this.#callbacks.onInspectorToggle?.();
         break;
 
       case 'snap':

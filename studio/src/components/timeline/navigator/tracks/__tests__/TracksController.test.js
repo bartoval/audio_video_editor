@@ -97,7 +97,6 @@ describe('TracksController', () => {
       onMove: vi.fn(),
       onSetMenu: vi.fn(),
       onDragEnd: vi.fn(),
-      onInspectorToggle: vi.fn(),
       onRevealSelection: vi.fn(),
       onTracksChange: vi.fn()
     };

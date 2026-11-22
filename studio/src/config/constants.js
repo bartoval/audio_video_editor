@@ -261,7 +261,6 @@ export const LABEL = {
   TOOLBAR_DELETE: 'Delete (Del)',
   TOOLBAR_MUTE: 'Mute (U)',
   TOOLBAR_VOLUME: 'Volume (V)',
-  TOOLBAR_INSPECTOR: 'Inspector (I)',
   TOOLBAR_SNAP: 'Snap (S)',
   TOOLBAR_SUPERZOOM: 'SuperZoom (Z)',
   LOADING: 'Loading...'

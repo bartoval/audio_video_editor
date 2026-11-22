@@ -102,7 +102,6 @@ export default class TrackPresenter extends ZonePresenter {
       onDelete: () => this.#handleDeleteRequest(),
       onVolumeToggle: active => this.#handleVolumeToggle(active),
       onMuteToggle: active => this.#handleMuteToggle(active),
-      onInspectorToggle: () => this.#handleInspectorToggle(),
       onSnapToggle: active => this.setSnapEnabled(active)
     });
 
@@ -406,10 +405,6 @@ export default class TrackPresenter extends ZonePresenter {
     } else {
       this.unmute();
     }
-  }
-
-  #handleInspectorToggle() {
-    this.#containerCallbacks.onInspectorToggle?.();
   }
 
   mute() {
