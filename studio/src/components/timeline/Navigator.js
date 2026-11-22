@@ -52,6 +52,27 @@ export default class Navigator extends View {
     `;
   }
 
+  /**
+   * Fixed tool bar at the top of the timeline. The selected track's toolbar docks here
+   * (see FloatingTrackToolbar), so selection never moves or covers the tracks.
+   * @returns {HTMLElement}
+   */
+  #createDock() {
+    const $dock = document.createElement('div');
+    $dock.className = 'timeline-dock';
+    $dock.setAttribute('role', 'toolbar');
+    $dock.setAttribute('aria-label', 'Clip tools');
+    $dock.dataset.testid = 'timeline-dock';
+    $dock.innerHTML = `
+      <span class="timeline-dock__empty">
+        <i class="bi bi-cursor" aria-hidden="true"></i>
+        Select a clip on the timeline to edit it
+      </span>
+    `;
+
+    return $dock;
+  }
+
   render() {
     const wrapper = document.createElement('div');
     wrapper.innerHTML = this.template();
@@ -59,6 +80,8 @@ export default class Navigator extends View {
     this.$parent.appendChild(this.$node);
 
     this.#$nav = this.$node.querySelector('.navigator');
+    // Outside .navigator: its children (playhead, cursor line) position from its top edge.
+    this.$node.insertBefore(this.#createDock(), this.#$nav);
     const $inspectorParent = document.querySelector('.studio') || document.body;
 
     this.#inspector = new Inspector($inspectorParent);

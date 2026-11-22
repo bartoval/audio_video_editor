@@ -1,0 +1,281 @@
+/* ============================================================================
+ * Timeline — 2026 redesign layer
+ *
+ * Loaded after timeline.css and overrides it using semantic tokens only.
+ * It will be merged into the per-component stylesheets when timeline.css
+ * is split up.
+ * ============================================================================ */
+
+/* ----------------------------------------------------------------------------
+ * Panel and compact chrome: more height for the tracks
+ * ---------------------------------------------------------------------------- */
+/* .timeline is the panel; it holds the dock and the navigator */
+.timeline {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-4);
+  box-shadow: var(--elevation-2);
+  overflow: hidden;
+}
+
+.navigator.glass-container {
+  min-height: 0;
+  padding-top: var(--space-1);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Short screens: crop the thumbnail strip (sprites are 80px tall) to keep a track visible */
+@media (max-height: 800px) {
+  .thumbs {
+    height: 52px;
+    overflow: hidden;
+  }
+}
+
+.navigator .ruler {
+  height: 26px;
+  flex: 0 0 26px;
+}
+
+.markers {
+  height: 24px;
+  margin-top: 2px;
+  background: var(--surface-inset);
+  border-radius: var(--radius-full);
+  box-shadow: none;
+}
+
+.tracks {
+  padding-top: var(--space-1);
+}
+
+.minimap {
+  padding: 3px 0;
+}
+
+.minimap-track {
+  height: 16px;
+}
+
+/* ----------------------------------------------------------------------------
+ * Fixed tool bar (.timeline-dock): the selected clip's tools live here
+ * ---------------------------------------------------------------------------- */
+.timeline-dock {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 0 0 auto;
+  min-height: 46px;
+  padding: 6px var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.timeline-dock__empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-faint);
+  font-size: var(--font-size-2);
+}
+
+.timeline-dock:has(.floating-track-toolbar.visible) .timeline-dock__empty {
+  display: none;
+}
+
+.timeline-dock .floating-track-toolbar {
+  position: static;
+  display: none;
+  flex: 1;
+  height: auto;
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.timeline-dock .floating-track-toolbar.visible {
+  display: block;
+}
+
+.timeline-dock .floating-toolbar-inner {
+  position: static;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transform: none !important;
+}
+
+/* Floating fallback (no dock): icons only */
+.floating-track-toolbar:not(.docked) .toolbar-btn__label,
+.floating-track-toolbar:not(.docked) .toolbar-spacer {
+  display: none;
+}
+
+.toolbar-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+.floating-toolbar-inner .toolbar-separator {
+  width: 1px;
+  height: 20px;
+  margin: 0;
+  background: var(--border-subtle);
+}
+
+/* Buttons: pills with text labels */
+.timeline-dock .toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: auto;
+  min-width: 32px;
+  height: 30px;
+  padding: 0 var(--space-3);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-full);
+  color: var(--text-subtle);
+  font-size: var(--font-size-2);
+  font-weight: 500;
+  line-height: 1;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.timeline-dock .toolbar-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-default);
+  border-color: transparent;
+}
+
+.timeline-dock .toolbar-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Modes: segmented pill, the active one in the accent */
+.timeline-dock .toolbar-group--modes {
+  padding: 3px;
+  background: var(--surface-inset);
+  border-radius: var(--radius-full);
+}
+
+.timeline-dock .toolbar-group--modes .toolbar-btn.active {
+  background: var(--accent-default);
+  color: var(--text-on-accent);
+  border-color: transparent;
+  box-shadow: 0 4px 12px var(--accent-glow-value);
+}
+
+/* Options and toggled actions (mute): soft accent */
+.timeline-dock .toolbar-group--actions .toolbar-btn.active,
+.timeline-dock .toolbar-group--options .toolbar-btn.active {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  border-color: transparent;
+}
+
+/* Destructive: red only on hover */
+.timeline-dock .toolbar-btn-danger:hover {
+  background: rgba(var(--danger-rgb-value), 0.14);
+  color: var(--danger-default);
+  border-color: transparent;
+}
+
+/* ----------------------------------------------------------------------------
+ * Clips: neutral fill, selection = accent ring + pill handles
+ * ---------------------------------------------------------------------------- */
+.track-content {
+  background: var(--surface-clip);
+  border: 1.5px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--radius-2);
+  box-shadow: none;
+}
+
+.track-content:hover:not(.selected) {
+  background: color-mix(in srgb, var(--surface-clip) 88%, white);
+  border-color: var(--border-strong);
+}
+
+.track-content.selected {
+  background: color-mix(in srgb, var(--accent-default) 18%, var(--surface-clip));
+  border-color: var(--accent-default);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+
+.zone-content {
+  border-left: 0;
+  border-right: 0;
+}
+
+.track-content.selected .waveform canvas {
+  filter: brightness(1.3);
+}
+
+.zone-content .hook-resize,
+.track-content.selected .hook-resize {
+  width: 5px;
+  height: 22px;
+  background-color: var(--accent-default);
+  background-image: none;
+  border-radius: var(--radius-full);
+  box-shadow: none;
+}
+
+.track-content.selected .hook-resize:hover {
+  transform: scaleX(1.4);
+  background-color: var(--accent-hover);
+  box-shadow: none;
+}
+
+.track-label {
+  bottom: 5px;
+  left: 12px;
+  padding: 1px 8px;
+  font-size: var(--font-size-1);
+  font-weight: 600;
+  color: var(--text-subtle);
+  background-color: rgba(0, 0, 0, 0.35);
+  border-radius: var(--radius-full);
+}
+
+.track-content.selected .track-label {
+  color: var(--text-default);
+}
+
+/* ----------------------------------------------------------------------------
+ * Playhead: white, reserved for time
+ * ---------------------------------------------------------------------------- */
+.navigator .scrubber-button {
+  background: var(--playhead);
+  border-color: var(--playhead);
+  box-shadow: var(--elevation-1);
+}
+
+.navigator .scrubber-button::after {
+  border-top-color: var(--playhead);
+}
+
+.thumb-item:hover {
+  outline-color: var(--accent-default);
+  box-shadow: none;
+}

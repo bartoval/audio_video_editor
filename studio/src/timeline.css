@@ -1379,21 +1379,6 @@ body.tool-split {
 
 .zone .waveform canvas {
   position: absolute;
-  filter: saturate(0.3) brightness(0.8) hue-rotate(0deg);
-  animation: waveColor 3s ease-in-out infinite;
-}
-
-@keyframes waveColor {
-  0%,
-  100% {
-    filter: saturate(0.3) brightness(0.8) hue-rotate(0deg);
-  }
-  33% {
-    filter: saturate(1) brightness(1) hue-rotate(0deg);
-  }
-  66% {
-    filter: saturate(1) brightness(1) hue-rotate(60deg);
-  }
 }
 
 .scenes .zone .footer {
@@ -2285,11 +2270,15 @@ body.tool-split {
   background: #282828;
   border: 1px solid var(--border-soft, rgba(255, 255, 255, 0.1));
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.3);
   opacity: 0;
   transform: translateY(4px);
   pointer-events: none;
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
 }
 
 .job-panel.visible {
@@ -2322,7 +2311,9 @@ body.tool-split {
   padding: 2px;
   font-size: 0.75rem;
   border-radius: 4px;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .job-panel-close:hover {
@@ -2395,7 +2386,9 @@ body.tool-split {
   color: rgba(255, 255, 255, 0.3);
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .job-panel-dismiss:hover {
@@ -2818,22 +2811,6 @@ body.tool-split {
 .thumbs-strip {
   background: linear-gradient(180deg, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0.05) 100%);
   border-left: 3px solid #6366f1;
-}
-
-/* Audio track waveform */
-.track-content {
-  background: linear-gradient(
-    180deg,
-    var(--accent-secondary-dim) 0%,
-    rgba(20, 184, 166, 0.08) 100%
-  );
-  border-left: 3px solid var(--accent-secondary);
-}
-
-.track-content.selected {
-  background: linear-gradient(180deg, rgba(20, 184, 166, 0.35) 0%, rgba(20, 184, 166, 0.15) 100%);
-  border-color: var(--accent-secondary-light);
-  box-shadow: 0 0 16px var(--accent-secondary-glow);
 }
 
 /* ============================================================================
