@@ -511,6 +511,7 @@ src/components/**/   each component keeps its stylesheet next to its JS
 3. **Selection never changes layout.** Tools for the selected clip dock in `.timeline-dock`.
 4. **A rule lives in exactly one file.** No override layers appended at the end.
 5. **Debt only goes down.** `npm run lint:css` counts raw colors, `!important` and `backdrop-filter` outside `tokens.css` and fails above `css-budget.json`. It runs in the pre-commit hook and in CI. After a cleanup, lock the gain with `npm run lint:css -- --update`.
+6. **Check style refactors visually.** With the dev servers running, `npm run visual:baseline` before the change and `npm run visual:check` after: it replays deterministic app states (see `scripts/visual/scenarios.mjs`) and diffs them pixel by pixel into `.visual/diff/`. Baselines stay local because rendering differs across operating systems.
 
 ---
 

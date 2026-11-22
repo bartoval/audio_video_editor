@@ -57,3 +57,6 @@ deployment/k8s/*-secret.yaml
 
 
 CLAUDE.md
+
+# Local visual regression captures
+studio/.visual/
